@@ -59,7 +59,9 @@ class PlayerStateHandlerImpl(
   }
 
   override fun updateTrackRating(rating: TrackRating) {
-    appState.updateTrackRating(rating)
+    if (devicePlaybackController?.hasLocalPlayback != true) {
+      appState.updateTrackRating(rating)
+    }
   }
 
   override fun updateTrackDetails(details: TrackDetails) {
@@ -67,7 +69,7 @@ class PlayerStateHandlerImpl(
   }
 
   override fun updateLyrics(lyrics: List<String>) {
-    appState.updateLyrics(lyrics)
+    if (devicePlaybackController?.hasLocalPlayback != true) appState.updateLyrics(lyrics)
   }
 
   override fun updatePlayingPosition(position: PlayingPosition) {

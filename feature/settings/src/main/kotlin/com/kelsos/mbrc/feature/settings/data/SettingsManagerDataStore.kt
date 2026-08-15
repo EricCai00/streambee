@@ -111,12 +111,12 @@ class SettingsManagerDataStore(
 
   override val albumSortPreferenceFlow: Flow<AlbumSortPreference> = dataStore.data.map { prefs ->
     val encoded = prefs[PreferenceKeys.ALBUM_SORT] ?: DefaultValues.ALBUM_SORT
-    SortPreference.decode(encoded, AlbumSortField::fromString, AlbumSortField.NAME)
+    SortPreference.decode(encoded, AlbumSortField::fromString, AlbumSortField.YEAR)
   }
 
   override val trackSortPreferenceFlow: Flow<TrackSortPreference> = dataStore.data.map { prefs ->
     val encoded = prefs[PreferenceKeys.TRACK_SORT] ?: DefaultValues.TRACK_SORT
-    SortPreference.decode(encoded, TrackSortField::fromString, TrackSortField.TITLE)
+    SortPreference.decode(encoded, TrackSortField::fromString, TrackSortField.YEAR)
   }
 
   override val genreArtistsSortPreferenceFlow: Flow<ArtistSortPreference> =

@@ -38,7 +38,7 @@ interface AppNotificationManager {
 
   companion object {
     const val MEDIA_SESSION_NOTIFICATION_ID = 15613
-    const val CHANNEL_ID = "mbrc_session_01"
+    const val CHANNEL_ID = "streambee_session_01"
   }
 }
 

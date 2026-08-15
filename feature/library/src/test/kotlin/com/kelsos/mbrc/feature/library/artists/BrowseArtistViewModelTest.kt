@@ -75,6 +75,7 @@ class BrowseArtistViewModelTest : KoinTest {
     every { repository.getAll() } returns flowOf(PagingData.empty())
     every { repository.getAll(any()) } returns flowOf(PagingData.empty())
     every { repository.getAlbumArtistsOnly(any()) } returns flowOf(PagingData.empty())
+    every { repository.searchAlbumArtists(any(), any()) } returns flowOf(PagingData.empty())
     every { repository.search(any()) } returns flowOf(PagingData.empty())
     every { repository.search(any(), any()) } returns flowOf(PagingData.empty())
     every { librarySettings.libraryTrackDefaultActionFlow } returns flowOf(TrackAction.PlayNow)
@@ -299,4 +300,5 @@ class BrowseArtistViewModelTest : KoinTest {
       coVerify(exactly = 1) { librarySettings.setArtistSortPreference(newPreference) }
     }
   }
+
 }

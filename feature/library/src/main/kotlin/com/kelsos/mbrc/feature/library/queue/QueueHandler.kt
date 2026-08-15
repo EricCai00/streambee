@@ -70,6 +70,19 @@ class QueueHandler(
     AppError.OperationFailed.asFailure()
   }
 
+  override suspend fun queuePaths(paths: List<String>, startIndex: Int): Outcome<Int> = try {
+    val tracks = withContext(dispatchers.database) {
+      paths.mapNotNull { path -> trackRepository.getByPath(path) }
+    }
+    if (tracks.isEmpty()) return AppError.OperationFailed.asFailure()
+    playTracks(tracks, startIndex.coerceIn(0, tracks.lastIndex))
+  } catch (e: CancellationException) {
+    throw e
+  } catch (e: Exception) {
+    Timber.e(e, "Local playlist playback from selected track failed")
+    AppError.OperationFailed.asFailure()
+  }
+
   suspend fun queueTrack(track: Track, type: Queue, queueAlbum: Boolean = false): Outcome<Int> = try {
     val tracks = when (type) {
       Queue.AddAll -> withContext(dispatchers.database) {

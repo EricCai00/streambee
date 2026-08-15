@@ -45,7 +45,7 @@ import com.kelsos.mbrc.core.ui.compose.QueueResultEffect
 import com.kelsos.mbrc.core.ui.compose.ScreenScaffold
 import com.kelsos.mbrc.feature.library.R
 import com.kelsos.mbrc.feature.library.albums.AlbumInfo
-import com.kelsos.mbrc.feature.library.compose.components.AlbumCoverByKey
+import com.kelsos.mbrc.feature.library.compose.components.HighResolutionAlbumCover
 import com.kelsos.mbrc.feature.library.compose.components.TrackListItem
 import com.kelsos.mbrc.feature.library.tracks.AlbumTracksViewModel
 import com.kelsos.mbrc.feature.library.tracks.TrackUiMessage
@@ -119,6 +119,7 @@ fun AlbumTracksScreen(
             ) {
               AlbumHeaderHorizontal(
                 albumInfo = albumInfo,
+                trackPath = tracks.itemSnapshotList.items.firstOrNull()?.src,
                 onPlayClick = { viewModel.queueAlbum(albumInfo) },
                 modifier = Modifier.fillMaxWidth()
               )
@@ -135,7 +136,8 @@ fun AlbumTracksScreen(
                   onClick = { viewModel.queue(Queue.Default, track) },
                   onQueue = { queue -> viewModel.queue(queue, track) },
                   showCover = false,
-                  showAlbum = false
+                  showAlbum = false,
+                  showExtendedActions = false
                 )
               }
             }
@@ -154,6 +156,7 @@ fun AlbumTracksScreen(
 @Composable
 private fun AlbumHeaderHorizontal(
   albumInfo: AlbumInfo,
+  trackPath: String?,
   onPlayClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
@@ -168,9 +171,10 @@ private fun AlbumHeaderHorizontal(
       elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
       shape = RoundedCornerShape(8.dp)
     ) {
-      AlbumCoverByKey(
+      HighResolutionAlbumCover(
         artist = albumInfo.artist,
         album = albumInfo.album,
+        trackPath = trackPath,
         size = 124.dp
       )
     }

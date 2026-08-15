@@ -21,7 +21,6 @@ import kotlinx.coroutines.launch
 
 private data class ArtistSearchParams(
   val keyword: String,
-  val albumArtists: Boolean,
   val sortOrder: SortOrder
 )
 
@@ -34,25 +33,19 @@ class BrowseArtistViewModel(
   queueHandler: QueueHandler,
   connectionStateFlow: ConnectionStateFlow
 ) : BaseArtistViewModel(queueHandler, librarySettings, connectionStateFlow) {
-  val shouldDisplayOnlyArtists = librarySettings.shouldDisplayOnlyArtists
   val sortPreference: Flow<ArtistSortPreference> = librarySettings.artistSortPreferenceFlow
 
   override val artists: Flow<PagingData<Artist>> =
     combine(
       searchModel.term,
-      shouldDisplayOnlyArtists,
       sortPreference
-    ) { keyword, albumArtists, sort ->
-      ArtistSearchParams(keyword, albumArtists, sort.order)
-    }.flatMapLatest { (keyword, albumArtists, sortOrder) ->
+    ) { keyword, sort ->
+      ArtistSearchParams(keyword, sort.order)
+    }.flatMapLatest { (keyword, sortOrder) ->
       if (keyword.isEmpty()) {
-        if (albumArtists) {
-          repository.getAlbumArtistsOnly(sortOrder)
-        } else {
-          repository.getAll(sortOrder)
-        }
+        repository.getAlbumArtistsOnly(sortOrder)
       } else {
-        repository.search(keyword, sortOrder)
+        repository.searchAlbumArtists(keyword, sortOrder)
       }
     }.cachedIn(viewModelScope)
 

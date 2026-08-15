@@ -8,6 +8,13 @@
   <string name="playlists_list_empty">No playlists found</string>
   <string name="playlists_load_failed">There was an error while trying to load the playlists.</string>
   <string name="playlists_load_success">Your playlists have been successfully loaded</string>
+  <string name="playlist_tracks_empty">No tracks found in this playlist</string>
+  <string name="playlist_go_to_album">Go to album</string>
+  <string name="playlist_go_to_artist">Go to artist</string>
+  <string name="playlist_play_failed">There was an error while trying to play this playlist.</string>
+  <string name="unknown_title">Unknown title</string>
+  <string name="unknown_artist">Unknown artist</string>
+  <string name="unknown_album">Unknown album</string>
 
   <!-- Radio -->
   <string name="radio__loading_failed">There was an error while loading the radio stations</string>

@@ -94,8 +94,8 @@ object SettingsDataStore {
     // Library sorting defaults (format: "field:order")
     const val GENRE_SORT = "name:asc"
     const val ARTIST_SORT = "name:asc"
-    const val ALBUM_SORT = "name:asc"
-    const val TRACK_SORT = "title:asc"
+    const val ALBUM_SORT = "year:desc"
+    const val TRACK_SORT = "year:desc"
     const val GENRE_ARTISTS_SORT = "name:asc"
     const val ARTIST_ALBUMS_SORT = "name:asc"
     const val ALBUM_VIEW_MODE = "auto"

@@ -7,7 +7,6 @@ import com.kelsos.mbrc.core.data.library.artist.ArtistRepository
 import com.kelsos.mbrc.core.data.library.genre.GenreRepository
 import com.kelsos.mbrc.core.data.library.track.TrackRepository
 import com.kelsos.mbrc.core.data.playlist.PlaylistRepository
-import com.kelsos.mbrc.feature.library.data.CoverCache
 import com.kelsos.mbrc.feature.library.data.LibraryStats
 import com.kelsos.mbrc.feature.library.ui.LibraryMediaType
 import okio.IOException
@@ -45,8 +44,7 @@ class LibrarySyncUseCaseImpl(
   private val artistRepository: ArtistRepository,
   private val albumRepository: AlbumRepository,
   private val trackRepository: TrackRepository,
-  private val playlistRepository: PlaylistRepository,
-  private val coverCache: CoverCache
+  private val playlistRepository: PlaylistRepository
 ) : LibrarySyncUseCase {
   private var running: Boolean = false
 
@@ -79,9 +77,6 @@ class LibrarySyncUseCaseImpl(
       }
       playlistRepository.getRemote { current, total ->
         progress?.invoke(LibraryMediaType.Playlists, current, total)
-      }
-      coverCache.cache { current, total ->
-        progress?.invoke(LibraryMediaType.Covers, current, total)
       }
       Timber.v("Library refresh was complete")
       return Outcome.Success(syncStats())

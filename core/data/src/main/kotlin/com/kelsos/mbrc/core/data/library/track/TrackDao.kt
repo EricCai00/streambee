@@ -241,6 +241,28 @@ interface TrackDao {
   @Query(
     """
     select * from track
+    order by
+      CASE WHEN sortable_year = '' THEN 1 ELSE 0 END,
+      sortable_year asc,
+      album_artist collate nocase asc, album collate nocase asc, disc asc, trackno asc
+    """
+  )
+  fun getAllByYearAsc(): PagingSource<Int, TrackEntity>
+
+  @Query(
+    """
+    select * from track
+    order by
+      CASE WHEN sortable_year = '' THEN 1 ELSE 0 END,
+      sortable_year desc,
+      album_artist collate nocase asc, album collate nocase asc, disc asc, trackno asc
+    """
+  )
+  fun getAllByYearDesc(): PagingSource<Int, TrackEntity>
+
+  @Query(
+    """
+    select * from track
     where title LIKE '%' || :term || '%' OR artist LIKE '%' || :term || '%'
     order by
       CASE
@@ -265,4 +287,28 @@ interface TrackDao {
     """
   )
   fun searchByAlbumArtistDesc(term: String): PagingSource<Int, TrackEntity>
+
+  @Query(
+    """
+    select * from track
+    where title LIKE '%' || :term || '%' OR artist LIKE '%' || :term || '%'
+    order by
+      CASE WHEN sortable_year = '' THEN 1 ELSE 0 END,
+      sortable_year asc,
+      album_artist collate nocase asc, album collate nocase asc, disc asc, trackno asc
+    """
+  )
+  fun searchByYearAsc(term: String): PagingSource<Int, TrackEntity>
+
+  @Query(
+    """
+    select * from track
+    where title LIKE '%' || :term || '%' OR artist LIKE '%' || :term || '%'
+    order by
+      CASE WHEN sortable_year = '' THEN 1 ELSE 0 END,
+      sortable_year desc,
+      album_artist collate nocase asc, album collate nocase asc, disc asc, trackno asc
+    """
+  )
+  fun searchByYearDesc(term: String): PagingSource<Int, TrackEntity>
 }

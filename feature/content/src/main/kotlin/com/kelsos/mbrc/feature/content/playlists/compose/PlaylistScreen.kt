@@ -41,6 +41,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun PlaylistScreen(
   onNavigateToPlayer: () -> Unit,
+  onNavigateToPlaylistDetail: (name: String, url: String) -> Unit,
   snackbarHostState: SnackbarHostState,
   onOpenDrawer: () -> Unit,
   modifier: Modifier = Modifier,
@@ -134,7 +135,8 @@ fun PlaylistScreen(
         BrowserItemRow(
           item = item,
           onFolderClick = { viewModel.actions.navigateToFolder(it) },
-          onPlaylistClick = { viewModel.actions.play(it) }
+          onPlaylistClick = { onNavigateToPlaylistDetail(item.name, it) },
+          onPlaylistPlay = { viewModel.actions.play(it) }
         )
       }
 
@@ -151,6 +153,7 @@ fun BrowserItemRow(
   item: PlaylistBrowserItem,
   onFolderClick: (path: String) -> Unit,
   onPlaylistClick: (url: String) -> Unit,
+  onPlaylistPlay: (url: String) -> Unit = onPlaylistClick,
   modifier: Modifier = Modifier
 ) {
   if (item.isFolder) {
@@ -181,7 +184,7 @@ fun BrowserItemRow(
         )
       },
       trailingContent = {
-        IconButton(onClick = { onPlaylistClick(item.path) }) {
+        IconButton(onClick = { onPlaylistPlay(item.path) }) {
           Icon(
             imageVector = Icons.Default.PlayArrow,
             contentDescription = stringResource(CoreUiR.string.action_play),

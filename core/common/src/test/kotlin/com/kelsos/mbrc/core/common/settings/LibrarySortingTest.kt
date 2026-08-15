@@ -65,6 +65,11 @@ class LibrarySortingTest {
   }
 
   @Test
+  fun `AlbumSortField fromString with valid year`() {
+    assertThat(AlbumSortField.fromString("year")).isEqualTo(AlbumSortField.YEAR)
+  }
+
+  @Test
   fun `AlbumSortField fromString with invalid falls back to NAME`() {
     assertThat(AlbumSortField.fromString("invalid")).isEqualTo(AlbumSortField.NAME)
   }
@@ -91,6 +96,11 @@ class LibrarySortingTest {
   @Test
   fun `TrackSortField fromString with valid album_artist`() {
     assertThat(TrackSortField.fromString("album_artist")).isEqualTo(TrackSortField.ALBUM_ARTIST)
+  }
+
+  @Test
+  fun `TrackSortField fromString with valid year`() {
+    assertThat(TrackSortField.fromString("year")).isEqualTo(TrackSortField.YEAR)
   }
 
   @Test
@@ -195,6 +205,16 @@ class LibrarySortingTest {
       TrackSortField::fromString,
       TrackSortField.TITLE
     )
+    assertThat(decoded).isEqualTo(original)
+  }
+
+  @Test
+  fun `Year sort preference persists descending order`() {
+    val original = SortPreference(AlbumSortField.YEAR, SortOrder.DESC)
+    val encoded = SortPreference.encode(original) { it.value }
+    val decoded = SortPreference.decode(encoded, AlbumSortField::fromString, AlbumSortField.YEAR)
+
+    assertThat(encoded).isEqualTo("year:desc")
     assertThat(decoded).isEqualTo(original)
   }
 

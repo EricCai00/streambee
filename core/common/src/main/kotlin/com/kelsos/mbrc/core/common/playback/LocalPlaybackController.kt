@@ -11,6 +11,7 @@ data class LocalQueueTrack(
 
 interface LocalPlaybackController {
   val queue: StateFlow<List<LocalQueueTrack>>
+  val hasLocalPlayback: Boolean
   fun play()
   fun pause()
   fun playPause()
@@ -26,4 +27,5 @@ interface LocalPlaybackController {
   fun toggleMute()
   fun toggleShuffle()
   fun toggleRepeat()
+  fun setFavorite(loved: Boolean)
 }

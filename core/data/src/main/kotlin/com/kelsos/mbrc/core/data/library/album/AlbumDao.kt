@@ -347,4 +347,148 @@ interface AlbumDao {
     """
   )
   fun getAlbumsByGenreByArtistDesc(genreId: Long): PagingSource<Int, AlbumEntity>
+
+  @Query(
+    """
+    SELECT
+      CASE WHEN album.album = '' THEN '' ELSE album.artist END AS artist,
+      album.album AS album,
+      MIN(album.date_added) AS date_added,
+      MIN(album.id) AS id,
+      NULL AS cover
+    FROM album
+    LEFT JOIN track ON album.album = track.album AND album.artist = track.album_artist
+    GROUP BY CASE WHEN album.album = '' THEN '' ELSE album.artist END, album.album
+    ORDER BY
+      CASE WHEN MAX(NULLIF(track.sortable_year, '')) IS NULL THEN 1 ELSE 0 END,
+      MAX(NULLIF(track.sortable_year, '')) ASC,
+      album.album COLLATE NOCASE ASC
+    """
+  )
+  fun getAllByYearAsc(): PagingSource<Int, AlbumEntity>
+
+  @Query(
+    """
+    SELECT
+      CASE WHEN album.album = '' THEN '' ELSE album.artist END AS artist,
+      album.album AS album,
+      MIN(album.date_added) AS date_added,
+      MIN(album.id) AS id,
+      NULL AS cover
+    FROM album
+    LEFT JOIN track ON album.album = track.album AND album.artist = track.album_artist
+    GROUP BY CASE WHEN album.album = '' THEN '' ELSE album.artist END, album.album
+    ORDER BY
+      CASE WHEN MAX(NULLIF(track.sortable_year, '')) IS NULL THEN 1 ELSE 0 END,
+      MAX(NULLIF(track.sortable_year, '')) DESC,
+      album.album COLLATE NOCASE ASC
+    """
+  )
+  fun getAllByYearDesc(): PagingSource<Int, AlbumEntity>
+
+  @Query(
+    """
+    SELECT
+      CASE WHEN album.album = '' THEN '' ELSE album.artist END AS artist,
+      album.album AS album,
+      MIN(album.date_added) AS date_added,
+      MIN(album.id) AS id,
+      NULL AS cover
+    FROM album
+    LEFT JOIN track ON album.album = track.album AND album.artist = track.album_artist
+    WHERE album.album LIKE '%' || :term || '%' OR album.artist LIKE '%' || :term || '%'
+    GROUP BY CASE WHEN album.album = '' THEN '' ELSE album.artist END, album.album
+    ORDER BY
+      CASE WHEN MAX(NULLIF(track.sortable_year, '')) IS NULL THEN 1 ELSE 0 END,
+      MAX(NULLIF(track.sortable_year, '')) ASC,
+      album.album COLLATE NOCASE ASC
+    """
+  )
+  fun searchByYearAsc(term: String): PagingSource<Int, AlbumEntity>
+
+  @Query(
+    """
+    SELECT
+      CASE WHEN album.album = '' THEN '' ELSE album.artist END AS artist,
+      album.album AS album,
+      MIN(album.date_added) AS date_added,
+      MIN(album.id) AS id,
+      NULL AS cover
+    FROM album
+    LEFT JOIN track ON album.album = track.album AND album.artist = track.album_artist
+    WHERE album.album LIKE '%' || :term || '%' OR album.artist LIKE '%' || :term || '%'
+    GROUP BY CASE WHEN album.album = '' THEN '' ELSE album.artist END, album.album
+    ORDER BY
+      CASE WHEN MAX(NULLIF(track.sortable_year, '')) IS NULL THEN 1 ELSE 0 END,
+      MAX(NULLIF(track.sortable_year, '')) DESC,
+      album.album COLLATE NOCASE ASC
+    """
+  )
+  fun searchByYearDesc(term: String): PagingSource<Int, AlbumEntity>
+
+  @Query(
+    """
+    SELECT album.artist AS artist, album.album AS album,
+      album.date_added AS date_added, album.id AS id, album.cover AS cover
+    FROM album
+    INNER JOIN track ON album.album = track.album AND track.album_artist = album.artist
+    WHERE track.artist = :artist OR track.album_artist = :artist
+    GROUP BY album.id
+    ORDER BY
+      CASE WHEN MAX(NULLIF(track.sortable_year, '')) IS NULL THEN 1 ELSE 0 END,
+      MAX(NULLIF(track.sortable_year, '')) ASC,
+      album.album COLLATE NOCASE ASC
+    """
+  )
+  fun getAlbumsByArtistByYearAsc(artist: String): PagingSource<Int, AlbumEntity>
+
+  @Query(
+    """
+    SELECT album.artist AS artist, album.album AS album,
+      album.date_added AS date_added, album.id AS id, album.cover AS cover
+    FROM album
+    INNER JOIN track ON album.album = track.album AND track.album_artist = album.artist
+    WHERE track.artist = :artist OR track.album_artist = :artist
+    GROUP BY album.id
+    ORDER BY
+      CASE WHEN MAX(NULLIF(track.sortable_year, '')) IS NULL THEN 1 ELSE 0 END,
+      MAX(NULLIF(track.sortable_year, '')) DESC,
+      album.album COLLATE NOCASE ASC
+    """
+  )
+  fun getAlbumsByArtistByYearDesc(artist: String): PagingSource<Int, AlbumEntity>
+
+  @Query(
+    """
+    SELECT DISTINCT album.artist AS artist, album.album AS album,
+      album.date_added AS date_added, album.id AS id, album.cover AS cover
+    FROM album
+    INNER JOIN track ON album.album = track.album AND track.album_artist = album.artist
+    INNER JOIN genre ON genre.genre = track.genre
+    WHERE genre.id = :genreId
+    GROUP BY album.id
+    ORDER BY
+      CASE WHEN MAX(NULLIF(track.sortable_year, '')) IS NULL THEN 1 ELSE 0 END,
+      MAX(NULLIF(track.sortable_year, '')) ASC,
+      album.album COLLATE NOCASE ASC
+    """
+  )
+  fun getAlbumsByGenreByYearAsc(genreId: Long): PagingSource<Int, AlbumEntity>
+
+  @Query(
+    """
+    SELECT DISTINCT album.artist AS artist, album.album AS album,
+      album.date_added AS date_added, album.id AS id, album.cover AS cover
+    FROM album
+    INNER JOIN track ON album.album = track.album AND track.album_artist = album.artist
+    INNER JOIN genre ON genre.genre = track.genre
+    WHERE genre.id = :genreId
+    GROUP BY album.id
+    ORDER BY
+      CASE WHEN MAX(NULLIF(track.sortable_year, '')) IS NULL THEN 1 ELSE 0 END,
+      MAX(NULLIF(track.sortable_year, '')) DESC,
+      album.album COLLATE NOCASE ASC
+    """
+  )
+  fun getAlbumsByGenreByYearDesc(genreId: Long): PagingSource<Int, AlbumEntity>
 }

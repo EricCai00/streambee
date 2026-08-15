@@ -14,6 +14,7 @@ import com.kelsos.mbrc.feature.library.artists.ArtistRepositoryImpl
 import com.kelsos.mbrc.feature.library.artists.BrowseArtistViewModel
 import com.kelsos.mbrc.feature.library.artists.GenreArtistsViewModel
 import com.kelsos.mbrc.feature.library.data.CoverCache
+import com.kelsos.mbrc.feature.library.data.HighResolutionCoverCache
 import com.kelsos.mbrc.feature.library.domain.LibrarySyncUseCase
 import com.kelsos.mbrc.feature.library.domain.LibrarySyncUseCaseImpl
 import com.kelsos.mbrc.feature.library.domain.LibrarySyncWorkHandler
@@ -61,6 +62,7 @@ val libraryModule = module {
 
   // Utilities
   singleOf(::CoverCache)
+  singleOf(::HighResolutionCoverCache)
   singleOf(::DevicePlaybackController) { bind<LocalPlaybackController>() }
   singleOf(::QueueHandler) { bind<PathQueueUseCase>() }
 

@@ -77,6 +77,16 @@ class ArtistRepositoryImpl(
     }
   }) { it.toArtist() }
 
+  override fun searchAlbumArtists(
+    term: String,
+    sortOrder: SortOrder
+  ): Flow<PagingData<Artist>> = paged({
+    when (sortOrder) {
+      SortOrder.ASC -> dao.searchAlbumArtistsAsc(term)
+      SortOrder.DESC -> dao.searchAlbumArtistsDesc(term)
+    }
+  }) { it.toArtist() }
+
   override suspend fun getById(id: Long): Artist? {
     return withContext(dispatchers.database) {
       val entity = dao.getById(id) ?: return@withContext null

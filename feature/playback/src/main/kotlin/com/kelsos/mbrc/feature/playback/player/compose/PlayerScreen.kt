@@ -46,7 +46,6 @@ import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.SpeakerGroup
-import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material.icons.outlined.Lyrics
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -546,12 +545,10 @@ private fun PortraitPlayerLayout(
     TrackInfoWithFavorite(
       track = playingTrack,
       isFavorite = isFavorite,
-      isBanned = isBanned,
       isStream = playingPosition.isStream,
       hasLyrics = hasLyrics,
       onTrackClick = onTrackInfoClick,
       onFavoriteClick = { actions.toggleFavorite(isFavorite, isBanned) },
-      onBanClick = { actions.toggleBan(isBanned, isFavorite) },
       onLyricsClick = onLyricsClick,
       modifier = Modifier
         .fillMaxWidth()
@@ -653,12 +650,10 @@ private fun TabletPlayerLayout(
       TrackInfoWithFavorite(
         track = playingTrack,
         isFavorite = isFavorite,
-        isBanned = isBanned,
         isStream = playingPosition.isStream,
         hasLyrics = hasLyrics,
         onTrackClick = onTrackInfoClick,
         onFavoriteClick = { actions.toggleFavorite(isFavorite, isBanned) },
-        onBanClick = { actions.toggleBan(isBanned, isFavorite) },
         onLyricsClick = onLyricsClick,
         modifier = Modifier.fillMaxWidth()
       )
@@ -765,12 +760,10 @@ private fun LandscapePlayerLayout(
       TrackInfoWithFavorite(
         track = playingTrack,
         isFavorite = isFavorite,
-        isBanned = isBanned,
         isStream = playingPosition.isStream,
         hasLyrics = hasLyrics,
         onTrackClick = onTrackInfoClick,
         onFavoriteClick = { actions.toggleFavorite(isFavorite, isBanned) },
-        onBanClick = { actions.toggleBan(isBanned, isFavorite) },
         onLyricsClick = onLyricsClick,
         modifier = Modifier.fillMaxWidth()
       )
@@ -849,12 +842,10 @@ private fun AlbumCover(painter: AsyncImagePainter, modifier: Modifier = Modifier
 private fun TrackInfoWithFavorite(
   track: TrackInfo,
   isFavorite: Boolean,
-  isBanned: Boolean,
   isStream: Boolean,
   hasLyrics: Boolean,
   onTrackClick: () -> Unit,
   onFavoriteClick: () -> Unit,
-  onBanClick: () -> Unit,
   onLyricsClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
@@ -926,23 +917,6 @@ private fun TrackInfoWithFavorite(
           MaterialTheme.colorScheme.primary
         } else {
           MaterialTheme.colorScheme.onSurfaceVariant
-        },
-        modifier = Modifier.size(24.dp)
-      )
-    }
-
-    // Ban button - disabled for streams (LFM rating not applicable)
-    IconButton(
-      onClick = onBanClick,
-      enabled = !isStream
-    ) {
-      Icon(
-        imageVector = Icons.Default.ThumbDown,
-        contentDescription = stringResource(R.string.player_lfm_ban),
-        tint = when {
-          isStream -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-          isBanned -> MaterialTheme.colorScheme.error
-          else -> MaterialTheme.colorScheme.onSurfaceVariant
         },
         modifier = Modifier.size(24.dp)
       )

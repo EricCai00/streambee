@@ -69,6 +69,10 @@ class PlayerActions(
   override val toggleFavorite: (Boolean, Boolean) -> Unit = { isFavorite, isBanned ->
     scope.launch {
       Timber.d("toggleFavorite: isFavorite=$isFavorite, isBanned=$isBanned")
+      if (devicePlaybackController.hasLocalPlayback) {
+        devicePlaybackController.setFavorite(!isFavorite)
+        return@launch
+      }
       when {
         isFavorite -> {
           // Currently Loved, toggle to Normal

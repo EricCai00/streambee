@@ -10,7 +10,13 @@ import com.kelsos.mbrc.core.networking.api.LibraryApi
 import com.kelsos.mbrc.core.networking.dto.AlbumCoverDto
 import com.kelsos.mbrc.core.networking.dto.CoverDto
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import okio.ByteString.Companion.decodeBase64
 import okio.buffer
@@ -24,6 +30,8 @@ class CoverCache(
   app: Application
 ) {
   private val cache = File(app.cacheDir, "covers")
+  private val locks = ConcurrentHashMap<String, Mutex>()
+  private val downloadPermits = Semaphore(MAX_CONCURRENT_DOWNLOADS)
 
   init {
     if (!cache.exists()) {
@@ -35,6 +43,42 @@ class CoverCache(
   suspend fun cache(progress: Progress? = null) {
     val covers = getCachedCovers()
     fetchCovers(covers, progress)
+  }
+
+  /** Fetches one thumbnail when its list item becomes visible. */
+  suspend fun load(artist: String, album: String, key: String): File? {
+    val file = File(cache, key)
+    if (file.isFile && file.length() > 0L) return file
+
+    return locks.getOrPut(key) { Mutex() }.withLock {
+      if (file.isFile && file.length() > 0L) return@withLock file
+      downloadPermits.withPermit {
+        val payload = AlbumCoverDto(artist, album, null)
+        val result = libraryApi.getCovers(listOf(payload), null).firstOrNull()
+          ?: return@withPermit null
+        val response = result.response
+        val cover = response.cover
+        val hash = response.hash
+        if (response.status != ApiStatus.SUCCESS ||
+          cover.isNullOrEmpty() || hash.isNullOrEmpty()
+        ) {
+          return@withPermit null
+        }
+
+        val updated = mutableListOf<AlbumCover>()
+        cacheAlbumCover(
+          payload = AlbumCover(artist, album, null),
+          cover = cover,
+          updated = updated,
+          hash = hash
+        ).getOrElse {
+          Timber.v(it, "Failed to cache album thumbnail")
+          return@withPermit null
+        }
+        withContext(dispatchers.database) { albumRepository.updateCovers(updated) }
+        file.takeIf { it.isFile && it.length() > 0L }
+      }
+    }
   }
 
   private suspend fun getCachedCovers(): List<AlbumCover> = withContext(dispatchers.database) {
@@ -125,4 +169,8 @@ class CoverCache(
   private fun AlbumCover.toDto(): AlbumCoverDto = AlbumCoverDto(artist, album, hash)
 
   private fun AlbumCoverDto.toAlbumCover(): AlbumCover = AlbumCover(artist, album, hash)
+
+  companion object {
+    private const val MAX_CONCURRENT_DOWNLOADS = 3
+  }
 }

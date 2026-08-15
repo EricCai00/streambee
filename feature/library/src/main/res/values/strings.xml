@@ -23,7 +23,7 @@
   <string name="library_album_artists_only">Only Album Artists</string>
   <string name="library_menu__sync_state">Library Sync State</string>
   <string name="library_search_hint">Search your library</string>
-  <string name="library_stats__description">The following metadata entries are currently available to MusicBee Remote:</string>
+  <string name="library_stats__description">The following metadata entries are currently available to StreamBee:</string>
   <string name="library_stats__title">Library Sync Information</string>
 
   <!-- Media types -->

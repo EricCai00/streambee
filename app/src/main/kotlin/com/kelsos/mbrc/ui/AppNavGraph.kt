@@ -13,6 +13,7 @@ import androidx.navigation.navArgument
 import com.kelsos.mbrc.R
 import com.kelsos.mbrc.core.data.library.track.TrackRepository
 import com.kelsos.mbrc.feature.content.playlists.compose.PlaylistScreen
+import com.kelsos.mbrc.feature.content.playlists.compose.PlaylistDetailScreen
 import com.kelsos.mbrc.feature.content.radio.compose.RadioScreen
 import com.kelsos.mbrc.feature.library.albums.AlbumInfo
 import com.kelsos.mbrc.feature.library.compose.LibraryScreen
@@ -91,6 +92,11 @@ fun AppNavGraph(
     composable(Screen.Playlists.route) {
       PlaylistScreen(
         onNavigateToPlayer = { navController.navigate(Screen.Home.route) },
+        onNavigateToPlaylistDetail = { name, url ->
+          navController.navigate(
+            "playlist_detail/${Uri.encode(url)}/${Uri.encode(name)}"
+          )
+        },
         snackbarHostState = snackbarHostState,
         onOpenDrawer = onOpenDrawer
       )
@@ -129,6 +135,30 @@ fun AppNavGraph(
     }
 
     // Detail screens with arguments
+    composable(
+      route = Screen.PlaylistDetail.ROUTE,
+      arguments = listOf(
+        navArgument("playlistUrl") { type = NavType.StringType },
+        navArgument("playlistName") { type = NavType.StringType }
+      )
+    ) { backStackEntry ->
+      val playlistUrl = backStackEntry.arguments?.getString("playlistUrl").orEmpty()
+      val playlistName = backStackEntry.arguments?.getString("playlistName").orEmpty()
+      PlaylistDetailScreen(
+        playlistName = playlistName,
+        playlistUrl = playlistUrl,
+        onNavigateBack = { navController.popBackStack() },
+        onNavigateToPlayer = { navController.navigate(Screen.Home.route) },
+        onNavigateToAlbum = { album, artist ->
+          navController.navigate("album_tracks/0/${Uri.encode(album)}/${Uri.encode(artist)}")
+        },
+        onNavigateToArtist = { artist ->
+          navController.navigate("artist_albums/0/${Uri.encode(artist)}")
+        },
+        snackbarHostState = snackbarHostState
+      )
+    }
+
     composable(
       route = Screen.AlbumTracks.ROUTE,
       arguments = listOf(
@@ -269,6 +299,13 @@ sealed class Screen(val route: String) {
   data object ConnectionManager : Screen("connection_manager")
   data object Licenses : Screen("licenses")
   data object AppLicense : Screen("app_license")
+
+  data class PlaylistDetail(val playlistUrl: String, val playlistName: String) :
+    Screen("playlist_detail/$playlistUrl/$playlistName") {
+    companion object {
+      const val ROUTE = "playlist_detail/{playlistUrl}/{playlistName}"
+    }
+  }
 
   // Detail screens with arguments (using companion objects for route templates)
   data class AlbumTracks(val albumId: Long, val album: String, val artist: String) :

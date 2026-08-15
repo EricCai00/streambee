@@ -34,11 +34,13 @@ enum class ArtistSortField(val value: String) {
 
 enum class AlbumSortField(val value: String) {
   NAME("name"),
-  ARTIST("artist");
+  ARTIST("artist"),
+  YEAR("year");
 
   companion object {
     fun fromString(value: String): AlbumSortField = when (value) {
       ARTIST.value -> ARTIST
+      YEAR.value -> YEAR
       else -> NAME
     }
   }
@@ -71,13 +73,15 @@ enum class TrackSortField(val value: String) {
   TITLE("title"),
   ARTIST("artist"),
   ALBUM("album"),
-  ALBUM_ARTIST("album_artist");
+  ALBUM_ARTIST("album_artist"),
+  YEAR("year");
 
   companion object {
     fun fromString(value: String): TrackSortField = when (value) {
       ARTIST.value -> ARTIST
       ALBUM.value -> ALBUM
       ALBUM_ARTIST.value -> ALBUM_ARTIST
+      YEAR.value -> YEAR
       else -> TITLE
     }
   }

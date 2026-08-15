@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <!-- App branding -->
-  <string name="application_description">Remote Control Application for MusicBee</string>
-  <string name="application_name">MusicBee Remote</string>
+  <string name="application_description">Stream your MusicBee library to this device</string>
+  <string name="application_name">StreamBee</string>
   <string name="application_starting">Attempting to establish connection…</string>
 
   <!-- Playback actions (used in notification) -->
@@ -48,7 +48,7 @@
 
   <!-- Notification -->
   <string name="notification__session_channel_description">Used to display the media control notification.</string>
-  <string name="notification__session_channel_name">MusicBee Remote Session</string>
+  <string name="notification__session_channel_name">StreamBee playback</string>
   <string name="notification__live">LIVE</string>
 
   <!-- Main button descriptions (used in widget previews and notification) -->

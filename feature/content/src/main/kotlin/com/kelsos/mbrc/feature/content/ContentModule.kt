@@ -3,6 +3,7 @@ package com.kelsos.mbrc.feature.content
 import com.kelsos.mbrc.core.data.playlist.PlaylistRepository
 import com.kelsos.mbrc.core.data.radio.RadioRepository
 import com.kelsos.mbrc.feature.content.playlists.PlaylistRepositoryImpl
+import com.kelsos.mbrc.feature.content.playlists.PlaylistDetailViewModel
 import com.kelsos.mbrc.feature.content.playlists.PlaylistViewModel
 import com.kelsos.mbrc.feature.content.radio.RadioRepositoryImpl
 import com.kelsos.mbrc.feature.content.radio.RadioViewModel
@@ -30,5 +31,6 @@ val contentModule = module {
 
   // ViewModels
   viewModelOf(::PlaylistViewModel)
+  viewModelOf(::PlaylistDetailViewModel)
   viewModelOf(::RadioViewModel)
 }

@@ -32,7 +32,8 @@ import org.koin.androidx.compose.koinViewModel
 
 val albumSortOptions = listOf(
   SortOption(AlbumSortField.NAME, R.string.sort_by_name),
-  SortOption(AlbumSortField.ARTIST, R.string.sort_by_artist)
+  SortOption(AlbumSortField.ARTIST, R.string.sort_by_artist),
+  SortOption(AlbumSortField.YEAR, R.string.sort_by_year)
 )
 
 @Composable
@@ -50,7 +51,7 @@ fun AlbumsTab(
   val albums = viewModel.albums.collectAsLazyPagingItems()
   val showSync by viewModel.showSync.collectAsStateWithLifecycle(initialValue = true)
   val sortPreference by viewModel.sortPreference.collectAsStateWithLifecycle(
-    initialValue = SortPreference(AlbumSortField.NAME, SortOrder.ASC)
+    initialValue = SortPreference(AlbumSortField.YEAR, SortOrder.DESC)
   )
 
   // Handle navigation events

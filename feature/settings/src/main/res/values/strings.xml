@@ -68,8 +68,8 @@
   <string name="setting_show_rating_on_player_summary">Display star rating below track info on player screen</string>
 
   <!-- About -->
-  <string name="preferences_about_version">MusicBee Remote Version</string>
-  <string name="preferences_category_about">About MusicBee Remote</string>
+  <string name="preferences_about_version">StreamBee Version</string>
+  <string name="preferences_category_about">About StreamBee</string>
   <string name="preferences_library_track_default_action_title">Library Track Action</string>
 
   <!-- Theme options -->

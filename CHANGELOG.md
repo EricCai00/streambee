@@ -1,8 +1,22 @@
 Changelog
 -----------
 
-## [1.7.0]
+## [2.0.0] - 2026-08-16
+### Added
+- Adds on-device streaming from the MusicBee library. StreamBee now plays the selected track on the phone instead of only controlling MusicBee on the computer.
+- Adds local queue management for albums and playlists. Opening a playlist shows its tracks; selecting a track queues the full collection from that point, with album and artist navigation from the track menu.
+- Adds persistent local playback state, including the paused track, position, and queue, so playback can be resumed after reopening the app.
+- Adds `Year` as an album and track sort field, with Year descending as the default and the selected sort saved across app restarts.
+
+### Changed
+- Renames the Android app to StreamBee.
+- Loads album artwork lazily as library rows become visible, with progressive high-resolution artwork for album and playback views.
+- Keeps library track metadata synchronization while removing the full-library cover download from refreshes.
+- Uses the local player's progress, lyrics, favorite state, and playback controls while a track is streaming on the device.
+
 ### Fixed
+- Prevents remote MusicBee updates from overwriting lyrics, rating, and position while local playback is active.
+- Fixes previous/next controls and queue navigation after starting playback from an album or playlist.
 - Fixes the volume slider on the Now Playing screen being hidden behind the system navigation bar. On foldables and other edge-to-edge devices the volume row could be drawn under the navigation bar or taskbar and could not be used; the player now keeps its controls clear of the system bars in portrait, landscape and on tablets.
 - Restores long-press-to-stop on the play/pause button. Long-pressing play/pause on the player and the mini-control now stops playback, a gesture that was lost when the player moved to the new UI. A short tap still toggles play/pause.
 
@@ -301,7 +315,8 @@ Changelog
 - Removes the dialogs that used to appear on each new setup.
 
 
-[Unreleased]: https://github.com/musicbeeremote/mbrc/compare/v1.6.1...HEAD
+[Unreleased]: https://github.com/musicbeeremote/mbrc/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/musicbeeremote/mbrc/compare/v1.6.1...v2.0.0
 [1.6.1]: https://github.com/musicbeeremote/mbrc/compare/v1.6.0...v1.6.1
 [1.6.0]: https://github.com/musicbeeremote/mbrc/compare/v1.6.0-rc.4...v1.6.0
 [1.6.0-rc.4]: https://github.com/musicbeeremote/mbrc/compare/v1.6.0-rc.3...v1.6.0-rc.4

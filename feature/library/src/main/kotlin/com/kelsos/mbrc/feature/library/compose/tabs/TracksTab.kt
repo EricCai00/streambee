@@ -30,7 +30,8 @@ val trackSortOptions = listOf(
   SortOption(TrackSortField.TITLE, R.string.sort_by_track_title),
   SortOption(TrackSortField.ARTIST, R.string.sort_by_artist),
   SortOption(TrackSortField.ALBUM, R.string.sort_by_album),
-  SortOption(TrackSortField.ALBUM_ARTIST, R.string.sort_by_album_artist)
+  SortOption(TrackSortField.ALBUM_ARTIST, R.string.sort_by_album_artist),
+  SortOption(TrackSortField.YEAR, R.string.sort_by_year)
 )
 
 @Composable
@@ -46,7 +47,7 @@ fun TracksTab(
   val tracks = viewModel.tracks.collectAsLazyPagingItems()
   val showSync by viewModel.showSync.collectAsStateWithLifecycle(initialValue = true)
   val sortPreference by viewModel.sortPreference.collectAsStateWithLifecycle(
-    initialValue = SortPreference(TrackSortField.TITLE, SortOrder.ASC)
+    initialValue = SortPreference(TrackSortField.YEAR, SortOrder.DESC)
   )
 
   val queueResults = remember {

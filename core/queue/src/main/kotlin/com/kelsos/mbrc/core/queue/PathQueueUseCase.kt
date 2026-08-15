@@ -17,4 +17,7 @@ interface PathQueueUseCase {
 
   /** Queue a set of library paths as one local playlist and start the first track. */
   suspend fun queuePaths(paths: List<String>): Outcome<Int>
+
+  /** Queue a set of library paths and start at [startIndex], preserving the order. */
+  suspend fun queuePaths(paths: List<String>, startIndex: Int): Outcome<Int> = queuePaths(paths)
 }

@@ -190,7 +190,7 @@ fun AlbumGridItem(
       )
   ) {
     Column {
-      AlbumCoverByKey(
+      HighResolutionAlbumGridCover(
         artist = album.artist,
         album = album.album,
         modifier = Modifier
@@ -238,7 +238,8 @@ fun TrackListItem(
   onQueue: (Queue) -> Unit,
   modifier: Modifier = Modifier,
   showCover: Boolean = true,
-  showAlbum: Boolean = true
+  showAlbum: Boolean = true,
+  showExtendedActions: Boolean = true
 ) {
   var menuExpanded by remember { mutableStateOf(false) }
   val title = track.title.ifEmpty { stringResource(R.string.unknown_title) }
@@ -278,7 +279,8 @@ fun TrackListItem(
         TrackItemMenu(
           expanded = menuExpanded,
           onDismiss = { menuExpanded = false },
-          onQueue = onQueue
+          onQueue = onQueue,
+          showExtendedActions = showExtendedActions
         )
       }
     }
@@ -286,7 +288,12 @@ fun TrackListItem(
 }
 
 @Composable
-private fun TrackItemMenu(expanded: Boolean, onDismiss: () -> Unit, onQueue: (Queue) -> Unit) {
+private fun TrackItemMenu(
+  expanded: Boolean,
+  onDismiss: () -> Unit,
+  onQueue: (Queue) -> Unit,
+  showExtendedActions: Boolean
+) {
   DropdownMenu(
     expanded = expanded,
     onDismissRequest = onDismiss
@@ -298,13 +305,15 @@ private fun TrackItemMenu(expanded: Boolean, onDismiss: () -> Unit, onQueue: (Qu
         onQueue(Queue.Now)
       }
     )
-    DropdownMenuItem(
-      text = { Text(stringResource(R.string.menu_play_on_device)) },
-      onClick = {
-        onDismiss()
-        onQueue(Queue.Local)
-      }
-    )
+    if (showExtendedActions) {
+      DropdownMenuItem(
+        text = { Text(stringResource(R.string.menu_play_on_device)) },
+        onClick = {
+          onDismiss()
+          onQueue(Queue.Local)
+        }
+      )
+    }
     DropdownMenuItem(
       text = { Text(stringResource(R.string.menu_queue_next)) },
       onClick = {
@@ -319,20 +328,22 @@ private fun TrackItemMenu(expanded: Boolean, onDismiss: () -> Unit, onQueue: (Qu
         onQueue(Queue.Last)
       }
     )
-    DropdownMenuItem(
-      text = { Text(stringResource(R.string.menu_play_artist)) },
-      onClick = {
-        onDismiss()
-        onQueue(Queue.PlayArtist)
-      }
-    )
-    DropdownMenuItem(
-      text = { Text(stringResource(R.string.menu_play_queue_all)) },
-      onClick = {
-        onDismiss()
-        onQueue(Queue.AddAll)
-      }
-    )
+    if (showExtendedActions) {
+      DropdownMenuItem(
+        text = { Text(stringResource(R.string.menu_play_artist)) },
+        onClick = {
+          onDismiss()
+          onQueue(Queue.PlayArtist)
+        }
+      )
+      DropdownMenuItem(
+        text = { Text(stringResource(R.string.menu_play_queue_all)) },
+        onClick = {
+          onDismiss()
+          onQueue(Queue.AddAll)
+        }
+      )
+    }
   }
 }
 

@@ -727,7 +727,7 @@ class SettingsScreenTest : KoinTest {
       composeTestRule.onNodeWithText("Library")
         .performScrollTo()
         .assertIsDisplayed()
-      composeTestRule.onNodeWithText("About MusicBee Remote")
+      composeTestRule.onNodeWithText("About StreamBee")
         .performScrollTo()
         .assertIsDisplayed()
     } finally {

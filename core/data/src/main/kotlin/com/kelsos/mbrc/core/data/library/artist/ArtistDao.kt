@@ -18,7 +18,7 @@ interface ArtistDao {
     """
       select distinct artist.id, artist.artist, artist.date_added
       from artist
-        inner join track on artist.artist = track.artist
+        inner join track on artist.artist = track.album_artist
         inner join genre on genre.genre = track.genre
       where genre.id = :genreId group by artist.artist
       order by
@@ -34,7 +34,7 @@ interface ArtistDao {
     """
       select distinct artist.id, artist.artist, artist.date_added
       from artist
-        inner join track on artist.artist = track.artist
+        inner join track on artist.artist = track.album_artist
         inner join genre on genre.genre = track.genre
       where genre.id = :genreId group by artist.artist
       order by
@@ -141,6 +141,36 @@ interface ArtistDao {
     """
   )
   fun getAlbumArtistsDesc(): PagingSource<Int, ArtistEntity>
+
+  @Query(
+    """
+      select distinct artist.id, artist.artist, artist.date_added
+      from artist inner join track on artist.artist = track.album_artist
+      where artist.artist like '%' || :term || '%'
+      group by artist.artist
+      order by
+        CASE
+          WHEN LOWER(artist.artist) LIKE 'the %' THEN SUBSTR(artist.artist, 5)
+          ELSE artist.artist
+        END COLLATE NOCASE ASC
+    """
+  )
+  fun searchAlbumArtistsAsc(term: String): PagingSource<Int, ArtistEntity>
+
+  @Query(
+    """
+      select distinct artist.id, artist.artist, artist.date_added
+      from artist inner join track on artist.artist = track.album_artist
+      where artist.artist like '%' || :term || '%'
+      group by artist.artist
+      order by
+        CASE
+          WHEN LOWER(artist.artist) LIKE 'the %' THEN SUBSTR(artist.artist, 5)
+          ELSE artist.artist
+        END COLLATE NOCASE DESC
+    """
+  )
+  fun searchAlbumArtistsDesc(term: String): PagingSource<Int, ArtistEntity>
 
   @Query("select * from artist where id = :id")
   fun getById(id: Long): ArtistEntity?

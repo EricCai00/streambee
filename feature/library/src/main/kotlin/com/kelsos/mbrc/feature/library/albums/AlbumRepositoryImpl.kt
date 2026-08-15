@@ -35,6 +35,11 @@ class AlbumRepositoryImpl(
         SortOrder.ASC -> dao.getAlbumsByArtistByNameAsc(artist)
         SortOrder.DESC -> dao.getAlbumsByArtistByNameDesc(artist)
       }
+
+      AlbumSortField.YEAR -> when (order) {
+        SortOrder.ASC -> dao.getAlbumsByArtistByYearAsc(artist)
+        SortOrder.DESC -> dao.getAlbumsByArtistByYearDesc(artist)
+      }
     }
   }) {
     it.toAlbum()
@@ -55,6 +60,11 @@ class AlbumRepositoryImpl(
         SortOrder.ASC -> dao.getAlbumsByGenreByArtistAsc(genreId)
         SortOrder.DESC -> dao.getAlbumsByGenreByArtistDesc(genreId)
       }
+
+      AlbumSortField.YEAR -> when (order) {
+        SortOrder.ASC -> dao.getAlbumsByGenreByYearAsc(genreId)
+        SortOrder.DESC -> dao.getAlbumsByGenreByYearDesc(genreId)
+      }
     }
   }) {
     it.toAlbum()
@@ -72,6 +82,11 @@ class AlbumRepositoryImpl(
       AlbumSortField.ARTIST -> when (order) {
         SortOrder.ASC -> dao.getAllByArtistAsc()
         SortOrder.DESC -> dao.getAllByArtistDesc()
+      }
+
+      AlbumSortField.YEAR -> when (order) {
+        SortOrder.ASC -> dao.getAllByYearAsc()
+        SortOrder.DESC -> dao.getAllByYearDesc()
       }
     }
   }) { it.toAlbum() }
@@ -131,6 +146,11 @@ class AlbumRepositoryImpl(
       AlbumSortField.ARTIST -> when (order) {
         SortOrder.ASC -> dao.searchByArtistAsc(term)
         SortOrder.DESC -> dao.searchByArtistDesc(term)
+      }
+
+      AlbumSortField.YEAR -> when (order) {
+        SortOrder.ASC -> dao.searchByYearAsc(term)
+        SortOrder.DESC -> dao.searchByYearDesc(term)
       }
     }
   }) { it.toAlbum() }

@@ -12,5 +12,7 @@ interface ArtistRepository : Repository<Artist> {
 
   fun getAlbumArtistsOnly(sortOrder: SortOrder): Flow<PagingData<Artist>>
 
+  fun searchAlbumArtists(term: String, sortOrder: SortOrder): Flow<PagingData<Artist>>
+
   fun search(term: String, sortOrder: SortOrder): Flow<PagingData<Artist>>
 }

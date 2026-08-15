@@ -1,8 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog>
   <version
-    version="1.7.0"
-    release="unreleased">
+    version="2.0.0"
+    release="Aug 16, 2026">
+    <feature>Adds on-device streaming from your MusicBee library, with audio playing on the phone through StreamBee.</feature>
+    <feature>Adds local album and playlist queues, including previous and next navigation from the selected track.</feature>
+    <feature>Restores the last local queue, paused track, and playback position when the app is reopened.</feature>
+    <feature>Adds Year sorting for albums and tracks, defaults to newest first, and remembers the selected sort.</feature>
+    <feature>Adds playlist detail screens with track playback and album or artist navigation.</feature>
+    <feature>Loads library artwork on demand and progressively upgrades album and player covers to high resolution.</feature>
+    <feature>Renames the Android app to StreamBee.</feature>
+    <bug>Uses the phone player's progress, lyrics, favorite state, and controls during local playback instead of remote MusicBee state.</bug>
+    <bug>Fixes previous and next controls after starting playback from an album or playlist.</bug>
     <bug>Fixes the volume slider on the Now Playing screen being hidden behind the system navigation bar on foldables and other edge-to-edge devices. The player now keeps its controls clear of the system bars in portrait, landscape and on tablets.</bug>
     <bug>Restores long-press-to-stop on the play/pause button (player and mini-control). Long-pressing play/pause now stops playback, a gesture lost when the player moved to the new UI; a short tap still toggles play/pause.</bug>
   </version>

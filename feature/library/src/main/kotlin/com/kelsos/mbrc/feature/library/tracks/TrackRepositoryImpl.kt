@@ -97,6 +97,11 @@ class TrackRepositoryImpl(
         SortOrder.ASC -> dao.getAllByAlbumArtistAsc()
         SortOrder.DESC -> dao.getAllByAlbumArtistDesc()
       }
+
+      TrackSortField.YEAR -> when (order) {
+        SortOrder.ASC -> dao.getAllByYearAsc()
+        SortOrder.DESC -> dao.getAllByYearDesc()
+      }
     }
   }) { it.toTrack() }
 
@@ -124,6 +129,11 @@ class TrackRepositoryImpl(
       TrackSortField.ALBUM_ARTIST -> when (order) {
         SortOrder.ASC -> dao.searchByAlbumArtistAsc(term)
         SortOrder.DESC -> dao.searchByAlbumArtistDesc(term)
+      }
+
+      TrackSortField.YEAR -> when (order) {
+        SortOrder.ASC -> dao.searchByYearAsc(term)
+        SortOrder.DESC -> dao.searchByYearDesc(term)
       }
     }
   }) { it.toTrack() }

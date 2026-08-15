@@ -16,7 +16,6 @@ import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.SnackbarDuration
@@ -90,9 +89,6 @@ fun LibraryScreen(
   }
   val isGridMode = albumViewMode.isGrid(screenWidthDp.value.toInt())
 
-  val albumArtistsOnly by viewModel.albumArtistsOnly.collectAsStateWithLifecycle(
-    initialValue = false
-  )
   val syncProgress by viewModel.progress.collectAsStateWithLifecycle(
     initialValue = LibrarySyncProgress.Idle
   )
@@ -101,7 +97,6 @@ fun LibraryScreen(
 
   // String resources for menu items and scaffold configuration
   val searchPlaceholder = stringResource(R.string.library_search_hint)
-  val albumArtistsOnlyLabel = stringResource(R.string.library_album_artists_only)
   val syncStateLabel = stringResource(R.string.library_menu__sync_state)
   val syncProgressTemplate = stringResource(R.string.library__sync_progress)
   val libraryTitle = stringResource(R.string.common_library)
@@ -153,7 +148,7 @@ fun LibraryScreen(
   val playAllLabel = stringResource(R.string.menu_play_all)
   val shuffleAllLabel = stringResource(R.string.menu_shuffle_all)
 
-  val menuItems = remember(isSearchActive, syncProgress.running, albumArtistsOnly) {
+  val menuItems = remember(isSearchActive, syncProgress.running) {
     if (isSearchActive || syncProgress.running) {
       emptyList()
     } else {
@@ -165,13 +160,6 @@ fun LibraryScreen(
         MenuItem(
           label = shuffleAllLabel,
           onClick = { viewModel.playAll(shuffle = true) }
-        ),
-        MenuItem(
-          label = albumArtistsOnlyLabel,
-          onClick = { viewModel.updateAlbumArtistOnly(!albumArtistsOnly) },
-          trailingContent = {
-            Checkbox(checked = albumArtistsOnly, onCheckedChange = null)
-          }
         ),
         MenuItem(
           label = syncStateLabel,

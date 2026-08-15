@@ -3,6 +3,7 @@ package com.kelsos.mbrc.feature.playback.lyrics
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import com.kelsos.mbrc.core.common.playback.LocalPlaybackController
 import com.kelsos.mbrc.core.common.state.AppStateFlow
 import com.kelsos.mbrc.core.common.state.BasicTrackInfo
 import com.kelsos.mbrc.core.common.state.PlayerState
@@ -11,11 +12,9 @@ import com.kelsos.mbrc.core.common.state.PlayingPosition
 import com.kelsos.mbrc.core.common.state.TrackInfo
 import com.kelsos.mbrc.core.common.test.testDispatcher
 import com.kelsos.mbrc.core.common.test.testDispatcherModule
-import com.kelsos.mbrc.core.networking.protocol.base.Protocol
-import com.kelsos.mbrc.core.networking.protocol.usecases.UserActionUseCase
-import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -46,12 +45,12 @@ class LyricsViewModelTest : KoinTest {
           every { playerStatus } returns playerStatusFlow
         }
       }
-      single<UserActionUseCase> { mockk(relaxed = true) }
+      single<LocalPlaybackController> { mockk(relaxed = true) }
       singleOf(::LyricsViewModel)
     }
 
   private val viewModel: LyricsViewModel by inject()
-  private val userActionUseCase: UserActionUseCase by inject()
+  private val localPlaybackController: LocalPlaybackController by inject()
 
   @Before
   fun setUp() {
@@ -165,21 +164,18 @@ class LyricsViewModelTest : KoinTest {
   }
 
   @Test
-  fun playPauseShouldCallUserActionUseCase() {
+  fun playPauseShouldControlLocalPlayback() {
     runTest(testDispatcher) {
       // When
       viewModel.playPause()
       testDispatcher.scheduler.advanceUntilIdle()
 
-      // Then - extension function calls perform with UserAction
-      coVerify(exactly = 1) {
-        userActionUseCase.perform(match { it.protocol == Protocol.PlayerPlayPause })
-      }
+      verify(exactly = 1) { localPlaybackController.playPause() }
     }
   }
 
   @Test
-  fun seekShouldCallUserActionUseCaseWithPosition() {
+  fun seekShouldControlLocalPlayback() {
     runTest(testDispatcher) {
       // Given
       val seekPosition = 90000
@@ -188,12 +184,7 @@ class LyricsViewModelTest : KoinTest {
       viewModel.seek(seekPosition)
       testDispatcher.scheduler.advanceUntilIdle()
 
-      // Then - extension function calls perform with UserAction containing protocol and data
-      coVerify(exactly = 1) {
-        userActionUseCase.perform(
-          match { it.protocol == Protocol.NowPlayingPosition && it.data == seekPosition }
-        )
-      }
+      verify(exactly = 1) { localPlaybackController.seekTo(seekPosition.toLong()) }
     }
   }
 
@@ -206,10 +197,9 @@ class LyricsViewModelTest : KoinTest {
       viewModel.seek(90000)
       testDispatcher.scheduler.advanceUntilIdle()
 
-      // Then
-      coVerify(exactly = 3) {
-        userActionUseCase.perform(match { it.protocol == Protocol.NowPlayingPosition })
-      }
+      verify(exactly = 1) { localPlaybackController.seekTo(30000L) }
+      verify(exactly = 1) { localPlaybackController.seekTo(60000L) }
+      verify(exactly = 1) { localPlaybackController.seekTo(90000L) }
     }
   }
 
