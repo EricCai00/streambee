@@ -4,8 +4,8 @@ import com.kelsos.mbrc.core.common.state.LfmRating
 import com.kelsos.mbrc.core.networking.protocol.actions.UserAction
 import com.kelsos.mbrc.core.networking.protocol.base.Protocol
 import com.kelsos.mbrc.core.networking.protocol.usecases.UserActionUseCase
+import com.kelsos.mbrc.core.common.playback.LocalPlaybackController
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -27,62 +27,43 @@ interface IPlayerActions {
 class PlayerActions(
   private val userActionUseCase: UserActionUseCase,
   private val scope: CoroutineScope,
-  private val progressRelay: MutableSharedFlow<Int>,
-  private val volumeRelay: MutableSharedFlow<Int>
+  private val devicePlaybackController: LocalPlaybackController
 ) : IPlayerActions {
 
   override val playPause: () -> Unit = {
-    scope.launch {
-      userActionUseCase.perform(UserAction(Protocol.PlayerPlayPause, true))
-    }
+    devicePlaybackController.playPause()
   }
 
   override val previous: () -> Unit = {
-    scope.launch {
-      userActionUseCase.perform(UserAction(Protocol.PlayerPrevious, true))
-    }
+    devicePlaybackController.previous()
   }
 
   override val next: () -> Unit = {
-    scope.launch {
-      userActionUseCase.perform(UserAction(Protocol.PlayerNext, true))
-    }
+    devicePlaybackController.next()
   }
 
   override val stop: () -> Unit = {
-    scope.launch {
-      userActionUseCase.perform(UserAction(Protocol.PlayerStop, true))
-    }
+    devicePlaybackController.stop()
   }
 
   override val shuffle: () -> Unit = {
-    scope.launch {
-      userActionUseCase.perform(UserAction.toggle(Protocol.PlayerShuffle))
-    }
+    devicePlaybackController.toggleShuffle()
   }
 
   override val repeat: () -> Unit = {
-    scope.launch {
-      userActionUseCase.perform(UserAction.toggle(Protocol.PlayerRepeat))
-    }
+    devicePlaybackController.toggleRepeat()
   }
 
   override val mute: () -> Unit = {
-    scope.launch {
-      userActionUseCase.perform(UserAction.toggle(Protocol.PlayerMute))
-    }
+    devicePlaybackController.toggleMute()
   }
 
   override val changeVolume: (Int) -> Unit = { volume ->
-    scope.launch {
-      volumeRelay.emit(volume)
-    }
+    devicePlaybackController.setVolume(volume)
   }
 
   override val seek: (Int) -> Unit = { position ->
-    scope.launch {
-      progressRelay.emit(position)
-    }
+    devicePlaybackController.seekTo(position.toLong())
   }
 
   override val toggleFavorite: (Boolean, Boolean) -> Unit = { isFavorite, isBanned ->

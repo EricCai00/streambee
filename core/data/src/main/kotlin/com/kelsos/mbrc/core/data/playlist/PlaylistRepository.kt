@@ -15,4 +15,7 @@ interface PlaylistRepository : Repository<Playlist> {
    * @param path The folder path, empty string for root
    */
   fun getBrowserItemsAtPath(path: String): Flow<PagingData<PlaylistBrowserItem>>
+
+  /** Returns the MusicBee library paths belonging to a remotely refreshed playlist. */
+  suspend fun getTrackPaths(url: String): List<String>
 }

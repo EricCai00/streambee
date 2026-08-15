@@ -1,107 +1,38 @@
 package com.kelsos.mbrc.service.mediasession
 
-import android.content.Context
-import androidx.annotation.OptIn
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
-import com.google.common.util.concurrent.Futures
-import com.google.common.util.concurrent.ListenableFuture
-import com.kelsos.mbrc.core.common.state.AppStateFlow
-import com.kelsos.mbrc.core.common.state.orEmpty
 import com.kelsos.mbrc.core.common.utilities.coroutines.AppCoroutineDispatchers
-import com.kelsos.mbrc.core.networking.protocol.usecases.UserActionUseCase
-import com.kelsos.mbrc.core.networking.protocol.usecases.VolumeModifyUseCase
-import com.kelsos.mbrc.core.platform.media.toMediaItem
-import com.kelsos.mbrc.core.platform.state.toPlayingTrack
+import com.kelsos.mbrc.feature.library.playback.DevicePlaybackController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.runBlocking
 
-/**
- * Manages the media session for the application.
- */
+/** Exposes the library player's single local Media3 session to notifications and system controls. */
 class MediaSessionManager(
-  private val context: Context,
-  private val userActionUseCase: UserActionUseCase,
-  private val volumeModifyUseCase: VolumeModifyUseCase,
-  private val appState: AppStateFlow,
-  private val dispatchers: AppCoroutineDispatchers
+  private val dispatchers: AppCoroutineDispatchers,
+  private val devicePlaybackController: DevicePlaybackController
 ) {
   private var _mediaSession: MediaSession? = null
   private var sessionJob: Job = Job()
-  var scope: CoroutineScope = CoroutineScope(sessionJob)
+  var scope: CoroutineScope = CoroutineScope(sessionJob + dispatchers.main)
     private set
 
-  /**
-   * Initializes the media session if it doesn't already exist.
-   *
-   * @return The initialized media session.
-   */
-  @OptIn(UnstableApi::class)
   fun initialize(): MediaSession {
-    if (_mediaSession != null) {
-      return requireNotNull(_mediaSession)
-    }
-
-    // Recreate scope if it was cancelled by a previous destroy() call
+    _mediaSession?.let { return it }
     if (sessionJob.isCancelled) {
       sessionJob = Job()
-      scope = CoroutineScope(sessionJob)
+      scope = CoroutineScope(sessionJob + dispatchers.main)
     }
-
-    val player =
-      RemotePlayer(context, userActionUseCase, volumeModifyUseCase, appState, dispatchers, scope)
-
-    val mediaSessionCallback =
-      object : MediaSession.Callback {
-        override fun onPlaybackResumption(
-          mediaSession: MediaSession,
-          controller: MediaSession.ControllerInfo,
-          playWhenReady: Boolean
-        ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
-          val item =
-            runBlocking {
-              val currentPlayingTrack = appState.playingTrack.firstOrNull()
-              currentPlayingTrack
-                .orEmpty()
-                .toPlayingTrack()
-                .toMediaItem()
-            }
-          return Futures.immediateFuture(
-            MediaSession.MediaItemsWithStartPosition(listOf(item), 0, 0)
-          )
-        }
-      }
-
-    _mediaSession =
-      MediaSession
-        .Builder(context, player)
-        .setCallback(mediaSessionCallback)
-        .setId(AppNotificationManager.MEDIA_SESSION_NOTIFICATION_ID.toString())
-        .build()
-
-    return requireNotNull(_mediaSession)
+    _mediaSession = devicePlaybackController.mediaSession
+    return devicePlaybackController.mediaSession
   }
 
-  /**
-   * Destroys the media session if it exists.
-   */
   fun destroy() {
     scope.cancel()
-    _mediaSession?.run {
-      player.release()
-      release()
-      _mediaSession = null
-    }
+    // DevicePlaybackController owns the player and session for the app process.
+    _mediaSession = null
   }
 
-  /**
-   * Gets the current media session.
-   *
-   * @return The current media session, or null if it hasn't been initialized.
-   */
   val mediaSession: MediaSession?
     get() = _mediaSession
 }

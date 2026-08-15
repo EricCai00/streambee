@@ -15,6 +15,8 @@ sealed class Queue(val action: String) {
 
   data object PlayArtist : Queue(PLAY_ARTIST)
 
+  data object Local : Queue(LOCAL)
+
   data object Default : Queue(DEFAULT)
 
   companion object {
@@ -24,6 +26,7 @@ sealed class Queue(val action: String) {
     const val ADD_ALL = "add-all"
     const val PLAY_ALBUM = "play-album"
     const val PLAY_ARTIST = "play-artist"
+    const val LOCAL = "local"
     const val DEFAULT = "default"
 
     fun fromString(string: String): Queue = when (string) {
@@ -33,6 +36,7 @@ sealed class Queue(val action: String) {
       ADD_ALL -> AddAll
       PLAY_ALBUM -> PlayAlbum
       PLAY_ARTIST -> PlayArtist
+      LOCAL -> Local
       DEFAULT -> Default
       else -> throw IllegalArgumentException("$string is not a recognized option")
     }

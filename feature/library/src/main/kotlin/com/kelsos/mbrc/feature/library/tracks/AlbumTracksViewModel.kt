@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.kelsos.mbrc.core.common.settings.LibrarySettings
 import com.kelsos.mbrc.core.common.state.ConnectionStateFlow
 import com.kelsos.mbrc.core.data.library.track.PagingTrackQuery
+import com.kelsos.mbrc.core.data.library.track.Track
 import com.kelsos.mbrc.core.data.library.track.TrackRepository
 import com.kelsos.mbrc.core.queue.Queue
 import com.kelsos.mbrc.feature.library.albums.AlbumInfo
@@ -37,6 +38,10 @@ class AlbumTracksViewModel(
     viewModelScope.launch {
       albumInfo.emit(album)
     }
+  }
+
+  override fun queue(action: Queue, track: Track) {
+    super.queue(if (action == Queue.Default) Queue.PlayAlbum else action, track)
   }
 
   fun queueAlbum(album: AlbumInfo) {

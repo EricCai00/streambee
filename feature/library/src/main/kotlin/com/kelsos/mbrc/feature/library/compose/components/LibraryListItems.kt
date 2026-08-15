@@ -299,6 +299,13 @@ private fun TrackItemMenu(expanded: Boolean, onDismiss: () -> Unit, onQueue: (Qu
       }
     )
     DropdownMenuItem(
+      text = { Text(stringResource(R.string.menu_play_on_device)) },
+      onClick = {
+        onDismiss()
+        onQueue(Queue.Local)
+      }
+    )
+    DropdownMenuItem(
       text = { Text(stringResource(R.string.menu_queue_next)) },
       onClick = {
         onDismiss()

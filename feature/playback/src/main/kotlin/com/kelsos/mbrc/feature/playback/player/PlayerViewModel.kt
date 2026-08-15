@@ -9,17 +9,14 @@ import com.kelsos.mbrc.core.common.state.PlayingPosition
 import com.kelsos.mbrc.core.common.state.TrackDetails
 import com.kelsos.mbrc.core.common.state.TrackInfo
 import com.kelsos.mbrc.core.common.state.TrackRating
-import com.kelsos.mbrc.core.networking.protocol.base.Protocol
 import com.kelsos.mbrc.core.networking.protocol.usecases.UserActionUseCase
-import com.kelsos.mbrc.core.networking.protocol.usecases.performUserAction
+import com.kelsos.mbrc.core.common.playback.LocalPlaybackController
 import com.kelsos.mbrc.feature.settings.domain.SettingsManager
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -28,11 +25,9 @@ class PlayerViewModel(
   changeLogChecker: ChangeLogChecker,
   appState: AppStateFlow,
   private val userActionUseCase: UserActionUseCase,
-  settingsManager: SettingsManager
+  settingsManager: SettingsManager,
+  devicePlaybackController: LocalPlaybackController
 ) : BaseViewModel<PlayerUiMessage>() {
-  private val progressRelay: MutableSharedFlow<Int> = MutableSharedFlow()
-  private val volumeRelay: MutableSharedFlow<Int> = MutableSharedFlow()
-
   // Separate flows for granular recomposition
   val playingTrack: StateFlow<TrackInfo> = appState.playingTrack
     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BasicTrackInfo())
@@ -67,23 +62,10 @@ class PlayerViewModel(
   val actions: IPlayerActions = PlayerActions(
     userActionUseCase = userActionUseCase,
     scope = viewModelScope,
-    progressRelay = progressRelay,
-    volumeRelay = volumeRelay
+    devicePlaybackController = devicePlaybackController
   )
 
   init {
-    viewModelScope.launch {
-      progressRelay.sample(ACTION_DEBOUNCE_MS).collect { position ->
-        userActionUseCase.performUserAction(Protocol.NowPlayingPosition, position)
-      }
-    }
-
-    viewModelScope.launch {
-      volumeRelay.sample(ACTION_DEBOUNCE_MS).collect { volume ->
-        userActionUseCase.performUserAction(Protocol.PlayerVolume, volume)
-      }
-    }
-
     viewModelScope.launch {
       if (changeLogChecker.checkShouldShowChangeLog()) {
         emit(PlayerUiMessage.ShowChangelog)
@@ -92,6 +74,5 @@ class PlayerViewModel(
   }
 
   companion object {
-    private const val ACTION_DEBOUNCE_MS = 800L
   }
 }

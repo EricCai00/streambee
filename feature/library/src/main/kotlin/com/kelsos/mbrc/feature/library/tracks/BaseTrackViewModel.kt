@@ -18,14 +18,17 @@ abstract class BaseTrackViewModel(
 ) : BaseLibraryViewModel<TrackUiMessage>(librarySettings, connectionStateFlow) {
   abstract val tracks: Flow<PagingData<Track>>
 
-  fun queue(action: Queue, track: Track) {
+  open fun queue(action: Queue, track: Track) {
     viewModelScope.launch {
       if (!checkConnection()) {
         emit(TrackUiMessage.NetworkUnavailable)
         return@launch
       }
 
-      val queueAction = getQueueAction(action)
+      // A library track click always starts playback on this device. The
+      // queue menu actions are local as well; the plugin remains remote-capable
+      // for other clients.
+      val queueAction = if (action == Queue.Default) Queue.Local else action
       val result = queueHandler.queueTrack(track = track, type = queueAction)
 
       val message =

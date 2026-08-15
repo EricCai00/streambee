@@ -40,7 +40,8 @@ fun QueueResultEffect(
   }
 
   // Build message in composable scope using stringResource/pluralStringResource
-  val message = currentResult?.toMessage()
+  // Successful queue actions are silent; failures still provide actionable feedback.
+  val message = currentResult?.takeUnless { it is Outcome.Success }?.toMessage()
 
   // Show snackbar when a new result arrives
   LaunchedEffect(resultKey) {

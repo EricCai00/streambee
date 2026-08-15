@@ -4,21 +4,17 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.kelsos.mbrc.core.common.mvvm.BaseViewModel
+import com.kelsos.mbrc.core.common.playback.LocalPlaybackController
 import com.kelsos.mbrc.core.common.state.AppStateFlow
 import com.kelsos.mbrc.core.common.state.ConnectionStateFlow
 import com.kelsos.mbrc.core.common.utilities.coroutines.AppCoroutineDispatchers
 import com.kelsos.mbrc.core.data.nowplaying.NowPlaying
-import com.kelsos.mbrc.core.networking.protocol.SelfMutationTracker
-import com.kelsos.mbrc.core.networking.protocol.payloads.NowPlayingMoveRequest
-import com.kelsos.mbrc.core.networking.protocol.usecases.UserActionUseCase
-import com.kelsos.mbrc.core.networking.protocol.usecases.moveTrack
-import com.kelsos.mbrc.core.networking.protocol.usecases.playTrack
-import com.kelsos.mbrc.core.networking.protocol.usecases.removeTrack
 import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -47,9 +43,8 @@ class NowPlayingActions(
   private val dispatchers: AppCoroutineDispatchers,
   private val repository: NowPlayingRepository,
   private val moveManager: MoveManager,
-  private val userActionUseCase: UserActionUseCase,
   private val connectionStateFlow: ConnectionStateFlow,
-  private val selfMutationTracker: SelfMutationTracker,
+  private val localPlaybackController: LocalPlaybackController,
   private val emit: suspend (uiMessage: NowPlayingUiMessages) -> Unit
 ) : INowPlayingActions {
   override fun reload() {
@@ -84,13 +79,11 @@ class NowPlayingActions(
   }
 
   override fun play(position: Int) {
-    scope.launch(dispatchers.network) {
-      if (!connectionStateFlow.isConnected) {
-        emit(NowPlayingUiMessages.NetworkUnavailable)
-        return@launch
-      }
+    scope.launch(dispatchers.database) {
       try {
-        userActionUseCase.playTrack(position)
+        if (position !in localPlaybackController.queue.value.indices) {
+          emit(NowPlayingUiMessages.PlayFailed)
+        } else localPlaybackController.playQueueItem(position)
       } catch (e: IOException) {
         Timber.e(e)
         emit(NowPlayingUiMessages.PlayFailed)
@@ -99,15 +92,10 @@ class NowPlayingActions(
   }
 
   override fun removeTrack(position: Int) {
-    scope.launch(dispatchers.network) {
-      if (!connectionStateFlow.isConnected) {
-        emit(NowPlayingUiMessages.NetworkUnavailable)
-        return@launch
-      }
+    scope.launch(dispatchers.database) {
       try {
         delay(REMOVE_DELAY_MS)
-        selfMutationTracker.mark()
-        userActionUseCase.removeTrack(position)
+        localPlaybackController.removeQueueItem(position)
       } catch (e: IOException) {
         Timber.e(e)
         emit(NowPlayingUiMessages.RemoveFailed)
@@ -120,32 +108,24 @@ class NowPlayingActions(
   }
 
   override fun move() {
-    scope.launch(dispatchers.network) {
-      if (!connectionStateFlow.isConnected) {
-        emit(NowPlayingUiMessages.NetworkUnavailable)
-        return@launch
-      }
+    scope.launch(dispatchers.database) {
       moveManager.commit()
     }
   }
 
   override fun search(query: String) {
     scope.launch(dispatchers.database) {
-      val result = repository.searchTrack(query)
-      if (result == null || result.position <= 0) {
+      val result = localPlaybackController.queue.value.indexOfFirst {
+        it.title.contains(query, ignoreCase = true) || it.artist.contains(query, ignoreCase = true)
+      }
+      if (result < 0) {
         emit(NowPlayingUiMessages.SearchNotFound)
         return@launch
       }
 
-      // Check connection before playing
-      if (!connectionStateFlow.isConnected) {
-        emit(NowPlayingUiMessages.NetworkUnavailable)
-        return@launch
-      }
-
       try {
-        userActionUseCase.playTrack(result.position)
-        emit(NowPlayingUiMessages.SearchSuccess(result.title))
+        localPlaybackController.playQueueItem(result)
+        emit(NowPlayingUiMessages.SearchSuccess(localPlaybackController.queue.value[result].title))
       } catch (e: IOException) {
         Timber.e(e)
         emit(NowPlayingUiMessages.PlayFailed)
@@ -162,16 +142,21 @@ class NowPlayingViewModel(
   repository: NowPlayingRepository,
   dispatchers: AppCoroutineDispatchers,
   moveManager: MoveManager,
-  userActionUseCase: UserActionUseCase,
   connectionStateFlow: ConnectionStateFlow,
   appState: AppStateFlow,
-  selfMutationTracker: SelfMutationTracker
+  localPlaybackController: LocalPlaybackController
 ) : BaseViewModel<NowPlayingUiMessages>() {
-  val tracks: Flow<PagingData<NowPlaying>> = repository.getAll().cachedIn(viewModelScope)
+  val tracks: Flow<PagingData<NowPlaying>> = localPlaybackController.queue
+    .map { queue ->
+      PagingData.from(queue.mapIndexed { index, track ->
+        NowPlaying(track.title, track.artist, track.path, index, index.toLong())
+      })
+    }.cachedIn(viewModelScope)
   val playingTrack = appState.playingTrack
   val connectionState = connectionStateFlow.connection
   val syncProgress: StateFlow<SyncProgress?> = repository.syncProgress()
-  val trackCount: StateFlow<Int> = repository.observeCount()
+  val trackCount: StateFlow<Int> = localPlaybackController.queue
+    .map { it.size }
     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
   val actions: NowPlayingActions =
     NowPlayingActions(
@@ -179,20 +164,17 @@ class NowPlayingViewModel(
       dispatchers = dispatchers,
       repository = repository,
       moveManager = moveManager,
-      userActionUseCase = userActionUseCase,
       connectionStateFlow = connectionStateFlow,
-      selfMutationTracker = selfMutationTracker,
+      localPlaybackController = localPlaybackController,
       emit = this::emit
     )
 
   init {
     actions.reload(showUserMessage = false)
     moveManager.onMoveCommit { originalPosition, finalPosition ->
-      viewModelScope.launch(dispatchers.network) {
+      viewModelScope.launch(dispatchers.database) {
         try {
-          selfMutationTracker.mark()
-          userActionUseCase.moveTrack(NowPlayingMoveRequest(originalPosition, finalPosition))
-          repository.move(originalPosition + 1, finalPosition + 1)
+          localPlaybackController.moveQueueItem(originalPosition, finalPosition)
         } catch (e: IOException) {
           Timber.e(e)
           emit(NowPlayingUiMessages.MoveFailed)

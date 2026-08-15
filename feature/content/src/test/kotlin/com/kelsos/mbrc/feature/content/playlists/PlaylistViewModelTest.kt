@@ -9,9 +9,7 @@ import com.kelsos.mbrc.core.common.test.testDispatcher
 import com.kelsos.mbrc.core.common.test.testDispatcherModule
 import com.kelsos.mbrc.core.data.playlist.PlaylistBrowserItem
 import com.kelsos.mbrc.core.data.playlist.PlaylistRepository
-import com.kelsos.mbrc.core.networking.protocol.actions.UserAction
-import com.kelsos.mbrc.core.networking.protocol.base.Protocol
-import com.kelsos.mbrc.core.networking.protocol.usecases.UserActionUseCase
+import com.kelsos.mbrc.core.queue.PathQueueUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -35,14 +33,14 @@ class PlaylistViewModelTest : KoinTest {
   private val testModule =
     module {
       single<PlaylistRepository> { mockk(relaxed = true) }
-      single<UserActionUseCase> { mockk(relaxed = true) }
+      single<PathQueueUseCase> { mockk(relaxed = true) }
       single<ConnectionStateFlow> { mockk(relaxed = true) }
       singleOf(::PlaylistViewModel)
     }
 
   private val viewModel: PlaylistViewModel by inject()
   private val playlistRepository: PlaylistRepository by inject()
-  private val userActionUseCase: UserActionUseCase by inject()
+  private val queueUseCase: PathQueueUseCase by inject()
   private val connectionStateFlow: ConnectionStateFlow by inject()
 
   @Before
@@ -222,18 +220,20 @@ class PlaylistViewModelTest : KoinTest {
         assertThat(event).isEqualTo(PlaylistUiMessages.NetworkUnavailable)
       }
 
-      // Verify user action is not called when not connected
-      coVerify(exactly = 0) { userActionUseCase.perform(any()) }
+      // Verify local queue is not called when not connected
+      coVerify(exactly = 0) { queueUseCase.queuePaths(any()) }
     }
   }
 
   @Test
-  fun playShouldNotEmitWhenConnectedAndUserActionSucceeds() {
+  fun playShouldNotEmitWhenConnectedAndLocalQueueSucceeds() {
     runTest(testDispatcher) {
       // Given
       val playlistPath = "playlist/test"
       coEvery { connectionStateFlow.isConnected } returns true
-      coEvery { userActionUseCase.perform(any()) } returns Unit
+      coEvery { playlistRepository.getTrackPaths(playlistPath) } returns listOf("track.mp3")
+      coEvery { queueUseCase.queuePaths(listOf("track.mp3")) } returns
+        com.kelsos.mbrc.core.common.utilities.Outcome.Success(1)
 
       // When & Then
       viewModel.events.test {
@@ -244,20 +244,17 @@ class PlaylistViewModelTest : KoinTest {
         expectNoEvents()
       }
 
-      // Verify user action was called with correct parameters
-      coVerify(exactly = 1) {
-        userActionUseCase.perform(UserAction.create(Protocol.PlaylistPlay, playlistPath))
-      }
+      coVerify(exactly = 1) { queueUseCase.queuePaths(listOf("track.mp3")) }
     }
   }
 
   @Test
-  fun playShouldEmitPlayFailedWhenConnectedButUserActionThrowsIOException() {
+  fun playShouldEmitPlayFailedWhenPlaylistHasNoLocalTracks() {
     runTest(testDispatcher) {
       // Given
       val playlistPath = "playlist/test"
       coEvery { connectionStateFlow.isConnected } returns true
-      coEvery { userActionUseCase.perform(any()) } throws IOException("Network error")
+      coEvery { playlistRepository.getTrackPaths(playlistPath) } returns emptyList()
 
       // When & Then
       viewModel.events.test {
@@ -268,10 +265,7 @@ class PlaylistViewModelTest : KoinTest {
         assertThat(event).isEqualTo(PlaylistUiMessages.PlayFailed)
       }
 
-      // Verify user action was called
-      coVerify(exactly = 1) {
-        userActionUseCase.perform(UserAction.create(Protocol.PlaylistPlay, playlistPath))
-      }
+      coVerify(exactly = 0) { queueUseCase.queuePaths(any()) }
     }
   }
 

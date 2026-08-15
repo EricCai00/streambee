@@ -190,11 +190,10 @@ class BrowseTrackViewModelTest : KoinTest {
   }
 
   @Test
-  fun queueShouldUseDefaultActionWhenQueueIsDefault() {
+  fun queueShouldUseLocalPlaybackWhenQueueIsDefault() {
     runTest(testDispatcher) {
       // Given
       coEvery { connectionStateFlow.isConnected } returns true
-      every { librarySettings.libraryTrackDefaultActionFlow } returns flowOf(TrackAction.QueueLast)
       val track =
         Track(
           id = 1,
@@ -209,7 +208,7 @@ class BrowseTrackViewModelTest : KoinTest {
           albumArtist = "Test Artist"
         )
       val queueResult = Outcome.Success(1)
-      coEvery { queueHandler.queueTrack(track = track, type = Queue.Last) } returns queueResult
+      coEvery { queueHandler.queueTrack(track = track, type = Queue.Local) } returns queueResult
 
       // When & Then
       viewModel.events.test {
@@ -220,8 +219,7 @@ class BrowseTrackViewModelTest : KoinTest {
         assertThat(event).isEqualTo(TrackUiMessage.QueueSuccess(1))
       }
 
-      // Verify queue handler was called with default action
-      coVerify(exactly = 1) { queueHandler.queueTrack(track = track, type = Queue.Last) }
+      coVerify(exactly = 1) { queueHandler.queueTrack(track = track, type = Queue.Local) }
     }
   }
 

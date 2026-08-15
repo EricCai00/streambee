@@ -164,4 +164,7 @@ interface NowPlayingDao {
 
   @Query("select * from now_playing where id = :id")
   fun getById(id: Long): NowPlayingEntity?
+
+  @Query("select * from now_playing where position = :position limit 1")
+  fun getByPosition(position: Int): NowPlayingEntity?
 }

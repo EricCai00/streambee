@@ -7,7 +7,7 @@ import org.koin.core.component.KoinComponent
 import timber.log.Timber
 
 // TODO: Check if this receiver is still needed. Media3's MediaSession handles media button
-//  events through RemotePlayer. This may be redundant but is kept for backward compatibility.
+// Media3 routes button events to the app-owned local MediaSession.
 class MediaButtonReceiver :
   BroadcastReceiver(),
   KoinComponent {

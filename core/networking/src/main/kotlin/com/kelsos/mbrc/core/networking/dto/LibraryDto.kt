@@ -78,7 +78,9 @@ data class PlaylistDto(
   @Json(name = "name")
   val name: String = "",
   @Json(name = "url")
-  val url: String = ""
+  val url: String = "",
+  @Json(name = "tracks")
+  val tracks: List<TrackDto> = emptyList()
 )
 
 @JsonClass(generateAdapter = true)

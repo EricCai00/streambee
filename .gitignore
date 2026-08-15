@@ -52,3 +52,6 @@ replay_pid*.log
 signing.env
 /scripts/*.jks
 /screenshots/
+
+/.tmp-dotnet-install.ps1
+/.tmp-jdk17.zip

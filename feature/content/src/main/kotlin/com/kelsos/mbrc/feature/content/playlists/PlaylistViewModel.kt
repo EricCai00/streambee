@@ -5,11 +5,10 @@ import androidx.paging.cachedIn
 import com.kelsos.mbrc.core.common.mvvm.BaseViewModel
 import com.kelsos.mbrc.core.common.mvvm.UiMessageBase
 import com.kelsos.mbrc.core.common.state.ConnectionStateFlow
+import com.kelsos.mbrc.core.common.utilities.Outcome
 import com.kelsos.mbrc.core.common.utilities.coroutines.AppCoroutineDispatchers
 import com.kelsos.mbrc.core.data.playlist.PlaylistRepository
-import com.kelsos.mbrc.core.networking.protocol.base.Protocol
-import com.kelsos.mbrc.core.networking.protocol.usecases.UserActionUseCase
-import com.kelsos.mbrc.core.networking.protocol.usecases.performUserAction
+import com.kelsos.mbrc.core.queue.PathQueueUseCase
 import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -42,7 +41,7 @@ class PlaylistActions(
   private val scope: CoroutineScope,
   private val dispatchers: AppCoroutineDispatchers,
   private val repository: PlaylistRepository,
-  private val userActionUseCase: UserActionUseCase,
+  private val queueUseCase: PathQueueUseCase,
   private val connectionStateFlow: ConnectionStateFlow,
   private val emit: suspend (uiMessage: PlaylistUiMessages) -> Unit,
   private val getCurrentPath: () -> String,
@@ -50,19 +49,21 @@ class PlaylistActions(
 ) : IPlaylistActions {
   override fun play(url: String) {
     scope.launch(dispatchers.network) {
-      val result =
-        if (!connectionStateFlow.isConnected) {
-          PlaylistUiMessages.NetworkUnavailable
-        } else {
-          try {
-            userActionUseCase.performUserAction(Protocol.PlaylistPlay, url)
-            return@launch // Don't emit anything on success for play action
-          } catch (e: IOException) {
-            Timber.e(e)
-            PlaylistUiMessages.PlayFailed
-          }
-        }
-      emit(result)
+      if (!connectionStateFlow.isConnected) {
+        emit(PlaylistUiMessages.NetworkUnavailable)
+        return@launch
+      }
+
+      val paths = repository.getTrackPaths(url)
+      if (paths.isEmpty()) {
+        emit(PlaylistUiMessages.PlayFailed)
+        return@launch
+      }
+
+      val result = queueUseCase.queuePaths(paths)
+      if (result is Outcome.Failure) {
+        emit(PlaylistUiMessages.PlayFailed)
+      }
     }
   }
 
@@ -111,7 +112,7 @@ class PlaylistActions(
 class PlaylistViewModel(
   repository: PlaylistRepository,
   dispatchers: AppCoroutineDispatchers,
-  userActionsUseCase: UserActionUseCase,
+  queueUseCase: PathQueueUseCase,
   connectionStateFlow: ConnectionStateFlow
 ) : BaseViewModel<PlaylistUiMessages>() {
 
@@ -128,7 +129,7 @@ class PlaylistViewModel(
       scope = viewModelScope,
       dispatchers = dispatchers,
       repository = repository,
-      userActionUseCase = userActionsUseCase,
+      queueUseCase = queueUseCase,
       connectionStateFlow = connectionStateFlow,
       emit = this::emit,
       getCurrentPath = { _currentPath.value },

@@ -135,6 +135,35 @@ class AlbumTracksViewModelTest : KoinTest {
   }
 
   @Test
+  fun defaultAlbumTrackClickShouldPlayTheWholeAlbumFromSelectedTrack() {
+    runTest(testDispatcher) {
+      val track = Track(
+        id = 2,
+        artist = "Test Artist",
+        title = "Second Track",
+        album = "Test Album",
+        year = "2023",
+        genre = "Rock",
+        disc = 1,
+        trackno = 2,
+        src = "second.mp3",
+        albumArtist = "Test Artist"
+      )
+      coEvery { queueHandler.queueTrack(track = track, type = Queue.PlayAlbum) } returns
+        Outcome.Success(3)
+
+      viewModel.events.test {
+        viewModel.queue(Queue.Default, track)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertThat(awaitItem()).isEqualTo(TrackUiMessage.QueueSuccess(3))
+      }
+
+      coVerify(exactly = 1) { queueHandler.queueTrack(track = track, type = Queue.PlayAlbum) }
+    }
+  }
+
+  @Test
   fun queueAlbumShouldEmitNetworkUnavailableWhenNotConnected() {
     runTest(testDispatcher) {
       // Given

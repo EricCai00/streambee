@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+  <string name="menu_play_on_device">Play on this device</string>
   <!-- Actions -->
   <string name="action_refresh">Refresh</string>
   <string name="action_search_clear">Clear search</string>

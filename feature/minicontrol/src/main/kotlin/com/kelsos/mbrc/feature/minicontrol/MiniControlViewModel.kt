@@ -4,19 +4,13 @@ import androidx.compose.runtime.Stable
 import androidx.lifecycle.viewModelScope
 import com.kelsos.mbrc.core.common.mvvm.BaseViewModel
 import com.kelsos.mbrc.core.common.mvvm.UiMessageBase
+import com.kelsos.mbrc.core.common.playback.LocalPlaybackController
 import com.kelsos.mbrc.core.common.state.AppStateFlow
 import com.kelsos.mbrc.core.common.state.BasicTrackInfo
-import com.kelsos.mbrc.core.common.state.ConnectionStateFlow
 import com.kelsos.mbrc.core.common.state.PlayerState
 import com.kelsos.mbrc.core.common.state.PlayingPosition
 import com.kelsos.mbrc.core.common.state.TrackInfo
 import com.kelsos.mbrc.core.common.utilities.coroutines.AppCoroutineDispatchers
-import com.kelsos.mbrc.core.networking.protocol.usecases.UserActionUseCase
-import com.kelsos.mbrc.core.networking.protocol.usecases.next
-import com.kelsos.mbrc.core.networking.protocol.usecases.playPause
-import com.kelsos.mbrc.core.networking.protocol.usecases.previous
-import com.kelsos.mbrc.core.networking.protocol.usecases.stop
-import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -32,8 +26,7 @@ sealed class MiniControlUiMessages : UiMessageBase {
 
 class MiniControlViewModel(
   appState: AppStateFlow,
-  private val userActionUseCase: UserActionUseCase,
-  private val connectionStateFlow: ConnectionStateFlow,
+  private val localPlaybackController: LocalPlaybackController,
   private val dispatchers: AppCoroutineDispatchers
 ) : BaseViewModel<MiniControlUiMessages>() {
   val state: Flow<MiniControlState> =
@@ -50,19 +43,15 @@ class MiniControlViewModel(
     }
 
   fun perform(action: MiniControlAction) {
-    viewModelScope.launch(dispatchers.network) {
-      if (!connectionStateFlow.isConnected) {
-        emit(MiniControlUiMessages.NetworkUnavailable)
-        return@launch
-      }
+    viewModelScope.launch(dispatchers.main) {
       try {
         when (action) {
-          MiniControlAction.PlayNext -> userActionUseCase.next()
-          MiniControlAction.PlayPause -> userActionUseCase.playPause()
-          MiniControlAction.PlayPrevious -> userActionUseCase.previous()
-          MiniControlAction.Stop -> userActionUseCase.stop()
+          MiniControlAction.PlayNext -> localPlaybackController.next()
+          MiniControlAction.PlayPause -> localPlaybackController.playPause()
+          MiniControlAction.PlayPrevious -> localPlaybackController.previous()
+          MiniControlAction.Stop -> localPlaybackController.stop()
         }
-      } catch (e: IOException) {
+      } catch (e: Exception) {
         Timber.e(e)
         emit(MiniControlUiMessages.ActionFailed)
       }

@@ -22,6 +22,7 @@ import com.kelsos.mbrc.core.networking.protocol.actions.PluginVersionHandler
 import com.kelsos.mbrc.core.networking.protocol.actions.TrackChangeNotifier
 import com.kelsos.mbrc.core.platform.state.toPlayingTrack
 import com.kelsos.mbrc.feature.playback.nowplaying.NowPlayingRepository
+import com.kelsos.mbrc.feature.library.playback.DevicePlaybackController
 import com.kelsos.mbrc.feature.settings.domain.PluginUpdateCheckUseCase
 import com.kelsos.mbrc.feature.widgets.WidgetUpdater
 import com.kelsos.mbrc.state.PlayingTrackCache
@@ -38,18 +39,23 @@ import timber.log.Timber
 /**
  * Adapts [AppStatePublisher] to [PlayerStateHandler] interface.
  */
-class PlayerStateHandlerImpl(private val appState: AppStatePublisher) : PlayerStateHandler {
+class PlayerStateHandlerImpl(
+  private val appState: AppStatePublisher,
+  private val devicePlaybackController: DevicePlaybackController? = null
+) : PlayerStateHandler {
   override val playerStatus: Flow<PlayerStatusModel> = appState.playerStatus
   override val playingTrack: Flow<TrackInfo> = appState.playingTrack
   override val playingTrackRating: Flow<TrackRating> = appState.playingTrackRating
   override val playingTrackDetails: Flow<TrackDetails> = appState.playingTrackDetails
 
   override fun updatePlayerStatus(status: PlayerStatusModel) {
-    appState.updatePlayerStatus(status)
+    if (devicePlaybackController?.hasLocalPlayback != true) appState.updatePlayerStatus(status)
   }
 
   override fun updatePlayingTrack(track: TrackInfo) {
-    appState.updatePlayingTrack(track.toPlayingTrack())
+    if (devicePlaybackController?.hasLocalPlayback != true) {
+      appState.updatePlayingTrack(track.toPlayingTrack())
+    }
   }
 
   override fun updateTrackRating(rating: TrackRating) {
@@ -65,7 +71,7 @@ class PlayerStateHandlerImpl(private val appState: AppStatePublisher) : PlayerSt
   }
 
   override fun updatePlayingPosition(position: PlayingPosition) {
-    appState.updatePlayingPosition(position)
+    if (devicePlaybackController?.hasLocalPlayback != true) appState.updatePlayingPosition(position)
   }
 }
 

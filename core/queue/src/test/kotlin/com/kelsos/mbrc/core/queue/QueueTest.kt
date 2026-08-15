@@ -39,6 +39,11 @@ class QueueTest {
   }
 
   @Test
+  fun `Local should have correct action string`() {
+    assertThat(Queue.Local.action).isEqualTo("local")
+  }
+
+  @Test
   fun `Default should have correct action string`() {
     assertThat(Queue.Default.action).isEqualTo("default")
   }
@@ -75,6 +80,11 @@ class QueueTest {
   @Test
   fun `fromString should return PlayArtist for play-artist`() {
     assertThat(Queue.fromString("play-artist")).isEqualTo(Queue.PlayArtist)
+  }
+
+  @Test
+  fun `fromString should return Local for local`() {
+    assertThat(Queue.fromString("local")).isEqualTo(Queue.Local)
   }
 
   @Test
@@ -153,6 +163,11 @@ class QueueTest {
   @Test
   fun `PLAY_ARTIST constant should be play-artist`() {
     assertThat(Queue.PLAY_ARTIST).isEqualTo("play-artist")
+  }
+
+  @Test
+  fun `LOCAL constant should be local`() {
+    assertThat(Queue.LOCAL).isEqualTo("local")
   }
 
   @Test

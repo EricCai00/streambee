@@ -25,6 +25,8 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 interface NowPlayingRepository : Repository<NowPlaying> {
+  suspend fun getByPosition(position: Int): NowPlaying?
+
   suspend fun move(from: Int, to: Int)
 
   suspend fun remove(position: Int)
@@ -151,6 +153,9 @@ class NowPlayingRepositoryImpl(
       return@withContext entity.toNowPlaying()
     }
   }
+
+  override suspend fun getByPosition(position: Int): NowPlaying? =
+    withContext(dispatchers.database) { dao.getByPosition(position)?.toNowPlaying() }
 
   override fun observeCount(): Flow<Int> = dao.observeCount()
 }

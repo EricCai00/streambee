@@ -172,6 +172,15 @@ You have to first install the [plugin](https://github.com/musicbeeremote/mbrc-pl
 
 After installing the plugin if you are not prompted to allow MusicBee or the plugin through the Windows Firewall you might have to manually configure Windows Firewall to allow the plugin to receive connections.
 
+### Play library audio on Android
+
+Open a track's overflow menu and choose **Play on this device**. The plugin serves the original
+library file over HTTP with byte-range support and Android decodes it locally with Media3. The
+audio service listens on the configured MusicBee Remote port plus one (for example, command port
+`3000` uses audio port `3001`). Both ports must be reachable on the local network. Only local files
+currently present in the MusicBee library are exposed. This MVP uses unauthenticated HTTP on the
+LAN; do not port-forward the audio port to the internet.
+
 For more detailed information you can check the [help](https://mbrc.kelsos.net/help/) page.
 
 ## Contributing

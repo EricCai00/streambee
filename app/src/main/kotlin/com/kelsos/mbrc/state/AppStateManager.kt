@@ -9,13 +9,10 @@ import com.kelsos.mbrc.core.common.utilities.coroutines.ScopeBase
 import com.kelsos.mbrc.service.ServiceLifecycleManager
 import com.kelsos.mbrc.service.mediasession.AppNotificationManager
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -29,7 +26,6 @@ class AppStateManager(
   dispatchers: AppCoroutineDispatchers
 ) : ScopeBase(dispatchers.io) {
   private var isRunning = false
-  private var positionJob: Job? = null
 
   init {
     launch {
@@ -59,11 +55,6 @@ class AppStateManager(
       debouncedPlayerState.collect { state ->
         val position = playingPosition.first()
         notifications.updateState(state, position)
-        if (state == PlayerState.Playing) {
-          startPositionUpdater()
-        } else {
-          stopPositionUpdater()
-        }
       }
     }
 
@@ -83,7 +74,6 @@ class AppStateManager(
         notifications.connectionStateChanged(connection == ConnectionStatus.Connected)
         when (connection) {
           ConnectionStatus.Offline -> {
-            stopPositionUpdater()
             if (wasConnectionAttempted) {
               serviceLifecycleManager.onConnectionLost()
             }
@@ -117,40 +107,10 @@ class AppStateManager(
   fun stop() {
     this.onStop()
     notifications.cancel()
-    stopPositionUpdater()
     isRunning = false
-  }
-
-  private fun startPositionUpdater() {
-    stopPositionUpdater()
-    positionJob = launch {
-      while (isActive) {
-        delay(UPDATE_PERIOD_MS)
-        updatePosition()
-      }
-    }
-  }
-
-  private fun stopPositionUpdater() {
-    positionJob?.cancel()
-    positionJob = null
-  }
-
-  private fun updatePosition() {
-    val position = appState.playingPosition.value
-    // For streams (total <= 0), don't coerce - just increment the elapsed time
-    val current = if (position.total <= 0) {
-      position.current + UPDATE_PERIOD_MS
-    } else {
-      (position.current + UPDATE_PERIOD_MS).coerceAtMost(position.total)
-    }
-    if (current != position.current) {
-      appState.updatePlayingPosition(position.copy(current = current))
-    }
   }
 
   companion object {
     private const val PLAYER_STATE_DEBOUNCE_MS = 600L
-    private const val UPDATE_PERIOD_MS = 1000L
   }
 }

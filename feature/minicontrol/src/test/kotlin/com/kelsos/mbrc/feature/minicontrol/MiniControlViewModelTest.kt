@@ -3,24 +3,17 @@ package com.kelsos.mbrc.feature.minicontrol
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import com.kelsos.mbrc.core.common.playback.LocalPlaybackController
 import com.kelsos.mbrc.core.common.state.AppStateFlow
 import com.kelsos.mbrc.core.common.state.BasicTrackInfo
-import com.kelsos.mbrc.core.common.state.ConnectionStateFlow
 import com.kelsos.mbrc.core.common.state.PlayerState
 import com.kelsos.mbrc.core.common.state.PlayerStatusModel
 import com.kelsos.mbrc.core.common.state.PlayingPosition
 import com.kelsos.mbrc.core.common.test.testDispatcher
 import com.kelsos.mbrc.core.common.test.testDispatcherModule
-import com.kelsos.mbrc.core.networking.protocol.usecases.UserActionUseCase
-import com.kelsos.mbrc.core.networking.protocol.usecases.next
-import com.kelsos.mbrc.core.networking.protocol.usecases.playPause
-import com.kelsos.mbrc.core.networking.protocol.usecases.previous
-import com.kelsos.mbrc.core.networking.protocol.usecases.stop
-import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import java.io.IOException
+import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -36,411 +29,64 @@ import org.koin.test.inject
 
 @RunWith(AndroidJUnit4::class)
 class MiniControlViewModelTest : KoinTest {
-  private val testModule =
-    module {
-      single<AppStateFlow> { mockk(relaxed = true) }
-      single<UserActionUseCase> { mockk(relaxed = true) }
-      single<ConnectionStateFlow> { mockk(relaxed = true) }
-      singleOf(::MiniControlViewModel)
-    }
+  private val appState = mockk<AppStateFlow>(relaxed = true)
+  private val playbackController = mockk<LocalPlaybackController>(relaxed = true)
+
+  private val testModule = module {
+    single<AppStateFlow> { appState }
+    single<LocalPlaybackController> { playbackController }
+    singleOf(::MiniControlViewModel)
+  }
 
   private val viewModel: MiniControlViewModel by inject()
-  private val appStateFlow: AppStateFlow by inject()
-  private val userActionUseCase: UserActionUseCase by inject()
-  private val connectionStateFlow: ConnectionStateFlow by inject()
 
   @Before
   fun setUp() {
-    startKoin {
-      modules(listOf(testModule, testDispatcherModule))
-    }
-
-    // Setup default mocks
-    val playingTrack =
-      BasicTrackInfo(
-        artist = "Test Artist",
-        title = "Test Title",
-        album = "Test Album",
-        path = "test/path",
-        coverUrl = "test/cover/url"
-      )
-    val playingPosition = PlayingPosition(current = 30, total = 100)
-    val playerStatus =
-      PlayerStatusModel(
-        mute = false,
-        state = PlayerState.Playing,
-        volume = 50
-      )
-
-    every { appStateFlow.playingTrack } returns MutableStateFlow(playingTrack)
-    every { appStateFlow.playingPosition } returns MutableStateFlow(playingPosition)
-    every { appStateFlow.playerStatus } returns MutableStateFlow(playerStatus)
-    coEvery { connectionStateFlow.isConnected } returns true
+    startKoin { modules(testModule, testDispatcherModule) }
+    every { appState.playingTrack } returns MutableStateFlow(
+      BasicTrackInfo("Artist", "Title", "Album", path = "path")
+    )
+    every { appState.playingPosition } returns MutableStateFlow(PlayingPosition(30L, 100L))
+    every { appState.playerStatus } returns MutableStateFlow(
+      PlayerStatusModel(volume = 50, state = PlayerState.Playing)
+    )
   }
 
   @After
-  fun tearDown() {
-    stopKoin()
-  }
+  fun tearDown() = stopKoin()
 
   @Test
-  fun stateShouldCombineAppStateFlows() {
-    runTest(testDispatcher) {
-      // Given
-      val expectedTrack =
-        BasicTrackInfo(
-          artist = "Artist",
-          title = "Title",
-          album = "Album",
-          path = "path",
-          coverUrl = "cover"
-        )
-      val expectedPosition = PlayingPosition(current = 50, total = 200)
-      val expectedPlayerStatus =
-        PlayerStatusModel(
-          mute = false,
-          state = PlayerState.Paused,
-          volume = 50
-        )
-
-      every { appStateFlow.playingTrack } returns MutableStateFlow(expectedTrack)
-      every { appStateFlow.playingPosition } returns MutableStateFlow(expectedPosition)
-      every { appStateFlow.playerStatus } returns MutableStateFlow(expectedPlayerStatus)
-
-      // Then
-      viewModel.state.test {
-        val state = awaitItem()
-        assertThat(state.playingTrack).isEqualTo(expectedTrack)
-        assertThat(state.playingPosition).isEqualTo(expectedPosition)
-        assertThat(state.playingState).isEqualTo(PlayerState.Paused)
-      }
+  fun stateShouldCombineLocalPlayerState() = runTest(testDispatcher) {
+    viewModel.state.test {
+      val state = awaitItem()
+      assertThat(state.playingTrack.title).isEqualTo("Title")
+      assertThat(state.playingPosition.current).isEqualTo(30)
+      assertThat(state.playingState).isEqualTo(PlayerState.Playing)
     }
   }
 
   @Test
-  fun performPlayPauseShouldEmitNetworkUnavailableWhenNotConnected() {
-    runTest(testDispatcher) {
-      // Given
-      coEvery { connectionStateFlow.isConnected } returns false
+  fun controlsShouldUseLocalPlaybackController() = runTest(testDispatcher) {
+    viewModel.perform(MiniControlAction.PlayPrevious)
+    viewModel.perform(MiniControlAction.PlayPause)
+    viewModel.perform(MiniControlAction.PlayNext)
+    viewModel.perform(MiniControlAction.Stop)
+    testDispatcher.scheduler.advanceUntilIdle()
 
-      // When & Then
-      viewModel.events.test {
-        viewModel.perform(MiniControlAction.PlayPause)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val event = awaitItem()
-        assertThat(event).isEqualTo(MiniControlUiMessages.NetworkUnavailable)
-      }
-
-      // Verify user action is not called when not connected
-      coVerify(exactly = 0) { userActionUseCase.playPause() }
-    }
+    verify(exactly = 1) { playbackController.previous() }
+    verify(exactly = 1) { playbackController.playPause() }
+    verify(exactly = 1) { playbackController.next() }
+    verify(exactly = 1) { playbackController.stop() }
   }
 
   @Test
-  fun performPlayPauseShouldNotEmitWhenConnectedAndUserActionSucceeds() {
-    runTest(testDispatcher) {
-      // Given
-      coEvery { connectionStateFlow.isConnected } returns true
-      coEvery { userActionUseCase.playPause() } returns Unit
+  fun controllerFailureEmitsActionFailed() = runTest(testDispatcher) {
+    every { playbackController.next() } throws IllegalStateException("player error")
 
-      // When & Then
-      viewModel.events.test {
-        viewModel.perform(MiniControlAction.PlayPause)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        // Should not emit any events on successful action
-        expectNoEvents()
-      }
-
-      // Verify user action was called
-      coVerify(exactly = 1) { userActionUseCase.playPause() }
-    }
-  }
-
-  @Test
-  fun performPlayPauseShouldEmitActionFailedWhenConnectedButUserActionThrowsIOException() {
-    runTest(testDispatcher) {
-      // Given
-      coEvery { connectionStateFlow.isConnected } returns true
-      coEvery { userActionUseCase.playPause() } throws IOException("Network error")
-
-      // When & Then
-      viewModel.events.test {
-        viewModel.perform(MiniControlAction.PlayPause)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val event = awaitItem()
-        assertThat(event).isEqualTo(MiniControlUiMessages.ActionFailed)
-      }
-
-      // Verify user action was called
-      coVerify(exactly = 1) { userActionUseCase.playPause() }
-    }
-  }
-
-  @Test
-  fun performPlayNextShouldEmitNetworkUnavailableWhenNotConnected() {
-    runTest(testDispatcher) {
-      // Given
-      coEvery { connectionStateFlow.isConnected } returns false
-
-      // When & Then
-      viewModel.events.test {
-        viewModel.perform(MiniControlAction.PlayNext)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val event = awaitItem()
-        assertThat(event).isEqualTo(MiniControlUiMessages.NetworkUnavailable)
-      }
-
-      // Verify user action is not called when not connected
-      coVerify(exactly = 0) { userActionUseCase.next() }
-    }
-  }
-
-  @Test
-  fun performPlayNextShouldNotEmitWhenConnectedAndUserActionSucceeds() {
-    runTest(testDispatcher) {
-      // Given
-      coEvery { connectionStateFlow.isConnected } returns true
-      coEvery { userActionUseCase.next() } returns Unit
-
-      // When & Then
-      viewModel.events.test {
-        viewModel.perform(MiniControlAction.PlayNext)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        // Should not emit any events on successful action
-        expectNoEvents()
-      }
-
-      // Verify user action was called
-      coVerify(exactly = 1) { userActionUseCase.next() }
-    }
-  }
-
-  @Test
-  fun performPlayNextShouldEmitActionFailedWhenConnectedButUserActionThrowsIOException() {
-    runTest(testDispatcher) {
-      // Given
-      coEvery { connectionStateFlow.isConnected } returns true
-      coEvery { userActionUseCase.next() } throws IOException("Network error")
-
-      // When & Then
-      viewModel.events.test {
-        viewModel.perform(MiniControlAction.PlayNext)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val event = awaitItem()
-        assertThat(event).isEqualTo(MiniControlUiMessages.ActionFailed)
-      }
-
-      // Verify user action was called
-      coVerify(exactly = 1) { userActionUseCase.next() }
-    }
-  }
-
-  @Test
-  fun performPlayPreviousShouldEmitNetworkUnavailableWhenNotConnected() {
-    runTest(testDispatcher) {
-      // Given
-      coEvery { connectionStateFlow.isConnected } returns false
-
-      // When & Then
-      viewModel.events.test {
-        viewModel.perform(MiniControlAction.PlayPrevious)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val event = awaitItem()
-        assertThat(event).isEqualTo(MiniControlUiMessages.NetworkUnavailable)
-      }
-
-      // Verify user action is not called when not connected
-      coVerify(exactly = 0) { userActionUseCase.previous() }
-    }
-  }
-
-  @Test
-  fun performPlayPreviousShouldNotEmitWhenConnectedAndUserActionSucceeds() {
-    runTest(testDispatcher) {
-      // Given
-      coEvery { connectionStateFlow.isConnected } returns true
-      coEvery { userActionUseCase.previous() } returns Unit
-
-      // When & Then
-      viewModel.events.test {
-        viewModel.perform(MiniControlAction.PlayPrevious)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        // Should not emit any events on successful action
-        expectNoEvents()
-      }
-
-      // Verify user action was called
-      coVerify(exactly = 1) { userActionUseCase.previous() }
-    }
-  }
-
-  @Test
-  fun performPlayPreviousShouldEmitActionFailedWhenConnectedButUserActionThrowsIOException() {
-    runTest(testDispatcher) {
-      // Given
-      coEvery { connectionStateFlow.isConnected } returns true
-      coEvery { userActionUseCase.previous() } throws IOException("Network error")
-
-      // When & Then
-      viewModel.events.test {
-        viewModel.perform(MiniControlAction.PlayPrevious)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val event = awaitItem()
-        assertThat(event).isEqualTo(MiniControlUiMessages.ActionFailed)
-      }
-
-      // Verify user action was called
-      coVerify(exactly = 1) { userActionUseCase.previous() }
-    }
-  }
-
-  @Test
-  fun performStopShouldEmitNetworkUnavailableWhenNotConnected() {
-    runTest(testDispatcher) {
-      // Given
-      coEvery { connectionStateFlow.isConnected } returns false
-
-      // When & Then
-      viewModel.events.test {
-        viewModel.perform(MiniControlAction.Stop)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val event = awaitItem()
-        assertThat(event).isEqualTo(MiniControlUiMessages.NetworkUnavailable)
-      }
-
-      // Verify user action is not called when not connected
-      coVerify(exactly = 0) { userActionUseCase.stop() }
-    }
-  }
-
-  @Test
-  fun performStopShouldNotEmitWhenConnectedAndUserActionSucceeds() {
-    runTest(testDispatcher) {
-      // Given
-      coEvery { connectionStateFlow.isConnected } returns true
-      coEvery { userActionUseCase.stop() } returns Unit
-
-      // When & Then
-      viewModel.events.test {
-        viewModel.perform(MiniControlAction.Stop)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        // Should not emit any events on successful action
-        expectNoEvents()
-      }
-
-      // Verify user action was called
-      coVerify(exactly = 1) { userActionUseCase.stop() }
-    }
-  }
-
-  @Test
-  fun performStopShouldEmitActionFailedWhenConnectedButUserActionThrowsIOException() {
-    runTest(testDispatcher) {
-      // Given
-      coEvery { connectionStateFlow.isConnected } returns true
-      coEvery { userActionUseCase.stop() } throws IOException("Network error")
-
-      // When & Then
-      viewModel.events.test {
-        viewModel.perform(MiniControlAction.Stop)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val event = awaitItem()
-        assertThat(event).isEqualTo(MiniControlUiMessages.ActionFailed)
-      }
-
-      // Verify user action was called
-      coVerify(exactly = 1) { userActionUseCase.stop() }
-    }
-  }
-
-  @Test
-  fun multipleActionsShouldBehaveCorrectly() {
-    runTest(testDispatcher) {
-      // Given
-      coEvery { connectionStateFlow.isConnected } returns true
-      coEvery { userActionUseCase.playPause() } returns Unit
-      coEvery { userActionUseCase.next() } returns Unit
-      coEvery { userActionUseCase.previous() } returns Unit
-
-      // When & Then
-      viewModel.events.test {
-        viewModel.perform(MiniControlAction.PlayPause)
-        viewModel.perform(MiniControlAction.PlayNext)
-        viewModel.perform(MiniControlAction.PlayPrevious)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        // Should not emit any events on successful actions
-        expectNoEvents()
-      }
-
-      // Verify all user actions were called
-      coVerify(exactly = 1) { userActionUseCase.playPause() }
-      coVerify(exactly = 1) { userActionUseCase.next() }
-      coVerify(exactly = 1) { userActionUseCase.previous() }
-    }
-  }
-
-  @Test
-  fun networkCheckIsPerformedAtStartOfEachOperation() {
-    runTest(testDispatcher) {
-      // Given - connection starts as true, then becomes false
-      coEvery { connectionStateFlow.isConnected } returns true andThen false
-      coEvery { userActionUseCase.playPause() } returns Unit
-
-      // When & Then - First call should succeed, second should fail
-      viewModel.events.test {
-        viewModel.perform(MiniControlAction.PlayPause) // Should succeed (first call)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        expectNoEvents() // No events on success
-
-        viewModel.perform(MiniControlAction.PlayPause) // Should fail (second call)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val event = awaitItem()
-        assertThat(event).isEqualTo(MiniControlUiMessages.NetworkUnavailable)
-      }
-
-      // Verify user action was called only once (for successful call)
-      coVerify(exactly = 1) { userActionUseCase.playPause() }
-    }
-  }
-
-  @Test
-  fun concurrentActionsShouldHandleNetworkFailuresIndependently() {
-    runTest(testDispatcher) {
-      // Given
-      coEvery { connectionStateFlow.isConnected } returns true
-      coEvery { userActionUseCase.playPause() } throws IOException("Network error")
-      coEvery { userActionUseCase.next() } returns Unit
-
-      // When & Then
-      viewModel.events.test {
-        viewModel.perform(MiniControlAction.PlayPause)
-        viewModel.perform(MiniControlAction.PlayNext)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        // Should only emit one ActionFailed event (for PlayPause)
-        val event = awaitItem()
-        assertThat(event).isEqualTo(MiniControlUiMessages.ActionFailed)
-        expectNoEvents()
-      }
-
-      // Verify both user actions were called
-      coVerify(exactly = 1) { userActionUseCase.playPause() }
-      coVerify(exactly = 1) { userActionUseCase.next() }
+    viewModel.events.test {
+      viewModel.perform(MiniControlAction.PlayNext)
+      testDispatcher.scheduler.advanceUntilIdle()
+      assertThat(awaitItem()).isEqualTo(MiniControlUiMessages.ActionFailed)
     }
   }
 }

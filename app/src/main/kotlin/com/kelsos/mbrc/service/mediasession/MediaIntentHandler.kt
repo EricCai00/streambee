@@ -2,15 +2,10 @@ package com.kelsos.mbrc.service.mediasession
 
 import android.content.Intent
 import android.view.KeyEvent
-import com.kelsos.mbrc.core.networking.protocol.actions.UserAction
-import com.kelsos.mbrc.core.networking.protocol.base.Protocol
-import com.kelsos.mbrc.core.networking.protocol.usecases.UserActionUseCase
-import com.kelsos.mbrc.core.networking.protocol.usecases.VolumeModifyUseCase
-import kotlinx.coroutines.runBlocking
+import com.kelsos.mbrc.core.common.playback.LocalPlaybackController
 
 class MediaIntentHandler(
-  private val userActionUseCase: UserActionUseCase,
-  private val volumeModifyUseCase: VolumeModifyUseCase
+  private val devicePlaybackController: LocalPlaybackController
 ) {
   private var previousClick: Long = 0
 
@@ -32,10 +27,12 @@ class MediaIntentHandler(
   private fun detectDoubleClick(): Boolean {
     val currentClick = System.currentTimeMillis()
     if (currentClick - previousClick < DOUBLE_CLICK_INTERVAL) {
-      return postAction(UserAction(Protocol.PlayerNext, true))
+      devicePlaybackController.next()
+      return true
     }
     previousClick = currentClick
-    return postAction(UserAction(Protocol.PlayerPlayPause, true))
+    devicePlaybackController.playPause()
+    return true
   }
 
   fun handleMediaIntent(mediaIntent: Intent?): Boolean {
@@ -47,38 +44,34 @@ class MediaIntentHandler(
     return when (event.keyCode) {
       KeyEvent.KEYCODE_HEADSETHOOK -> detectDoubleClick()
 
-      KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> postAction(UserAction(Protocol.PlayerPlayPause, true))
+      KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> devicePlaybackController.playPause().let { true }
 
-      KeyEvent.KEYCODE_MEDIA_PLAY -> postAction(UserAction(Protocol.PlayerPlay, true))
+      KeyEvent.KEYCODE_MEDIA_PLAY -> devicePlaybackController.play().let { true }
 
-      KeyEvent.KEYCODE_MEDIA_PAUSE -> postAction(UserAction(Protocol.PlayerPause, true))
+      KeyEvent.KEYCODE_MEDIA_PAUSE -> devicePlaybackController.pause().let { true }
 
-      KeyEvent.KEYCODE_MEDIA_STOP -> postAction(UserAction(Protocol.PlayerStop, true))
+      KeyEvent.KEYCODE_MEDIA_STOP -> devicePlaybackController.stop().let { true }
 
-      KeyEvent.KEYCODE_MEDIA_NEXT -> postAction(UserAction(Protocol.PlayerNext, true))
+      KeyEvent.KEYCODE_MEDIA_NEXT -> devicePlaybackController.next().let { true }
 
-      KeyEvent.KEYCODE_MEDIA_PREVIOUS -> postAction(UserAction(Protocol.PlayerPrevious, true))
+      KeyEvent.KEYCODE_MEDIA_PREVIOUS -> devicePlaybackController.previous().let { true }
 
       KeyEvent.KEYCODE_VOLUME_UP -> {
-        runBlocking { volumeModifyUseCase.increase() }
+        devicePlaybackController.adjustVolume(10)
         true
       }
 
       KeyEvent.KEYCODE_VOLUME_DOWN -> {
-        runBlocking { volumeModifyUseCase.decrease() }
+        devicePlaybackController.adjustVolume(-10)
         true
       }
 
-      KeyEvent.KEYCODE_VOLUME_MUTE -> postAction(UserAction.toggle(Protocol.PlayerMute))
+      KeyEvent.KEYCODE_VOLUME_MUTE -> devicePlaybackController.toggleMute().let { true }
 
       else -> false
     }
   }
 
-  private fun postAction(action: UserAction): Boolean {
-    userActionUseCase.tryPerform(action)
-    return true
-  }
 
   companion object {
     private const val DOUBLE_CLICK_INTERVAL = 350

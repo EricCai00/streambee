@@ -1,6 +1,7 @@
 package com.kelsos.mbrc.feature.library
 
 import com.kelsos.mbrc.core.data.library.album.AlbumRepository
+import com.kelsos.mbrc.core.common.playback.LocalPlaybackController
 import com.kelsos.mbrc.core.data.library.artist.ArtistRepository
 import com.kelsos.mbrc.core.data.library.genre.GenreRepository
 import com.kelsos.mbrc.core.data.library.track.TrackRepository
@@ -21,6 +22,7 @@ import com.kelsos.mbrc.feature.library.domain.LibrarySyncWorker
 import com.kelsos.mbrc.feature.library.genres.BrowseGenreViewModel
 import com.kelsos.mbrc.feature.library.genres.GenreRepositoryImpl
 import com.kelsos.mbrc.feature.library.queue.QueueHandler
+import com.kelsos.mbrc.feature.library.playback.DevicePlaybackController
 import com.kelsos.mbrc.feature.library.tracks.AlbumTracksViewModel
 import com.kelsos.mbrc.feature.library.tracks.BrowseTrackViewModel
 import com.kelsos.mbrc.feature.library.tracks.TrackRepositoryImpl
@@ -59,6 +61,7 @@ val libraryModule = module {
 
   // Utilities
   singleOf(::CoverCache)
+  singleOf(::DevicePlaybackController) { bind<LocalPlaybackController>() }
   singleOf(::QueueHandler) { bind<PathQueueUseCase>() }
 
   // ViewModels

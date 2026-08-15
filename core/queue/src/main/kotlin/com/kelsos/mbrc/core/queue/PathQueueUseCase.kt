@@ -14,4 +14,7 @@ interface PathQueueUseCase {
    * @return Outcome with track count on success, or AppError on failure
    */
   suspend fun queuePath(path: String): Outcome<Int>
+
+  /** Queue a set of library paths as one local playlist and start the first track. */
+  suspend fun queuePaths(paths: List<String>): Outcome<Int>
 }

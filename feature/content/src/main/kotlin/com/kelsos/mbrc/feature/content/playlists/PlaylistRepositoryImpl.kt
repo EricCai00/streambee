@@ -13,12 +13,15 @@ import com.kelsos.mbrc.core.networking.api.ContentApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.withContext
+import java.util.concurrent.ConcurrentHashMap
 
 class PlaylistRepositoryImpl(
   private val dao: PlaylistDao,
   private val contentApi: ContentApi,
   private val dispatchers: AppCoroutineDispatchers
 ) : PlaylistRepository {
+  private val playlistTrackPaths = ConcurrentHashMap<String, List<String>>()
+
   override suspend fun count(): Long = withContext(dispatchers.database) { dao.count() }
 
   override fun getAll(): Flow<PagingData<Playlist>> = paged({ dao.getAll() }) { it.toPlaylist() }
@@ -34,6 +37,9 @@ class PlaylistRepositoryImpl(
           }
         }.collect { items ->
           val playlists = items.map { it.toEntity().copy(dateAdded = added) }
+          items.forEach { playlist ->
+            playlistTrackPaths[playlist.url] = playlist.tracks.map { it.src }
+          }
           withContext(dispatchers.database) {
             dao.insertAll(playlists)
           }
@@ -59,4 +65,7 @@ class PlaylistRepositoryImpl(
       dao.getBrowserItemsAtPath(path)
     }
   }) { it }
+
+  override suspend fun getTrackPaths(url: String): List<String> =
+    playlistTrackPaths[url].orEmpty()
 }

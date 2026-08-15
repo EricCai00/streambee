@@ -7,10 +7,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.telephony.TelephonyManager
-import com.kelsos.mbrc.core.networking.protocol.actions.UserAction
+import com.kelsos.mbrc.core.common.playback.LocalPlaybackController
 import com.kelsos.mbrc.core.networking.protocol.base.Protocol
-import com.kelsos.mbrc.core.networking.protocol.usecases.UserActionUseCase
-import com.kelsos.mbrc.core.networking.protocol.usecases.VolumeModifyUseCase
 import com.kelsos.mbrc.core.platform.intents.MediaIntentActions
 import com.kelsos.mbrc.feature.settings.data.CallAction
 import com.kelsos.mbrc.feature.settings.domain.SettingsManager
@@ -29,8 +27,7 @@ import timber.log.Timber
  */
 class NotificationActionReceiver(
   private val settingsManager: SettingsManager,
-  private val userActionUseCase: UserActionUseCase,
-  private val volumeModifyUseCase: VolumeModifyUseCase
+  private val devicePlaybackController: LocalPlaybackController
 ) : BroadcastReceiver() {
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
@@ -98,13 +95,21 @@ class NotificationActionReceiver(
       when (callAction) {
         CallAction.Pause -> performAction(Protocol.PlayerPause)
         CallAction.Stop -> performAction(Protocol.PlayerStop)
-        CallAction.Reduce -> volumeModifyUseCase.reduceVolume()
+        CallAction.Reduce -> devicePlaybackController.adjustVolume(-50)
         else -> Timber.v("No call action set, nothing to do.")
       }
     }
   }
 
   private fun performAction(protocol: Protocol) {
-    userActionUseCase.tryPerform(UserAction.create(protocol))
+    when (protocol) {
+      Protocol.PlayerPlayPause -> devicePlaybackController.playPause()
+      Protocol.PlayerPlay -> devicePlaybackController.play()
+      Protocol.PlayerPause -> devicePlaybackController.pause()
+      Protocol.PlayerStop -> devicePlaybackController.stop()
+      Protocol.PlayerNext -> devicePlaybackController.next()
+      Protocol.PlayerPrevious -> devicePlaybackController.previous()
+      else -> Unit
+    }
   }
 }
