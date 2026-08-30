@@ -21,6 +21,7 @@ import com.kelsos.mbrc.core.common.state.PlayerState
 import com.kelsos.mbrc.core.common.state.PlayingPosition
 import com.kelsos.mbrc.core.common.state.Repeat
 import com.kelsos.mbrc.core.common.state.ShuffleMode
+import com.kelsos.mbrc.core.common.state.TrackDetails
 import com.kelsos.mbrc.core.common.utilities.coroutines.AppCoroutineDispatchers
 import com.kelsos.mbrc.core.data.history.PlaybackHistoryDao
 import com.kelsos.mbrc.core.data.history.PlaybackHistoryEntry
@@ -279,6 +280,7 @@ class DevicePlaybackController(
     favoriteJob?.cancel()
     appState.updateLyrics(emptyList())
     appState.updateTrackRating(com.kelsos.mbrc.core.common.state.TrackRating())
+    appState.updateTrackDetails(TrackDetails.EMPTY)
     queueRevision += 1
     _queue.value = emptyList()
     statePreferences.edit().clear().apply()
@@ -657,9 +659,13 @@ class DevicePlaybackController(
       )
       if (publishedTrackPath != track.src) {
         publishedTrackPath = track.src
+        appState.updateTrackDetails(track.toTrackDetails())
         loadLyrics(track.src)
         loadFavorite(track.src)
       }
+    } else if (publishedTrackPath != null) {
+      publishedTrackPath = null
+      appState.updateTrackDetails(TrackDetails.EMPTY)
     }
     val state = when {
       player.isPlaying -> PlayerState.Playing
@@ -1070,3 +1076,10 @@ class DevicePlaybackController(
     private const val TRACK_FIELD_COUNT = 10
   }
 }
+
+internal fun Track.toTrackDetails(): TrackDetails = TrackDetails(
+  albumArtist = albumArtist,
+  genre = genre,
+  trackNo = trackno.takeIf { it > 0 }?.toString().orEmpty(),
+  discNo = disc.takeIf { it > 0 }?.toString().orEmpty()
+)

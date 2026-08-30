@@ -62,6 +62,8 @@ object SettingsDataStore {
     val LIBRARY_TRACK_DEFAULT_ACTION = stringPreferencesKey("mbrc.library_track_default")
     val ALBUM_ARTISTS_ONLY = booleanPreferencesKey("mbrc.settings.album_artist_only")
     val INDEXED_LIBRARY_SCROLLBAR = booleanPreferencesKey("mbrc.library.indexed_scrollbar")
+    val ALBUM_LIST_PLAY_BUTTON = booleanPreferencesKey("mbrc.library.album_list_play_button")
+    val ALBUM_GRID_PLAY_BUTTON = booleanPreferencesKey("mbrc.library.album_grid_play_button")
     val LAST_UPDATE_CHECK = longPreferencesKey("last_update_check")
     val LAST_VERSION_RUN = longPreferencesKey(LAST_VERSION_RUN_KEY_NAME)
     val REQUIRED_UPDATE_CHECK = longPreferencesKey("update_required_check")
@@ -88,6 +90,8 @@ object SettingsDataStore {
     const val LIBRARY_TRACK_DEFAULT_ACTION = "now"
     const val ALBUM_ARTISTS_ONLY = false
     const val INDEXED_LIBRARY_SCROLLBAR = true
+    const val ALBUM_LIST_PLAY_BUTTON = true
+    const val ALBUM_GRID_PLAY_BUTTON = false
     const val LAST_UPDATE_CHECK = 0L
     const val LAST_VERSION_RUN = 0L
     const val REQUIRED_UPDATE_CHECK = 0L

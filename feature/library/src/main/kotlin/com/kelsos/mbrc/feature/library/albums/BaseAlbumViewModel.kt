@@ -17,6 +17,8 @@ abstract class BaseAlbumViewModel(
   connectionStateFlow: ConnectionStateFlow
 ) : BaseLibraryViewModel<AlbumUiMessage>(librarySettings, connectionStateFlow) {
   abstract val albums: Flow<PagingData<Album>>
+  val albumListPlayButtonEnabled: Flow<Boolean> = librarySettings.albumListPlayButtonFlow
+  val albumGridPlayButtonEnabled: Flow<Boolean> = librarySettings.albumGridPlayButtonFlow
 
   fun queue(queue: Queue, album: Album) {
     if (queue == Queue.Default) {

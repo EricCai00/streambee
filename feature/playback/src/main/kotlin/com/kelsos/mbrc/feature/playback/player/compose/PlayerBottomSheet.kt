@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Album
+import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,6 +40,7 @@ fun PlayerBottomSheet(
   onShowTrackDetails: () -> Unit,
   onGoToAlbum: (() -> Unit)?,
   onGoToArtist: (() -> Unit)?,
+  onGoToGenre: (() -> Unit)?,
   onDismiss: () -> Unit,
   viewModel: RatingDialogViewModel = koinViewModel()
 ) {
@@ -127,6 +129,32 @@ fun PlayerBottomSheet(
           )
           Text(
             text = stringResource(R.string.player_go_to_artist),
+            style = MaterialTheme.typography.bodyLarge
+          )
+        }
+      }
+
+      // Go to Genre option
+      if (onGoToGenre != null) {
+        Row(
+          modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = {
+              onDismiss()
+              onGoToGenre()
+            })
+            .padding(vertical = 12.dp),
+          horizontalArrangement = Arrangement.spacedBy(16.dp),
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          Icon(
+            imageVector = Icons.Default.LibraryMusic,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(24.dp)
+          )
+          Text(
+            text = stringResource(R.string.player_go_to_genre),
             style = MaterialTheme.typography.bodyLarge
           )
         }

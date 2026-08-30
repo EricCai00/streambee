@@ -189,6 +189,31 @@ class GenreRepositoryTest : KoinTest {
   }
 
   @Test
+  fun getByNameShouldReturnCaseInsensitiveExactMatch() {
+    runTest(testDispatcher) {
+      dao.insertAll(
+        listOf(
+          GenreEntity(genre = "Rock", dateAdded = 1000L),
+          GenreEntity(genre = "Pop Rock", dateAdded = 1000L)
+        )
+      )
+
+      val result = repository.getByName("rock")
+
+      assertThat(result?.genre).isEqualTo("Rock")
+    }
+  }
+
+  @Test
+  fun getByNameShouldReturnNullWhenNotExists() {
+    runTest(testDispatcher) {
+      val result = repository.getByName("Classical")
+
+      assertThat(result).isNull()
+    }
+  }
+
+  @Test
   fun getRemoteShouldFetchAndStoreNewGenres() {
     runTest(testDispatcher) {
       val remoteGenres =

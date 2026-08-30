@@ -103,4 +103,8 @@ class GenreRepositoryImpl(
       return@withContext entity.toGenre()
     }
   }
+
+  override suspend fun getByName(name: String): Genre? = withContext(dispatchers.database) {
+    dao.getByName(name)?.toGenre()
+  }
 }

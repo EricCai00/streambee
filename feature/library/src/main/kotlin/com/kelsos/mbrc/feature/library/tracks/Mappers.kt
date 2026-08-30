@@ -31,7 +31,8 @@ object TrackDtoMapper : Mapper<TrackDto, TrackEntity> {
     album = from.album,
     genre = from.genre,
     year = from.year,
-    sortableYear = parseYear(from.year)
+    sortableYear = parseYear(from.year),
+    loved = from.loved
   )
 }
 
@@ -46,7 +47,8 @@ object TrackEntityMapper : Mapper<TrackEntity, Track> {
     album = from.album,
     genre = from.genre,
     year = from.year,
-    id = from.id
+    id = from.id,
+    loved = from.loved
   )
 }
 

@@ -42,6 +42,8 @@ fun AlbumsTab(
   isSyncing: Boolean,
   showSortSheet: Boolean,
   isGridMode: Boolean,
+  albumListPlayButtonEnabled: Boolean,
+  albumGridPlayButtonEnabled: Boolean,
   indexedScrollbar: Boolean,
   onNavigateToAlbumTracks: (Album) -> Unit,
   onDismissSortSheet: () -> Unit,
@@ -102,14 +104,16 @@ fun AlbumsTab(
       AlbumGridItem(
         album = album,
         onClick = { viewModel.queue(Queue.Default, album) },
-        onQueue = { queue -> viewModel.queue(queue, album) }
+        onQueue = { queue -> viewModel.queue(queue, album) },
+        showPlayButton = albumGridPlayButtonEnabled
       )
     }
   ) { album ->
     AlbumListItem(
       album = album,
       onClick = { viewModel.queue(Queue.Default, album) },
-      onQueue = { queue -> viewModel.queue(queue, album) }
+      onQueue = { queue -> viewModel.queue(queue, album) },
+      showPlayButton = albumListPlayButtonEnabled
     )
   }
 

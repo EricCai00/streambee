@@ -1,5 +1,6 @@
 package com.kelsos.mbrc.feature.library.compose.drilldown
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -30,7 +31,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
@@ -57,6 +60,8 @@ import org.koin.androidx.compose.koinViewModel
 fun AlbumTracksScreen(
   albumInfo: AlbumInfo,
   onNavigateBack: () -> Unit,
+  onNavigateToArtist: (String) -> Unit,
+  onNavigateToGenre: (String) -> Unit,
   onNavigateToPlayer: () -> Unit,
   snackbarHostState: SnackbarHostState,
   modifier: Modifier = Modifier,
@@ -108,6 +113,10 @@ fun AlbumTracksScreen(
 
         else -> {
           val listState = rememberLazyListState()
+          val loadedTracks = tracks.itemSnapshotList.items
+          val representativeTrack = loadedTracks.firstOrNull()
+          val genre = loadedTracks.firstOrNull { it.genre.isNotBlank() }?.genre.orEmpty()
+          val year = loadedTracks.firstOrNull { it.year.isNotBlank() }?.year.orEmpty()
           LazyColumn(
             state = listState,
             modifier = Modifier.weight(1f),
@@ -119,7 +128,11 @@ fun AlbumTracksScreen(
             ) {
               AlbumHeaderHorizontal(
                 albumInfo = albumInfo,
-                trackPath = tracks.itemSnapshotList.items.firstOrNull()?.src,
+                trackPath = representativeTrack?.src,
+                genre = genre,
+                year = year,
+                onArtistClick = onNavigateToArtist,
+                onGenreClick = onNavigateToGenre,
                 onPlayClick = { viewModel.queueAlbum(albumInfo) },
                 modifier = Modifier.fillMaxWidth()
               )
@@ -157,13 +170,17 @@ fun AlbumTracksScreen(
 private fun AlbumHeaderHorizontal(
   albumInfo: AlbumInfo,
   trackPath: String?,
+  genre: String,
+  year: String,
+  onArtistClick: (String) -> Unit,
+  onGenreClick: (String) -> Unit,
   onPlayClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   Row(
     modifier = modifier
       .fillMaxWidth()
-      .height(156.dp)
+      .height(180.dp)
       .padding(16.dp),
     verticalAlignment = Alignment.Top
   ) {
@@ -175,14 +192,14 @@ private fun AlbumHeaderHorizontal(
         artist = albumInfo.artist,
         album = albumInfo.album,
         trackPath = trackPath,
-        size = 124.dp
+        size = 148.dp
       )
     }
     Spacer(modifier = Modifier.width(16.dp))
     Column(
       modifier = Modifier
         .weight(1f)
-        .height(124.dp),
+        .height(148.dp),
       verticalArrangement = Arrangement.SpaceBetween
     ) {
       Column {
@@ -196,10 +213,59 @@ private fun AlbumHeaderHorizontal(
         Text(
           text = albumInfo.artist.ifEmpty { stringResource(R.string.unknown_artist) },
           style = MaterialTheme.typography.bodyLarge,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          color = if (albumInfo.artist.isNotBlank()) {
+            MaterialTheme.colorScheme.primary
+          } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+          },
+          textDecoration = if (albumInfo.artist.isNotBlank()) {
+            TextDecoration.Underline
+          } else {
+            null
+          },
           maxLines = 1,
-          overflow = TextOverflow.Ellipsis
+          overflow = TextOverflow.Ellipsis,
+          modifier = Modifier.clickable(
+            enabled = albumInfo.artist.isNotBlank(),
+            role = Role.Button,
+            onClick = { onArtistClick(albumInfo.artist) }
+          )
         )
+        if (year.isNotBlank() || genre.isNotBlank()) {
+          Row(verticalAlignment = Alignment.CenterVertically) {
+            if (year.isNotBlank()) {
+              Text(
+                text = year,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1
+              )
+            }
+            if (year.isNotBlank() && genre.isNotBlank()) {
+              Text(
+                text = " • ",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+              )
+            }
+            if (genre.isNotBlank()) {
+              Text(
+                text = genre,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+                textDecoration = TextDecoration.Underline,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                  .weight(1f, fill = false)
+                  .clickable(
+                    role = Role.Button,
+                    onClick = { onGenreClick(genre) }
+                  )
+              )
+            }
+          }
+        }
       }
       FilledIconButton(
         onClick = onPlayClick,

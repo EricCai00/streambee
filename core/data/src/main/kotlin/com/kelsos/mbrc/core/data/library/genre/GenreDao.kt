@@ -89,4 +89,7 @@ interface GenreDao {
 
   @Query("select * from genre where id = :id")
   fun getById(id: Long): GenreEntity?
+
+  @Query("select * from genre where genre = :name collate nocase limit 1")
+  fun getByName(name: String): GenreEntity?
 }

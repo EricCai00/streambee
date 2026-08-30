@@ -448,4 +448,29 @@ class DatabaseMigrationTest {
     cursor.close()
     db.close()
   }
+
+  @Test
+  fun migrate6To7AddsLovedTrackFlag() {
+    var db = helper.createDatabase(migrationTestDb, 6)
+    db.execSQL(
+      """
+      INSERT INTO track (
+        artist, title, src, trackno, disc, album_artist, album, genre,
+        year, sortable_year, date_added, id
+      ) VALUES (
+        'Artist', 'Title', 'D:/Music/song.flac', 1, 1, 'Artist', 'Album', 'Rock',
+        '2026', '2026', 123, 1
+      )
+      """.trimIndent()
+    )
+    db.close()
+
+    db = helper.runMigrationsAndValidate(migrationTestDb, 7, true, MIGRATION_6_7)
+
+    val cursor = db.query("SELECT loved FROM track WHERE id = 1")
+    assertThat(cursor.moveToFirst()).isTrue()
+    assertThat(cursor.getInt(cursor.getColumnIndex("loved"))).isEqualTo(0)
+    cursor.close()
+    db.close()
+  }
 }

@@ -72,6 +72,13 @@ class TrackMappersTest {
     assertThat(entity.year).isEqualTo("1979")
   }
 
+  @Test
+  fun `toEntity should map loved from dto`() {
+    val entity = createTrackDto(loved = true).toEntity()
+
+    assertThat(entity.loved).isTrue()
+  }
+
   // endregion
 
   // region Year parsing tests
@@ -210,7 +217,8 @@ class TrackMappersTest {
       genre = "Rock",
       year = "1975",
       sortableYear = "1975",
-      id = 42
+      id = 42,
+      loved = true
     )
     val track = entity.toTrack()
 
@@ -224,6 +232,7 @@ class TrackMappersTest {
     assertThat(track.genre).isEqualTo("Rock")
     assertThat(track.year).isEqualTo("1975")
     assertThat(track.id).isEqualTo(42)
+    assertThat(track.loved).isTrue()
   }
 
   @Test
@@ -306,7 +315,8 @@ class TrackMappersTest {
     albumArtist: String = "Album Artist",
     album: String = "Album",
     genre: String = "Genre",
-    year: String = "2020"
+    year: String = "2020",
+    loved: Boolean = false
   ) = TrackDto(
     artist = artist,
     title = title,
@@ -316,7 +326,8 @@ class TrackMappersTest {
     albumArtist = albumArtist,
     album = album,
     genre = genre,
-    year = year
+    year = year,
+    loved = loved
   )
 
   private fun createTrackEntity(

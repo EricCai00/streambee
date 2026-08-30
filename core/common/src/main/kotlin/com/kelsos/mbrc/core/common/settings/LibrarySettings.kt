@@ -10,8 +10,12 @@ interface LibrarySettings {
   val shouldDisplayOnlyArtists: Flow<Boolean>
   val libraryTrackDefaultActionFlow: Flow<TrackAction>
   val indexedLibraryScrollbarFlow: Flow<Boolean>
+  val albumListPlayButtonFlow: Flow<Boolean>
+  val albumGridPlayButtonFlow: Flow<Boolean>
   suspend fun setShouldDisplayOnlyAlbumArtist(onlyAlbumArtist: Boolean)
   suspend fun setIndexedLibraryScrollbar(enabled: Boolean)
+  suspend fun setAlbumListPlayButton(enabled: Boolean)
+  suspend fun setAlbumGridPlayButton(enabled: Boolean)
 
   // Library sorting preferences
   val genreSortPreferenceFlow: Flow<GenreSortPreference>

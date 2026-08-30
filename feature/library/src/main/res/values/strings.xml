@@ -69,6 +69,7 @@
   <string name="unknown_artist">Unknown artist</string>
   <string name="unknown_title">Unknown title</string>
   <string name="unknown_genre_category">Uncategorized</string>
+  <string name="track_loved_description">Loved track</string>
 
   <!-- App playback history -->
   <string name="history_title">History</string>

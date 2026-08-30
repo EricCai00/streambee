@@ -36,5 +36,6 @@ fun TrackDto.toTrack(): Track = Track(
   album = album,
   genre = genre,
   year = year,
-  id = 0
+  id = 0,
+  loved = loved
 )

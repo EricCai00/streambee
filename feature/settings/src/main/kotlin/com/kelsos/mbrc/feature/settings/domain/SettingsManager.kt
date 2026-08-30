@@ -26,6 +26,8 @@ interface SettingsManager :
   override val libraryTrackDefaultActionFlow: Flow<TrackAction>
   override val shouldDisplayOnlyArtists: Flow<Boolean>
   override val indexedLibraryScrollbarFlow: Flow<Boolean>
+  override val albumListPlayButtonFlow: Flow<Boolean>
+  override val albumGridPlayButtonFlow: Flow<Boolean>
   val halfStarRatingFlow: Flow<Boolean>
   val showRatingOnPlayerFlow: Flow<Boolean>
   override val appScrobblingEnabledFlow: Flow<Boolean>
@@ -38,6 +40,8 @@ interface SettingsManager :
   suspend fun setLibraryTrackDefaultAction(action: TrackAction)
   override suspend fun setShouldDisplayOnlyAlbumArtist(onlyAlbumArtist: Boolean)
   override suspend fun setIndexedLibraryScrollbar(enabled: Boolean)
+  override suspend fun setAlbumListPlayButton(enabled: Boolean)
+  override suspend fun setAlbumGridPlayButton(enabled: Boolean)
   suspend fun setHalfStarRating(enabled: Boolean)
   suspend fun setShowRatingOnPlayer(enabled: Boolean)
   suspend fun setAppScrobblingEnabled(enabled: Boolean)

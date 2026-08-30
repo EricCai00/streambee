@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -12,12 +13,15 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -113,12 +117,7 @@ fun ArtistListItem(
     onLongClick = { menuExpanded = true },
     modifier = modifier,
     leadingContent = {
-      Icon(
-        imageVector = Icons.Default.Person,
-        contentDescription = null,
-        modifier = Modifier.size(24.dp),
-        tint = MaterialTheme.colorScheme.primary
-      )
+      ArtistPicture(artist = artist.artist)
     },
     trailingContent = {
       Box(modifier = Modifier.wrapContentSize(Alignment.TopEnd)) {
@@ -138,7 +137,8 @@ fun AlbumListItem(
   album: Album,
   onClick: () -> Unit,
   onQueue: (Queue) -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
+  showPlayButton: Boolean = true
 ) {
   var menuExpanded by remember { mutableStateOf(false) }
   // Special case: grouped empty albums (both album and artist are empty)
@@ -169,7 +169,16 @@ fun AlbumListItem(
     },
     trailingContent = {
       Box(modifier = Modifier.wrapContentSize(Alignment.TopEnd)) {
-        MoreOptionsButton(onClick = { menuExpanded = true })
+        if (showPlayButton) {
+          IconButton(onClick = { onQueue(Queue.Now) }) {
+            Icon(
+              imageVector = Icons.Default.PlayArrow,
+              contentDescription = stringResource(R.string.menu_play)
+            )
+          }
+        } else {
+          MoreOptionsButton(onClick = { menuExpanded = true })
+        }
         LibraryItemMenu(
           expanded = menuExpanded,
           onDismiss = { menuExpanded = false },
@@ -186,7 +195,8 @@ fun AlbumGridItem(
   album: Album,
   onClick: () -> Unit,
   onQueue: (Queue) -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
+  showPlayButton: Boolean = false
 ) {
   var menuExpanded by remember { mutableStateOf(false) }
   val isGroupedEmptyAlbum = album.album.isEmpty() && album.artist.isEmpty()
@@ -209,44 +219,62 @@ fun AlbumGridItem(
         onLongClick = { menuExpanded = true }
       )
   ) {
-    Column {
-      HighResolutionAlbumGridCover(
-        artist = album.artist,
-        album = album.album,
-        modifier = Modifier
-          .fillMaxWidth()
-          .aspectRatio(1f)
-          .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-      )
-      Text(
-        text = title,
-        style = MaterialTheme.typography.bodySmall,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        modifier = Modifier
-          .fillMaxWidth()
-          .padding(horizontal = 8.dp)
-          .padding(top = 6.dp)
-      )
-      Text(
-        text = subtitle,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        modifier = Modifier
-          .fillMaxWidth()
-          .padding(horizontal = 8.dp)
-          .padding(bottom = 6.dp)
-      )
-    }
+    Box {
+      Column {
+        Box {
+          HighResolutionAlbumGridCover(
+            artist = album.artist,
+            album = album.album,
+            modifier = Modifier
+              .fillMaxWidth()
+              .aspectRatio(1f)
+              .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+          )
+          if (showPlayButton) {
+            FilledIconButton(
+              onClick = { onQueue(Queue.Now) },
+              modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(8.dp)
+                .size(40.dp)
+            ) {
+              Icon(
+                imageVector = Icons.Default.PlayArrow,
+                contentDescription = stringResource(R.string.menu_play)
+              )
+            }
+          }
+        }
+        Text(
+          text = title,
+          style = MaterialTheme.typography.bodySmall,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis,
+          modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp)
+            .padding(top = 6.dp)
+        )
+        Text(
+          text = subtitle,
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis,
+          modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp)
+            .padding(bottom = 6.dp)
+        )
+      }
 
-    Box(modifier = Modifier.wrapContentSize(Alignment.TopEnd)) {
-      LibraryItemMenu(
-        expanded = menuExpanded,
-        onDismiss = { menuExpanded = false },
-        onQueue = onQueue
-      )
+      Box(modifier = Modifier.align(Alignment.TopEnd)) {
+        LibraryItemMenu(
+          expanded = menuExpanded,
+          onDismiss = { menuExpanded = false },
+          onQueue = onQueue
+        )
+      }
     }
   }
 }
@@ -294,14 +322,24 @@ fun TrackListItem(
       }
     },
     trailingContent = {
-      Box(modifier = Modifier.wrapContentSize(Alignment.TopEnd)) {
-        MoreOptionsButton(onClick = { menuExpanded = true })
-        TrackItemMenu(
-          expanded = menuExpanded,
-          onDismiss = { menuExpanded = false },
-          onQueue = onQueue,
-          showExtendedActions = showExtendedActions
-        )
+      Row(verticalAlignment = Alignment.CenterVertically) {
+        if (track.loved) {
+          Icon(
+            imageVector = Icons.Default.Favorite,
+            contentDescription = stringResource(R.string.track_loved_description),
+            modifier = Modifier.size(20.dp),
+            tint = MaterialTheme.colorScheme.error
+          )
+        }
+        Box(modifier = Modifier.wrapContentSize(Alignment.TopEnd)) {
+          MoreOptionsButton(onClick = { menuExpanded = true })
+          TrackItemMenu(
+            expanded = menuExpanded,
+            onDismiss = { menuExpanded = false },
+            onQueue = onQueue,
+            showExtendedActions = showExtendedActions
+          )
+        }
       }
     }
   )

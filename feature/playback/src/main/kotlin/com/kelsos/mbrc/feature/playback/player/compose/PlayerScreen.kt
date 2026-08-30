@@ -33,6 +33,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Favorite
@@ -47,6 +48,8 @@ import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.SpeakerGroup
 import androidx.compose.material.icons.outlined.Lyrics
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -113,6 +116,7 @@ fun PlayerScreen(
   onNavigateToNowPlaying: () -> Unit,
   onNavigateToAlbum: (album: String, artist: String) -> Unit,
   onNavigateToArtist: (artist: String) -> Unit,
+  onNavigateToGenre: (genre: String) -> Unit,
   snackbarHostState: SnackbarHostState,
   onOpenDrawer: () -> Unit,
   modifier: Modifier = Modifier,
@@ -128,6 +132,7 @@ fun PlayerScreen(
   val isScrobbling by viewModel.isScrobbling.collectAsStateWithLifecycle()
   val trackDetails by viewModel.trackDetails.collectAsStateWithLifecycle()
   val showRatingOnPlayer by viewModel.showRatingOnPlayer.collectAsStateWithLifecycle()
+  val queue by viewModel.queue.collectAsStateWithLifecycle()
 
   // Lyrics state
   val lyrics by lyricsViewModel.lyrics.collectAsStateWithLifecycle(initialValue = emptyList())
@@ -142,6 +147,7 @@ fun PlayerScreen(
   var showOutputSelection by remember { mutableStateOf(false) }
   var showLyrics by remember { mutableStateOf(false) }
   var showTrackDetails by remember { mutableStateOf(false) }
+  var showQueue by remember { mutableStateOf(false) }
 
   val title = stringResource(R.string.nav_now_playing)
 
@@ -170,7 +176,19 @@ fun PlayerScreen(
       onGoToArtist = playingTrack.artist.takeIf { it.isNotEmpty() }?.let {
         { onNavigateToArtist(playingTrack.artist) }
       },
+      onGoToGenre = trackDetails.genre.takeIf { it.isNotBlank() }?.let {
+        { onNavigateToGenre(trackDetails.genre) }
+      },
       onDismiss = { showBottomSheet = false }
+    )
+  }
+
+  if (showQueue) {
+    PlayerQueueBottomSheet(
+      queue = queue,
+      playingTrackPath = playingTrack.path,
+      onTrackClick = viewModel::playQueueItem,
+      onDismiss = { showQueue = false }
     )
   }
 
@@ -214,7 +232,8 @@ fun PlayerScreen(
         onTrackInfoClick = onNavigateToNowPlaying,
         onLyricsClick = { showLyrics = true },
         onOutputClick = { showOutputSelection = true },
-        onRatingClick = { showBottomSheet = true }
+        onRatingClick = { showBottomSheet = true },
+        onQueueClick = { showQueue = true }
       )
 
       // Lyrics overlay with slide animation from bottom
@@ -261,6 +280,7 @@ fun PlayerScreenContent(
   onLyricsClick: () -> Unit,
   onOutputClick: () -> Unit,
   onRatingClick: () -> Unit,
+  onQueueClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   val configuration = LocalConfiguration.current
@@ -319,7 +339,8 @@ fun PlayerScreenContent(
         onTrackInfoClick = onTrackInfoClick,
         onLyricsClick = onLyricsClick,
         onOutputClick = onOutputClick,
-        onRatingClick = onRatingClick
+        onRatingClick = onRatingClick,
+        onQueueClick = onQueueClick
       )
 
       isTablet -> TabletPlayerLayout(
@@ -339,7 +360,8 @@ fun PlayerScreenContent(
         onTrackInfoClick = onTrackInfoClick,
         onLyricsClick = onLyricsClick,
         onOutputClick = onOutputClick,
-        onRatingClick = onRatingClick
+        onRatingClick = onRatingClick,
+        onQueueClick = onQueueClick
       )
 
       else -> PortraitPlayerLayout(
@@ -359,7 +381,8 @@ fun PlayerScreenContent(
         onTrackInfoClick = onTrackInfoClick,
         onLyricsClick = onLyricsClick,
         onOutputClick = onOutputClick,
-        onRatingClick = onRatingClick
+        onRatingClick = onRatingClick,
+        onQueueClick = onQueueClick
       )
     }
   }
@@ -511,6 +534,7 @@ private fun PortraitPlayerLayout(
   onLyricsClick: () -> Unit,
   onOutputClick: () -> Unit,
   onRatingClick: () -> Unit,
+  onQueueClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   Column(
@@ -585,7 +609,8 @@ private fun PortraitPlayerLayout(
     // Playback controls
     PlaybackControls(
       playbackState = playbackState,
-      actions = actions
+      actions = actions,
+      onQueueClick = onQueueClick
     )
 
     Spacer(modifier = Modifier.height(24.dp))
@@ -621,6 +646,7 @@ private fun TabletPlayerLayout(
   onLyricsClick: () -> Unit,
   onOutputClick: () -> Unit,
   onRatingClick: () -> Unit,
+  onQueueClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   // For tablets in portrait, use a centered layout with max width constraint
@@ -685,7 +711,8 @@ private fun TabletPlayerLayout(
       // Playback controls
       PlaybackControls(
         playbackState = playbackState,
-        actions = actions
+        actions = actions,
+        onQueueClick = onQueueClick
       )
 
       Spacer(modifier = Modifier.height(32.dp))
@@ -720,6 +747,7 @@ private fun LandscapePlayerLayout(
   onLyricsClick: () -> Unit,
   onOutputClick: () -> Unit,
   onRatingClick: () -> Unit,
+  onQueueClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   Row(
@@ -795,7 +823,8 @@ private fun LandscapePlayerLayout(
       // Playback controls
       PlaybackControls(
         playbackState = playbackState,
-        actions = actions
+        actions = actions,
+        onQueueClick = onQueueClick
       )
 
       Spacer(modifier = Modifier.height(24.dp))
@@ -1105,17 +1134,18 @@ private fun VolumeSection(
 }
 
 @Composable
-private fun PlaybackControls(playbackState: PlaybackState, actions: IPlayerActions) {
+private fun PlaybackControls(
+  playbackState: PlaybackState,
+  actions: IPlayerActions,
+  onQueueClick: () -> Unit
+) {
   Row(
     modifier = Modifier.fillMaxWidth(),
     horizontalArrangement = Arrangement.SpaceEvenly,
     verticalAlignment = Alignment.CenterVertically
   ) {
-    // Shuffle button
-    ShuffleButton(
-      shuffleMode = playbackState.shuffle,
-      onClick = actions.shuffle
-    )
+    // Shuffle and repeat share one menu, leaving the matching right-side slot for queue.
+    PlaybackModeButton(playbackState = playbackState, actions = actions)
 
     // Previous button - larger
     IconButton(
@@ -1176,20 +1206,12 @@ private fun PlaybackControls(playbackState: PlaybackState, actions: IPlayerActio
       )
     }
 
-    // Repeat button
-    IconButton(onClick = actions.repeat) {
+    // Quick queue button
+    IconButton(onClick = onQueueClick) {
       Icon(
-        imageVector = if (playbackState.repeat == Repeat.One) {
-          Icons.Default.RepeatOne
-        } else {
-          Icons.Default.Repeat
-        },
-        contentDescription = stringResource(R.string.main_button_repeat_description),
-        tint = if (playbackState.repeat != Repeat.None) {
-          MaterialTheme.colorScheme.primary
-        } else {
-          MaterialTheme.colorScheme.onSurfaceVariant
-        },
+        imageVector = Icons.AutoMirrored.Filled.QueueMusic,
+        contentDescription = stringResource(R.string.player_show_queue),
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.size(24.dp)
       )
     }
@@ -1197,28 +1219,96 @@ private fun PlaybackControls(playbackState: PlaybackState, actions: IPlayerActio
 }
 
 @Composable
-private fun ShuffleButton(shuffleMode: ShuffleMode, onClick: () -> Unit) {
-  val isActive = shuffleMode != ShuffleMode.Off
-  val isAutoDj = shuffleMode == ShuffleMode.AutoDJ
+private fun PlaybackModeButton(playbackState: PlaybackState, actions: IPlayerActions) {
+  var expanded by remember { mutableStateOf(false) }
+  val shuffleActive = playbackState.shuffle != ShuffleMode.Off
+  val repeatActive = playbackState.repeat != Repeat.None
 
-  IconButton(onClick = onClick) {
-    if (isAutoDj) {
-      Icon(
-        imageVector = Icons.Default.Headset,
-        contentDescription = stringResource(R.string.main_button_shuffle_description),
-        tint = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.size(24.dp)
-      )
-    } else {
-      Icon(
-        imageVector = Icons.Default.Shuffle,
-        contentDescription = stringResource(R.string.main_button_shuffle_description),
-        tint = if (isActive) {
-          MaterialTheme.colorScheme.primary
-        } else {
-          MaterialTheme.colorScheme.onSurfaceVariant
+  Box {
+    IconButton(onClick = { expanded = true }) {
+      Box(modifier = Modifier.size(28.dp)) {
+        Icon(
+          imageVector = if (playbackState.shuffle == ShuffleMode.AutoDJ) {
+            Icons.Default.Headset
+          } else {
+            Icons.Default.Shuffle
+          },
+          contentDescription = stringResource(R.string.player_playback_modes),
+          tint = if (shuffleActive) {
+            MaterialTheme.colorScheme.primary
+          } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+          },
+          modifier = Modifier
+            .size(18.dp)
+            .align(Alignment.TopStart)
+        )
+        Icon(
+          imageVector = if (playbackState.repeat == Repeat.One) {
+            Icons.Default.RepeatOne
+          } else {
+            Icons.Default.Repeat
+          },
+          contentDescription = null,
+          tint = if (repeatActive) {
+            MaterialTheme.colorScheme.primary
+          } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+          },
+          modifier = Modifier
+            .size(18.dp)
+            .align(Alignment.BottomEnd)
+        )
+      }
+    }
+
+    DropdownMenu(
+      expanded = expanded,
+      onDismissRequest = { expanded = false }
+    ) {
+      DropdownMenuItem(
+        text = { Text(stringResource(R.string.player_mode_shuffle)) },
+        leadingIcon = {
+          Icon(
+            imageVector = if (playbackState.shuffle == ShuffleMode.AutoDJ) {
+              Icons.Default.Headset
+            } else {
+              Icons.Default.Shuffle
+            },
+            contentDescription = null,
+            tint = if (shuffleActive) {
+              MaterialTheme.colorScheme.primary
+            } else {
+              MaterialTheme.colorScheme.onSurfaceVariant
+            }
+          )
         },
-        modifier = Modifier.size(24.dp)
+        onClick = {
+          expanded = false
+          actions.shuffle()
+        }
+      )
+      DropdownMenuItem(
+        text = { Text(stringResource(R.string.player_mode_repeat)) },
+        leadingIcon = {
+          Icon(
+            imageVector = if (playbackState.repeat == Repeat.One) {
+              Icons.Default.RepeatOne
+            } else {
+              Icons.Default.Repeat
+            },
+            contentDescription = null,
+            tint = if (repeatActive) {
+              MaterialTheme.colorScheme.primary
+            } else {
+              MaterialTheme.colorScheme.onSurfaceVariant
+            }
+          )
+        },
+        onClick = {
+          expanded = false
+          actions.repeat()
+        }
       )
     }
   }

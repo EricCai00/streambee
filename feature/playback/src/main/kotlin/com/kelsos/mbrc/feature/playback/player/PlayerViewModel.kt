@@ -3,6 +3,7 @@ package com.kelsos.mbrc.feature.playback.player
 import androidx.lifecycle.viewModelScope
 import com.kelsos.mbrc.core.common.mvvm.BaseViewModel
 import com.kelsos.mbrc.core.common.playback.LocalPlaybackController
+import com.kelsos.mbrc.core.common.playback.LocalQueueTrack
 import com.kelsos.mbrc.core.common.settings.ChangeLogChecker
 import com.kelsos.mbrc.core.common.state.AppStateFlow
 import com.kelsos.mbrc.core.common.state.BasicTrackInfo
@@ -26,7 +27,7 @@ class PlayerViewModel(
   appState: AppStateFlow,
   private val userActionUseCase: UserActionUseCase,
   settingsManager: SettingsManager,
-  devicePlaybackController: LocalPlaybackController
+  private val devicePlaybackController: LocalPlaybackController
 ) : BaseViewModel<PlayerUiMessage>() {
   // Separate flows for granular recomposition
   val playingTrack: StateFlow<TrackInfo> = appState.playingTrack
@@ -58,6 +59,8 @@ class PlayerViewModel(
   val showRatingOnPlayer: StateFlow<Boolean> = settingsManager.showRatingOnPlayerFlow
     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
+  val queue: StateFlow<List<LocalQueueTrack>> = devicePlaybackController.queue
+
   val actions: IPlayerActions = PlayerActions(
     userActionUseCase = userActionUseCase,
     scope = viewModelScope,
@@ -71,6 +74,10 @@ class PlayerViewModel(
         emit(PlayerUiMessage.ShowChangelog)
       }
     }
+  }
+
+  fun playQueueItem(index: Int) {
+    devicePlaybackController.playQueueItem(index)
   }
 
   companion object {

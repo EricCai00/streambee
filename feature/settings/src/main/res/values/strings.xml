@@ -2,6 +2,10 @@
 <resources>
     <string name="setting_indexed_library_scrollbar">Indexed library scrollbar</string>
     <string name="setting_indexed_library_scrollbar_summary">Show the year or first letter while dragging. Turn this off for a standard scrollbar.</string>
+    <string name="setting_album_list_play_button">Play button in album lists</string>
+    <string name="setting_album_list_play_button_summary">Show a play button instead of the three-dot menu. Long-press an album for more actions.</string>
+    <string name="setting_album_grid_play_button">Play button on album covers</string>
+    <string name="setting_album_grid_play_button_summary">Show a play button on albums in the cover grid.</string>
   <!-- Navigation -->
   <string name="nav_connections">Connections</string>
 

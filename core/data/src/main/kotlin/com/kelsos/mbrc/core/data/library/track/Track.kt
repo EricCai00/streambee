@@ -18,7 +18,8 @@ data class Track(
   val album: String,
   val genre: String,
   val year: String,
-  val id: Long
+  val id: Long,
+  val loved: Boolean = false
 )
 
 @Entity(tableName = "track", indices = [Index("src", name = "track_src_index", unique = true)])
@@ -46,7 +47,9 @@ data class TrackEntity(
   @ColumnInfo(name = "date_added")
   val dateAdded: Long = 0,
   @PrimaryKey(autoGenerate = true)
-  val id: Long = 0
+  val id: Long = 0,
+  @ColumnInfo
+  val loved: Boolean = false
 )
 
 class TrackPath(val src: String, val id: Long)

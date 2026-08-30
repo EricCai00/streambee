@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Base64
 import androidx.core.net.toUri
+import com.kelsos.mbrc.core.common.playback.LocalPlaybackController
 import com.kelsos.mbrc.core.common.state.AppStatePublisher
 import com.kelsos.mbrc.core.common.state.PlayerState
 import com.kelsos.mbrc.core.common.state.PlayerStatusModel
@@ -21,7 +22,6 @@ import com.kelsos.mbrc.core.networking.protocol.actions.PlayerStateHandler
 import com.kelsos.mbrc.core.networking.protocol.actions.PluginVersionHandler
 import com.kelsos.mbrc.core.networking.protocol.actions.TrackChangeNotifier
 import com.kelsos.mbrc.core.platform.state.toPlayingTrack
-import com.kelsos.mbrc.feature.library.playback.DevicePlaybackController
 import com.kelsos.mbrc.feature.playback.nowplaying.NowPlayingRepository
 import com.kelsos.mbrc.feature.settings.domain.PluginUpdateCheckUseCase
 import com.kelsos.mbrc.feature.widgets.WidgetUpdater
@@ -41,7 +41,7 @@ import timber.log.Timber
  */
 class PlayerStateHandlerImpl(
   private val appState: AppStatePublisher,
-  private val devicePlaybackController: DevicePlaybackController? = null
+  private val localPlaybackController: LocalPlaybackController? = null
 ) : PlayerStateHandler {
   override val playerStatus: Flow<PlayerStatusModel> = appState.playerStatus
   override val playingTrack: Flow<TrackInfo> = appState.playingTrack
@@ -49,31 +49,33 @@ class PlayerStateHandlerImpl(
   override val playingTrackDetails: Flow<TrackDetails> = appState.playingTrackDetails
 
   override fun updatePlayerStatus(status: PlayerStatusModel) {
-    if (devicePlaybackController?.hasLocalPlayback != true) appState.updatePlayerStatus(status)
+    if (localPlaybackController?.hasLocalPlayback != true) appState.updatePlayerStatus(status)
   }
 
   override fun updatePlayingTrack(track: TrackInfo) {
-    if (devicePlaybackController?.hasLocalPlayback != true) {
+    if (localPlaybackController?.hasLocalPlayback != true) {
       appState.updatePlayingTrack(track.toPlayingTrack())
     }
   }
 
   override fun updateTrackRating(rating: TrackRating) {
-    if (devicePlaybackController?.hasLocalPlayback != true) {
+    if (localPlaybackController?.hasLocalPlayback != true) {
       appState.updateTrackRating(rating)
     }
   }
 
   override fun updateTrackDetails(details: TrackDetails) {
-    appState.updateTrackDetails(details)
+    if (localPlaybackController?.hasLocalPlayback != true) {
+      appState.updateTrackDetails(details)
+    }
   }
 
   override fun updateLyrics(lyrics: List<String>) {
-    if (devicePlaybackController?.hasLocalPlayback != true) appState.updateLyrics(lyrics)
+    if (localPlaybackController?.hasLocalPlayback != true) appState.updateLyrics(lyrics)
   }
 
   override fun updatePlayingPosition(position: PlayingPosition) {
-    if (devicePlaybackController?.hasLocalPlayback != true) appState.updatePlayingPosition(position)
+    if (localPlaybackController?.hasLocalPlayback != true) appState.updatePlayingPosition(position)
   }
 }
 
@@ -85,7 +87,8 @@ class TrackChangeNotifierImpl(
   private val cache: PlayingTrackCache,
   private val playbackApi: PlaybackApi,
   private val appState: AppStatePublisher,
-  private val dispatchers: AppCoroutineDispatchers
+  private val dispatchers: AppCoroutineDispatchers,
+  private val localPlaybackController: LocalPlaybackController
 ) : TrackChangeNotifier {
   override fun notifyTrackChanged(track: TrackInfo) {
     widgetUpdater.updatePlayingTrack(track.toPlayingTrack())
@@ -100,10 +103,13 @@ class TrackChangeNotifierImpl(
   }
 
   override suspend fun requestTrackDetails() {
+    if (localPlaybackController.hasLocalPlayback) return
     withContext(dispatchers.network) {
       runCatching {
         val details = playbackApi.getTrackDetails()
-        appState.updateTrackDetails(details.toTrackDetails())
+        if (!localPlaybackController.hasLocalPlayback) {
+          appState.updateTrackDetails(details.toTrackDetails())
+        }
       }.onFailure { e ->
         Timber.v(e, "Failed to fetch track details")
       }

@@ -60,6 +60,12 @@ class SettingsViewModel(
     settingsManager.indexedLibraryScrollbarFlow
       .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
+  val albumListPlayButtonEnabled: StateFlow<Boolean> = settingsManager.albumListPlayButtonFlow
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+  val albumGridPlayButtonEnabled: StateFlow<Boolean> = settingsManager.albumGridPlayButtonFlow
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
   val halfStarRatingEnabled: StateFlow<Boolean> = settingsManager.halfStarRatingFlow
     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
@@ -120,6 +126,18 @@ class SettingsViewModel(
   fun updateIndexedLibraryScrollbar(enabled: Boolean) {
     viewModelScope.launch {
       settingsManager.setIndexedLibraryScrollbar(enabled)
+    }
+  }
+
+  fun updateAlbumListPlayButton(enabled: Boolean) {
+    viewModelScope.launch {
+      settingsManager.setAlbumListPlayButton(enabled)
+    }
+  }
+
+  fun updateAlbumGridPlayButton(enabled: Boolean) {
+    viewModelScope.launch {
+      settingsManager.setAlbumGridPlayButton(enabled)
     }
   }
 

@@ -96,6 +96,16 @@ class SettingsManagerDataStore(
       ?: DefaultValues.INDEXED_LIBRARY_SCROLLBAR
   }
 
+  override val albumListPlayButtonFlow: Flow<Boolean> = dataStore.data.map { preferences ->
+    preferences[PreferenceKeys.ALBUM_LIST_PLAY_BUTTON]
+      ?: DefaultValues.ALBUM_LIST_PLAY_BUTTON
+  }
+
+  override val albumGridPlayButtonFlow: Flow<Boolean> = dataStore.data.map { preferences ->
+    preferences[PreferenceKeys.ALBUM_GRID_PLAY_BUTTON]
+      ?: DefaultValues.ALBUM_GRID_PLAY_BUTTON
+  }
+
   override val halfStarRatingFlow: Flow<Boolean> = dataStore.data.map { preferences ->
     preferences[PreferenceKeys.HALF_STAR_RATING] ?: DefaultValues.HALF_STAR_RATING
   }
@@ -185,6 +195,18 @@ class SettingsManagerDataStore(
   override suspend fun setIndexedLibraryScrollbar(enabled: Boolean) {
     dataStore.edit { preferences ->
       preferences[PreferenceKeys.INDEXED_LIBRARY_SCROLLBAR] = enabled
+    }
+  }
+
+  override suspend fun setAlbumListPlayButton(enabled: Boolean) {
+    dataStore.edit { preferences ->
+      preferences[PreferenceKeys.ALBUM_LIST_PLAY_BUTTON] = enabled
+    }
+  }
+
+  override suspend fun setAlbumGridPlayButton(enabled: Boolean) {
+    dataStore.edit { preferences ->
+      preferences[PreferenceKeys.ALBUM_GRID_PLAY_BUTTON] = enabled
     }
   }
 

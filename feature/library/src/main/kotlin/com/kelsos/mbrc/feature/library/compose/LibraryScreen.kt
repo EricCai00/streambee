@@ -1,5 +1,6 @@
 package com.kelsos.mbrc.feature.library.compose
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -80,9 +81,27 @@ fun LibraryScreen(
   var statsToShow by remember { mutableStateOf<LibraryStats?>(null) }
   var showSortSheet by rememberSaveable { mutableStateOf(false) }
 
+  val closeSearch = {
+    isSearchActive = false
+    searchQuery = ""
+    viewModel.search("")
+  }
+
+  BackHandler(enabled = isSearchActive, onBack = closeSearch)
+
+  // Keep the shared search model aligned with the saveable UI state when this
+  // destination is restored. This also clears any stale hidden filter.
+  LaunchedEffect(isSearchActive) {
+    viewModel.search(if (isSearchActive) searchQuery else "")
+  }
+
   val albumViewMode by albumViewModel.albumViewMode.collectAsStateWithLifecycle(
     initialValue = AlbumViewMode.AUTO
   )
+  val albumListPlayButtonEnabled by
+    albumViewModel.albumListPlayButtonEnabled.collectAsStateWithLifecycle(initialValue = true)
+  val albumGridPlayButtonEnabled by
+    albumViewModel.albumGridPlayButtonEnabled.collectAsStateWithLifecycle(initialValue = false)
   val screenWidthDp = with(LocalDensity.current) {
     LocalWindowInfo.current.containerSize.width.toDp()
   }
@@ -120,11 +139,7 @@ fun LibraryScreen(
       onSearch = {
         // Library search filters in real-time, no action needed on submit
       },
-      onClose = {
-        isSearchActive = false
-        searchQuery = ""
-        viewModel.search("")
-      }
+      onClose = closeSearch
     )
 
     syncProgress.running -> {
@@ -241,6 +256,8 @@ fun LibraryScreen(
       isSyncing = syncProgress.running,
       showSortSheet = showSortSheet,
       isGridMode = isGridMode,
+      albumListPlayButtonEnabled = albumListPlayButtonEnabled,
+      albumGridPlayButtonEnabled = albumGridPlayButtonEnabled,
       indexedScrollbar = indexedScrollbar,
       onDismissSortSheet = { showSortSheet = false },
       onNavigateToCategoryGenres = onNavigateToCategoryGenres,
@@ -340,6 +357,8 @@ private fun LibraryContent(
   isSyncing: Boolean,
   showSortSheet: Boolean,
   isGridMode: Boolean,
+  albumListPlayButtonEnabled: Boolean,
+  albumGridPlayButtonEnabled: Boolean,
   indexedScrollbar: Boolean,
   onDismissSortSheet: () -> Unit,
   onNavigateToCategoryGenres: (GenreCategory) -> Unit,
@@ -372,6 +391,8 @@ private fun LibraryContent(
         isSyncing = isSyncing,
         showSortSheet = showSortSheet && pagerState.currentPage == page,
         isGridMode = isGridMode,
+        albumListPlayButtonEnabled = albumListPlayButtonEnabled,
+        albumGridPlayButtonEnabled = albumGridPlayButtonEnabled,
         indexedScrollbar = indexedScrollbar,
         onDismissSortSheet = onDismissSortSheet,
         onNavigateToCategoryGenres = onNavigateToCategoryGenres,
@@ -395,6 +416,8 @@ private fun LibraryTabPage(
   isSyncing: Boolean,
   showSortSheet: Boolean,
   isGridMode: Boolean,
+  albumListPlayButtonEnabled: Boolean,
+  albumGridPlayButtonEnabled: Boolean,
   indexedScrollbar: Boolean,
   onDismissSortSheet: () -> Unit,
   onNavigateToCategoryGenres: (GenreCategory) -> Unit,
@@ -428,6 +451,8 @@ private fun LibraryTabPage(
       isSyncing = isSyncing,
       showSortSheet = showSortSheet,
       isGridMode = isGridMode,
+      albumListPlayButtonEnabled = albumListPlayButtonEnabled,
+      albumGridPlayButtonEnabled = albumGridPlayButtonEnabled,
       indexedScrollbar = indexedScrollbar,
       onNavigateToAlbumTracks = onNavigateToAlbumTracks,
       onDismissSortSheet = onDismissSortSheet,

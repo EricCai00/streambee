@@ -43,6 +43,8 @@ class SettingsViewModelTest : KoinTest {
   private val incomingCallActionFlow = MutableStateFlow<CallAction>(CallAction.None)
   private val trackDefaultActionFlow = MutableStateFlow<TrackAction>(TrackAction.PlayNow)
   private val indexedLibraryScrollbarFlow = MutableStateFlow(true)
+  private val albumListPlayButtonFlow = MutableStateFlow(true)
+  private val albumGridPlayButtonFlow = MutableStateFlow(false)
   private val halfStarRatingFlow = MutableStateFlow(false)
   private val showRatingOnPlayerFlow = MutableStateFlow(false)
 
@@ -63,6 +65,8 @@ class SettingsViewModelTest : KoinTest {
         this@SettingsViewModelTest.trackDefaultActionFlow
       every { indexedLibraryScrollbarFlow } returns
         this@SettingsViewModelTest.indexedLibraryScrollbarFlow
+      every { albumListPlayButtonFlow } returns this@SettingsViewModelTest.albumListPlayButtonFlow
+      every { albumGridPlayButtonFlow } returns this@SettingsViewModelTest.albumGridPlayButtonFlow
       every { halfStarRatingFlow } returns this@SettingsViewModelTest.halfStarRatingFlow
       every { showRatingOnPlayerFlow } returns this@SettingsViewModelTest.showRatingOnPlayerFlow
     }
@@ -103,6 +107,14 @@ class SettingsViewModelTest : KoinTest {
 
     viewModel.indexedLibraryScrollbarEnabled.test {
       assertThat(awaitItem()).isTrue()
+    }
+
+    viewModel.albumListPlayButtonEnabled.test {
+      assertThat(awaitItem()).isTrue()
+    }
+
+    viewModel.albumGridPlayButtonEnabled.test {
+      assertThat(awaitItem()).isFalse()
     }
 
     viewModel.visibleDialog.test {
@@ -172,6 +184,22 @@ class SettingsViewModelTest : KoinTest {
     advanceUntilIdle()
 
     coVerify { settingsManager.setIndexedLibraryScrollbar(false) }
+  }
+
+  @Test
+  fun `updateAlbumListPlayButton should persist the selected mode`() = runTest(testDispatcher) {
+    viewModel.updateAlbumListPlayButton(false)
+    advanceUntilIdle()
+
+    coVerify { settingsManager.setAlbumListPlayButton(false) }
+  }
+
+  @Test
+  fun `updateAlbumGridPlayButton should persist the selected mode`() = runTest(testDispatcher) {
+    viewModel.updateAlbumGridPlayButton(true)
+    advanceUntilIdle()
+
+    coVerify { settingsManager.setAlbumGridPlayButton(true) }
   }
 
   @Test

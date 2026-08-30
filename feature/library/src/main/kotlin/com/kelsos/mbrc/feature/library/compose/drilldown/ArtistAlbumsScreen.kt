@@ -71,6 +71,10 @@ fun ArtistAlbumsScreen(
   val albumViewMode by viewModel.albumViewMode.collectAsStateWithLifecycle(
     initialValue = AlbumViewMode.AUTO
   )
+  val albumListPlayButtonEnabled by
+    viewModel.albumListPlayButtonEnabled.collectAsStateWithLifecycle(initialValue = true)
+  val albumGridPlayButtonEnabled by
+    viewModel.albumGridPlayButtonEnabled.collectAsStateWithLifecycle(initialValue = false)
   val screenWidthDp = with(LocalDensity.current) {
     LocalWindowInfo.current.containerSize.width.toDp()
   }
@@ -137,7 +141,8 @@ fun ArtistAlbumsScreen(
           AlbumGridItem(
             album = album,
             onClick = { viewModel.queue(Queue.Default, album) },
-            onQueue = { queue -> viewModel.queue(queue, album) }
+            onQueue = { queue -> viewModel.queue(queue, album) },
+            showPlayButton = albumGridPlayButtonEnabled
           )
         }
       } else {
@@ -151,7 +156,8 @@ fun ArtistAlbumsScreen(
           AlbumListItem(
             album = album,
             onClick = { viewModel.queue(Queue.Default, album) },
-            onQueue = { queue -> viewModel.queue(queue, album) }
+            onQueue = { queue -> viewModel.queue(queue, album) },
+            showPlayButton = albumListPlayButtonEnabled
           )
         }
       }

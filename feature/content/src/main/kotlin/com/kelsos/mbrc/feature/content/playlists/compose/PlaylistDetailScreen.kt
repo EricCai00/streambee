@@ -3,12 +3,14 @@ package com.kelsos.mbrc.feature.content.playlists.compose
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.CircularProgressIndicator
@@ -26,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -147,33 +150,43 @@ private fun PlaylistTrackRow(
       }
     },
     trailingContent = {
-      Box {
-        IconButton(onClick = { menuExpanded = true }) {
+      Row(verticalAlignment = Alignment.CenterVertically) {
+        if (track.loved) {
           Icon(
-            imageVector = Icons.Default.MoreVert,
-            contentDescription = stringResource(CoreUiR.string.menu_overflow_description)
+            imageVector = Icons.Default.Favorite,
+            contentDescription = stringResource(R.string.track_loved_description),
+            modifier = Modifier.size(20.dp),
+            tint = MaterialTheme.colorScheme.error
           )
         }
-        DropdownMenu(
-          expanded = menuExpanded,
-          onDismissRequest = { menuExpanded = false }
-        ) {
-          DropdownMenuItem(
-            text = { Text(stringResource(R.string.playlist_go_to_album)) },
-            onClick = {
-              menuExpanded = false
-              if (track.album.isNotBlank()) {
-                onNavigateToAlbum(track.album, track.albumArtist.ifBlank { track.artist })
+        Box {
+          IconButton(onClick = { menuExpanded = true }) {
+            Icon(
+              imageVector = Icons.Default.MoreVert,
+              contentDescription = stringResource(CoreUiR.string.menu_overflow_description)
+            )
+          }
+          DropdownMenu(
+            expanded = menuExpanded,
+            onDismissRequest = { menuExpanded = false }
+          ) {
+            DropdownMenuItem(
+              text = { Text(stringResource(R.string.playlist_go_to_album)) },
+              onClick = {
+                menuExpanded = false
+                if (track.album.isNotBlank()) {
+                  onNavigateToAlbum(track.album, track.albumArtist.ifBlank { track.artist })
+                }
               }
-            }
-          )
-          DropdownMenuItem(
-            text = { Text(stringResource(R.string.playlist_go_to_artist)) },
-            onClick = {
-              menuExpanded = false
-              onNavigateToArtist(track.albumArtist.ifBlank { track.artist })
-            }
-          )
+            )
+            DropdownMenuItem(
+              text = { Text(stringResource(R.string.playlist_go_to_artist)) },
+              onClick = {
+                menuExpanded = false
+                onNavigateToArtist(track.albumArtist.ifBlank { track.artist })
+              }
+            )
+          }
         }
       }
     }

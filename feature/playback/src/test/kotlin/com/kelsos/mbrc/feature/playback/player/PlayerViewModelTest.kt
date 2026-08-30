@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import com.kelsos.mbrc.core.common.playback.LocalPlaybackController
+import com.kelsos.mbrc.core.common.playback.LocalQueueTrack
 import com.kelsos.mbrc.core.common.settings.ChangeLogChecker
 import com.kelsos.mbrc.core.common.state.AppStateFlow
 import com.kelsos.mbrc.core.common.state.BasicTrackInfo
@@ -50,6 +51,7 @@ class PlayerViewModelTest : KoinTest {
   private val trackDetailsFlow = MutableStateFlow(TrackDetails.EMPTY)
   private val showRatingOnPlayerFlow = MutableStateFlow(false)
   private val appScrobblingEnabledFlow = MutableStateFlow(false)
+  private val queueFlow = MutableStateFlow<List<LocalQueueTrack>>(emptyList())
 
   private val testModule = module {
     single<AppStateFlow> {
@@ -62,7 +64,11 @@ class PlayerViewModelTest : KoinTest {
       }
     }
     single<UserActionUseCase> { mockk(relaxed = true) }
-    single<LocalPlaybackController> { mockk(relaxed = true) }
+    single<LocalPlaybackController> {
+      mockk(relaxed = true) {
+        every { queue } returns queueFlow
+      }
+    }
     single<ChangeLogChecker> { mockk(relaxed = true) }
     single<SettingsManager> {
       mockk(relaxed = true) {
@@ -344,6 +350,13 @@ class PlayerViewModelTest : KoinTest {
     advanceUntilIdle()
 
     verify { localPlaybackController.toggleRepeat() }
+  }
+
+  @Test
+  fun `queue item action should play selected local queue index`() = runTest(testDispatcher) {
+    viewModel.playQueueItem(3)
+
+    verify { localPlaybackController.playQueueItem(3) }
   }
 
   @Test

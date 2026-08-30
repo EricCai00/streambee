@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.kelsos.mbrc.R
+import com.kelsos.mbrc.core.data.library.genre.GenreRepository
 import com.kelsos.mbrc.core.data.library.track.TrackRepository
 import com.kelsos.mbrc.feature.content.playlists.compose.PlaylistDetailScreen
 import com.kelsos.mbrc.feature.content.playlists.compose.PlaylistScreen
@@ -49,6 +50,10 @@ fun AppNavGraph(
   ) {
     // Main screens accessible from drawer
     composable(Screen.Home.route) {
+      val genreRepository: GenreRepository = koinInject()
+      val scope = rememberCoroutineScope()
+      val genreNotFoundMessage = stringResource(R.string.navigation_genre_not_in_library)
+
       PlayerScreen(
         onNavigateToNowPlaying = { navController.navigate(Screen.NowPlayingList.route) },
         onNavigateToAlbum = { album, artist ->
@@ -59,6 +64,16 @@ fun AppNavGraph(
         onNavigateToArtist = { artist ->
           val encodedName = Uri.encode(artist)
           navController.navigate("artist_albums/0/$encodedName")
+        },
+        onNavigateToGenre = { genreName ->
+          scope.launch {
+            val genre = genreRepository.getByName(genreName)
+            if (genre != null) {
+              navController.navigate("genre_albums/${genre.id}/${Uri.encode(genre.genre)}")
+            } else {
+              snackbarHostState.showSnackbar(genreNotFoundMessage)
+            }
+          }
         },
         snackbarHostState = snackbarHostState,
         onOpenDrawer = onOpenDrawer
@@ -168,9 +183,25 @@ fun AppNavGraph(
       val album = backStackEntry.arguments?.getString("album").orEmpty()
       val artist = backStackEntry.arguments?.getString("artist").orEmpty()
       val albumInfo = AlbumInfo(album = album, artist = artist, cover = null)
+      val genreRepository: GenreRepository = koinInject()
+      val scope = rememberCoroutineScope()
+      val genreNotFoundMessage = stringResource(R.string.navigation_genre_not_in_library)
       AlbumTracksScreen(
         albumInfo = albumInfo,
         onNavigateBack = { navController.popBackStack() },
+        onNavigateToArtist = { artistName ->
+          navController.navigate("artist_albums/0/${Uri.encode(artistName)}")
+        },
+        onNavigateToGenre = { genreName ->
+          scope.launch {
+            val genre = genreRepository.getByName(genreName)
+            if (genre != null) {
+              navController.navigate("genre_albums/${genre.id}/${Uri.encode(genre.genre)}")
+            } else {
+              snackbarHostState.showSnackbar(genreNotFoundMessage)
+            }
+          }
+        },
         onNavigateToPlayer = { navController.navigate(Screen.Home.route) },
         snackbarHostState = snackbarHostState
       )

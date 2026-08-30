@@ -47,6 +47,7 @@ dependencies {
 
   implementation(platform(libs.androidx.compose.bom))
   implementation(libs.bundles.androidx.compose)
+  implementation(libs.androidx.activity.compose)
   implementation(libs.google.material)
   implementation(libs.androidx.paging.compose)
   implementation(libs.androidx.paging.runtime.ktx)

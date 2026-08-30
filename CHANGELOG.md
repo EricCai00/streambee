@@ -1,6 +1,12 @@
 Changelog
 -----------
 
+## [Unreleased]
+### Added
+- Shows album year and genre in album details, with direct navigation to the album artist and genre.
+- Displays MusicBee loved-track hearts as read-only metadata in library, album, and playlist track lists.
+- Loads locally available MusicBee artist pictures in the artist list, with an icon fallback when no picture is available.
+
 ## [2.1.0] - 2026-08-30
 ### Added
 - Adds an on-device playback history for tracks completed in StreamBee, with unavailable-library entries handled gracefully.

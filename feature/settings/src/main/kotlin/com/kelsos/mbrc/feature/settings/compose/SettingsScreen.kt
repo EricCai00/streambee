@@ -79,6 +79,8 @@ data class SettingsContentState(
   val incomingCallAction: CallAction = CallAction.None,
   val trackDefaultAction: TrackAction = TrackAction.PlayNow,
   val indexedLibraryScrollbarEnabled: Boolean = true,
+  val albumListPlayButtonEnabled: Boolean = true,
+  val albumGridPlayButtonEnabled: Boolean = false,
   val halfStarRatingEnabled: Boolean = true,
   val showRatingOnPlayerEnabled: Boolean = false,
   val visibleDialog: SettingsDialogType? = null
@@ -101,6 +103,10 @@ interface ISettingsActions {
   val onTrackDefaultActionSelected: (TrackAction) -> Unit
   val onIndexedLibraryScrollbarChanged: (Boolean) -> Unit
     get() = {}
+  val onAlbumListPlayButtonChanged: (Boolean) -> Unit
+    get() = {}
+  val onAlbumGridPlayButtonChanged: (Boolean) -> Unit
+    get() = {}
   val onNavigateToLicenses: () -> Unit
   val onNavigateToAppLicense: () -> Unit
   val onDismissDialog: () -> Unit
@@ -121,6 +127,8 @@ object EmptySettingsActions : ISettingsActions {
   override val onTrackDefaultActionClick: () -> Unit = {}
   override val onTrackDefaultActionSelected: (TrackAction) -> Unit = {}
   override val onIndexedLibraryScrollbarChanged: (Boolean) -> Unit = {}
+  override val onAlbumListPlayButtonChanged: (Boolean) -> Unit = {}
+  override val onAlbumGridPlayButtonChanged: (Boolean) -> Unit = {}
   override val onNavigateToLicenses: () -> Unit = {}
   override val onNavigateToAppLicense: () -> Unit = {}
   override val onDismissDialog: () -> Unit = {}
@@ -253,6 +261,10 @@ private fun LibrarySettingsSection(viewModel: SettingsViewModel) {
   val trackDefaultAction by viewModel.trackDefaultAction.collectAsStateWithLifecycle()
   val indexedScrollbarEnabled by
     viewModel.indexedLibraryScrollbarEnabled.collectAsStateWithLifecycle()
+  val albumListPlayButtonEnabled by
+    viewModel.albumListPlayButtonEnabled.collectAsStateWithLifecycle()
+  val albumGridPlayButtonEnabled by
+    viewModel.albumGridPlayButtonEnabled.collectAsStateWithLifecycle()
   val visibleDialog by viewModel.visibleDialog.collectAsStateWithLifecycle()
 
   SettingsSection(title = stringResource(R.string.common_library)) {
@@ -267,6 +279,20 @@ private fun LibrarySettingsSection(viewModel: SettingsViewModel) {
       subtitle = stringResource(R.string.setting_indexed_library_scrollbar_summary),
       checked = indexedScrollbarEnabled,
       onCheckedChange = viewModel::updateIndexedLibraryScrollbar
+    )
+
+    SettingsToggleItem(
+      title = stringResource(R.string.setting_album_list_play_button),
+      subtitle = stringResource(R.string.setting_album_list_play_button_summary),
+      checked = albumListPlayButtonEnabled,
+      onCheckedChange = viewModel::updateAlbumListPlayButton
+    )
+
+    SettingsToggleItem(
+      title = stringResource(R.string.setting_album_grid_play_button),
+      subtitle = stringResource(R.string.setting_album_grid_play_button_summary),
+      checked = albumGridPlayButtonEnabled,
+      onCheckedChange = viewModel::updateAlbumGridPlayButton
     )
   }
 
@@ -471,8 +497,12 @@ fun SettingsScreenContent(
     LibraryContentSection(
       trackDefaultAction = state.trackDefaultAction,
       indexedScrollbarEnabled = state.indexedLibraryScrollbarEnabled,
+      albumListPlayButtonEnabled = state.albumListPlayButtonEnabled,
+      albumGridPlayButtonEnabled = state.albumGridPlayButtonEnabled,
       onTrackDefaultActionClick = actions.onTrackDefaultActionClick,
-      onIndexedScrollbarChanged = actions.onIndexedLibraryScrollbarChanged
+      onIndexedScrollbarChanged = actions.onIndexedLibraryScrollbarChanged,
+      onAlbumListPlayButtonChanged = actions.onAlbumListPlayButtonChanged,
+      onAlbumGridPlayButtonChanged = actions.onAlbumGridPlayButtonChanged
     )
 
     SettingsDivider()
@@ -601,8 +631,12 @@ private fun RatingContentSection(
 private fun LibraryContentSection(
   trackDefaultAction: TrackAction,
   indexedScrollbarEnabled: Boolean,
+  albumListPlayButtonEnabled: Boolean,
+  albumGridPlayButtonEnabled: Boolean,
   onTrackDefaultActionClick: () -> Unit,
-  onIndexedScrollbarChanged: (Boolean) -> Unit
+  onIndexedScrollbarChanged: (Boolean) -> Unit,
+  onAlbumListPlayButtonChanged: (Boolean) -> Unit,
+  onAlbumGridPlayButtonChanged: (Boolean) -> Unit
 ) {
   SettingsSection(title = stringResource(R.string.common_library)) {
     SettingsItem(
@@ -616,6 +650,20 @@ private fun LibraryContentSection(
       subtitle = stringResource(R.string.setting_indexed_library_scrollbar_summary),
       checked = indexedScrollbarEnabled,
       onCheckedChange = onIndexedScrollbarChanged
+    )
+
+    SettingsToggleItem(
+      title = stringResource(R.string.setting_album_list_play_button),
+      subtitle = stringResource(R.string.setting_album_list_play_button_summary),
+      checked = albumListPlayButtonEnabled,
+      onCheckedChange = onAlbumListPlayButtonChanged
+    )
+
+    SettingsToggleItem(
+      title = stringResource(R.string.setting_album_grid_play_button),
+      subtitle = stringResource(R.string.setting_album_grid_play_button_summary),
+      checked = albumGridPlayButtonEnabled,
+      onCheckedChange = onAlbumGridPlayButtonChanged
     )
   }
 }

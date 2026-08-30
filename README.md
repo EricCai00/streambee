@@ -30,6 +30,7 @@ experience and adds a phone-first playback path, richer library navigation, and 
 
 - Control MusicBee playback, volume, output, ratings, shuffle, repeat, and the now-playing queue.
 - Browse artists, albums, tracks, playlists, genres, and MusicBee Genre Categories.
+- See MusicBee artist pictures, album year/genre links, and read-only loved-track markers while browsing.
 - Drag an indexed scrollbar through large libraries by letter or year.
 - Stream files from the MusicBee library and playlists to Android with seeking and Media3 playback.
 - Start an album, artist, playlist, or the full library from any selected track.

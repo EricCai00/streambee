@@ -59,7 +59,8 @@ private fun PlayerScreenPreview(
   onTrackInfoClick: () -> Unit,
   onLyricsClick: () -> Unit,
   onOutputClick: () -> Unit,
-  onRatingClick: () -> Unit
+  onRatingClick: () -> Unit,
+  onQueueClick: () -> Unit = {}
 ) {
   val snackbarHostState = remember { SnackbarHostState() }
   DynamicScreenScaffold(
@@ -82,7 +83,8 @@ private fun PlayerScreenPreview(
       onTrackInfoClick = onTrackInfoClick,
       onLyricsClick = onLyricsClick,
       onOutputClick = onOutputClick,
-      onRatingClick = onRatingClick
+      onRatingClick = onRatingClick,
+      onQueueClick = onQueueClick
     )
   }
 }

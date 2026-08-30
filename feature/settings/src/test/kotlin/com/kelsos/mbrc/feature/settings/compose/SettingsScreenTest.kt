@@ -703,6 +703,69 @@ class SettingsScreenTest : KoinTest {
 
   // endregion
 
+  // region Album Button Settings Tests
+
+  @Test
+  fun `displays album button settings`() {
+    setupKoin()
+    try {
+      composeTestRule.setContent {
+        SettingsScreenContent(
+          state = SettingsContentState(),
+          actions = EmptySettingsActions,
+          appInfo = testAppInfo
+        )
+      }
+
+      composeTestRule.onNodeWithText("Play button in album lists")
+        .performScrollTo()
+        .assertIsDisplayed()
+      composeTestRule.onNodeWithText("Play button on album covers")
+        .performScrollTo()
+        .assertIsDisplayed()
+    } finally {
+      teardownKoin()
+    }
+  }
+
+  @Test
+  fun `album button setting clicks toggle their current values`() {
+    setupKoin()
+    try {
+      var listEnabled: Boolean? = null
+      var gridEnabled: Boolean? = null
+      val actions = TestSettingsActions(
+        onAlbumListPlayButtonChanged = { listEnabled = it },
+        onAlbumGridPlayButtonChanged = { gridEnabled = it }
+      )
+
+      composeTestRule.setContent {
+        SettingsScreenContent(
+          state = SettingsContentState(
+            albumListPlayButtonEnabled = true,
+            albumGridPlayButtonEnabled = false
+          ),
+          actions = actions,
+          appInfo = testAppInfo
+        )
+      }
+
+      composeTestRule.onNodeWithText("Play button in album lists")
+        .performScrollTo()
+        .performClick()
+      composeTestRule.onNodeWithText("Play button on album covers")
+        .performScrollTo()
+        .performClick()
+
+      assertThat(listEnabled).isFalse()
+      assertThat(gridEnabled).isTrue()
+    } finally {
+      teardownKoin()
+    }
+  }
+
+  // endregion
+
   // region Section Headers Tests
 
   @Test
@@ -823,6 +886,8 @@ class TestSettingsActions(
   override val onShowRatingOnPlayerChanged: (Boolean) -> Unit = {},
   override val onTrackDefaultActionClick: () -> Unit = {},
   override val onTrackDefaultActionSelected: (TrackAction) -> Unit = {},
+  override val onAlbumListPlayButtonChanged: (Boolean) -> Unit = {},
+  override val onAlbumGridPlayButtonChanged: (Boolean) -> Unit = {},
   override val onNavigateToLicenses: () -> Unit = {},
   override val onNavigateToAppLicense: () -> Unit = {},
   override val onDismissDialog: () -> Unit = {}
