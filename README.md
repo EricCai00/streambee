@@ -66,10 +66,10 @@ experience and adds a phone-first playback path, richer library navigation, and 
 Download `StreamBee-vX.Y.Z.apk` from
 [GitHub Releases](https://github.com/EricCai00/mbrc/releases) and open it on the Android device.
 
-Official StreamBee APKs use the package name `com.kelsos.mbrc` and a dedicated release signing key.
-Development builds use `com.kelsos.mbrc.dev`, so a release and a development build can be installed
-side by side with separate data. An old debug-signed build that used `com.kelsos.mbrc` must be
-uninstalled before the first official StreamBee release can be installed.
+Official StreamBee APKs use the package name `com.ericcai.streambee` and a dedicated release signing key.
+Development builds use `com.ericcai.streambee.dev`, so a release and a development build can be installed
+side by side with separate data. Builds using the previous `com.kelsos.mbrc` package are treated as a
+separate app and can be removed after any data or settings that are still needed have been migrated.
 
 ### MusicBee plugin
 
@@ -109,10 +109,10 @@ DataStore, and Glance.
 
 | Variant | Package | Purpose |
 | --- | --- | --- |
-| `githubDebug` | `com.kelsos.mbrc.dev` | Normal USB development without Firebase |
-| `playDebug` | `com.kelsos.mbrc.dev` | USB development with Google services |
-| `githubRelease` | `com.kelsos.mbrc` | Signed GitHub APK |
-| `playRelease` | `com.kelsos.mbrc` | Signed Play build |
+| `githubDebug` | `com.ericcai.streambee.dev` | Normal USB development without Firebase |
+| `playDebug` | `com.ericcai.streambee.dev` | USB development with Google services |
+| `githubRelease` | `com.ericcai.streambee` | Signed GitHub APK |
+| `playRelease` | `com.ericcai.streambee` | Signed Play build |
 
 Use `githubDebug` for day-to-day USB debugging. Release builds must be signed with the same private
 release key as earlier StreamBee releases; never commit signing credentials to Git.

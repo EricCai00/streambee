@@ -29,7 +29,7 @@ class BaselineProfileGenerator {
   @Test
   fun generateBaselineProfile() {
     rule.collect(
-      packageName = "com.kelsos.mbrc",
+      packageName = "com.ericcai.streambee",
       includeInStartupProfile = true
     ) {
       // App startup journey

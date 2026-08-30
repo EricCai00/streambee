@@ -108,7 +108,7 @@ android {
   }
 
   defaultConfig {
-    applicationId = "com.kelsos.mbrc"
+    applicationId = "com.ericcai.streambee"
     minSdk = minSDKVersion
     targetSdk = compileSDKVersion
     versionCode = appVersionCode
@@ -118,7 +118,7 @@ android {
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     // Explicit test applicationId to avoid namespace collision with debug .dev suffix
-    testApplicationId = "com.kelsos.mbrc.test"
+    testApplicationId = "com.ericcai.streambee.test"
   }
 
   testOptions {

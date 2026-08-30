@@ -97,10 +97,10 @@
       android:exported="false"
       android:foregroundServiceType="connectedDevice|mediaPlayback">
       <intent-filter>
-        <action android:name="com.kelsos.mbrc.notification.play" />
-        <action android:name="com.kelsos.mbrc.notification.next" />
-        <action android:name="com.kelsos.mbrc.notification.close" />
-        <action android:name="com.kelsos.mbrc.notification.previous" />
+        <action android:name="com.ericcai.streambee.notification.play" />
+        <action android:name="com.ericcai.streambee.notification.next" />
+        <action android:name="com.ericcai.streambee.notification.close" />
+        <action android:name="com.ericcai.streambee.notification.previous" />
       </intent-filter>
     </service>
 
