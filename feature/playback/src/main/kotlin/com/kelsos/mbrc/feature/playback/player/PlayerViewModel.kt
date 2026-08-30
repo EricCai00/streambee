@@ -2,6 +2,7 @@ package com.kelsos.mbrc.feature.playback.player
 
 import androidx.lifecycle.viewModelScope
 import com.kelsos.mbrc.core.common.mvvm.BaseViewModel
+import com.kelsos.mbrc.core.common.playback.LocalPlaybackController
 import com.kelsos.mbrc.core.common.settings.ChangeLogChecker
 import com.kelsos.mbrc.core.common.state.AppStateFlow
 import com.kelsos.mbrc.core.common.state.BasicTrackInfo
@@ -10,7 +11,6 @@ import com.kelsos.mbrc.core.common.state.TrackDetails
 import com.kelsos.mbrc.core.common.state.TrackInfo
 import com.kelsos.mbrc.core.common.state.TrackRating
 import com.kelsos.mbrc.core.networking.protocol.usecases.UserActionUseCase
-import com.kelsos.mbrc.core.common.playback.LocalPlaybackController
 import com.kelsos.mbrc.feature.settings.domain.SettingsManager
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.SharingStarted
@@ -48,8 +48,7 @@ class PlayerViewModel(
     .distinctUntilChanged()
     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), PlaybackState())
 
-  val isScrobbling: StateFlow<Boolean> = appState.playerStatus
-    .map { it.scrobbling }
+  val isScrobbling: StateFlow<Boolean> = settingsManager.appScrobblingEnabledFlow
     .distinctUntilChanged()
     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
@@ -62,7 +61,8 @@ class PlayerViewModel(
   val actions: IPlayerActions = PlayerActions(
     userActionUseCase = userActionUseCase,
     scope = viewModelScope,
-    devicePlaybackController = devicePlaybackController
+    devicePlaybackController = devicePlaybackController,
+    settingsManager = settingsManager
   )
 
   init {

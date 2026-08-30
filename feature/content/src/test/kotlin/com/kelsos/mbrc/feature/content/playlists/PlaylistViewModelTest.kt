@@ -7,6 +7,7 @@ import com.google.common.truth.Truth.assertThat
 import com.kelsos.mbrc.core.common.state.ConnectionStateFlow
 import com.kelsos.mbrc.core.common.test.testDispatcher
 import com.kelsos.mbrc.core.common.test.testDispatcherModule
+import com.kelsos.mbrc.core.data.library.track.Track
 import com.kelsos.mbrc.core.data.playlist.PlaylistBrowserItem
 import com.kelsos.mbrc.core.data.playlist.PlaylistRepository
 import com.kelsos.mbrc.core.queue.PathQueueUseCase
@@ -30,6 +31,19 @@ import org.koin.test.inject
 
 @RunWith(AndroidJUnit4::class)
 class PlaylistViewModelTest : KoinTest {
+  private val track = Track(
+    artist = "Artist",
+    title = "Outside Library",
+    src = "D:\\Playlists\\outside.flac",
+    trackno = 1,
+    disc = 1,
+    albumArtist = "Artist",
+    album = "Playlist Album",
+    genre = "",
+    year = "2026",
+    id = 0
+  )
+
   private val testModule =
     module {
       single<PlaylistRepository> { mockk(relaxed = true) }
@@ -221,7 +235,7 @@ class PlaylistViewModelTest : KoinTest {
       }
 
       // Verify local queue is not called when not connected
-      coVerify(exactly = 0) { queueUseCase.queuePaths(any()) }
+      coVerify(exactly = 0) { queueUseCase.queueTracks(any<List<Track>>()) }
     }
   }
 
@@ -231,8 +245,8 @@ class PlaylistViewModelTest : KoinTest {
       // Given
       val playlistPath = "playlist/test"
       coEvery { connectionStateFlow.isConnected } returns true
-      coEvery { playlistRepository.getTrackPaths(playlistPath) } returns listOf("track.mp3")
-      coEvery { queueUseCase.queuePaths(listOf("track.mp3")) } returns
+      coEvery { playlistRepository.getTracks(playlistPath) } returns listOf(track)
+      coEvery { queueUseCase.queueTracks(listOf(track)) } returns
         com.kelsos.mbrc.core.common.utilities.Outcome.Success(1)
 
       // When & Then
@@ -244,17 +258,17 @@ class PlaylistViewModelTest : KoinTest {
         expectNoEvents()
       }
 
-      coVerify(exactly = 1) { queueUseCase.queuePaths(listOf("track.mp3")) }
+      coVerify(exactly = 1) { queueUseCase.queueTracks(listOf(track)) }
     }
   }
 
   @Test
-  fun playShouldEmitPlayFailedWhenPlaylistHasNoLocalTracks() {
+  fun playShouldEmitPlayFailedWhenPlaylistHasNoTracks() {
     runTest(testDispatcher) {
       // Given
       val playlistPath = "playlist/test"
       coEvery { connectionStateFlow.isConnected } returns true
-      coEvery { playlistRepository.getTrackPaths(playlistPath) } returns emptyList()
+      coEvery { playlistRepository.getTracks(playlistPath) } returns emptyList()
 
       // When & Then
       viewModel.events.test {
@@ -265,7 +279,7 @@ class PlaylistViewModelTest : KoinTest {
         assertThat(event).isEqualTo(PlaylistUiMessages.PlayFailed)
       }
 
-      coVerify(exactly = 0) { queueUseCase.queuePaths(any()) }
+      coVerify(exactly = 0) { queueUseCase.queueTracks(any<List<Track>>()) }
     }
   }
 

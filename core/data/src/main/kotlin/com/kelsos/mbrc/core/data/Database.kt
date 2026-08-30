@@ -3,6 +3,8 @@ package com.kelsos.mbrc.core.data
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.kelsos.mbrc.core.data.Database.Companion.VERSION
+import com.kelsos.mbrc.core.data.history.PlaybackHistoryDao
+import com.kelsos.mbrc.core.data.history.PlaybackHistoryEntry
 import com.kelsos.mbrc.core.data.library.album.AlbumDao
 import com.kelsos.mbrc.core.data.library.album.AlbumEntity
 import com.kelsos.mbrc.core.data.library.artist.ArtistDao
@@ -29,7 +31,8 @@ import com.kelsos.mbrc.core.data.settings.ConnectionSettingsEntity
     NowPlayingEntity::class,
     PlaylistEntity::class,
     RadioStationEntity::class,
-    ConnectionSettingsEntity::class
+    ConnectionSettingsEntity::class,
+    PlaybackHistoryEntry::class
   ],
   version = VERSION
 )
@@ -50,8 +53,10 @@ abstract class Database : RoomDatabase() {
 
   abstract fun connectionDao(): ConnectionDao
 
+  abstract fun playbackHistoryDao(): PlaybackHistoryDao
+
   companion object {
-    const val VERSION = 4
+    const val VERSION = 6
     const val NAME = "cache.db"
   }
 }

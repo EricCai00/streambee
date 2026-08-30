@@ -2,6 +2,7 @@ package com.kelsos.mbrc.feature.settings.domain
 
 import com.kelsos.mbrc.core.common.settings.ChangeLogChecker
 import com.kelsos.mbrc.core.common.settings.LibrarySettings
+import com.kelsos.mbrc.core.common.settings.PlaybackSettings
 import com.kelsos.mbrc.core.common.settings.TrackAction
 import com.kelsos.mbrc.feature.settings.data.CallAction
 import com.kelsos.mbrc.feature.settings.theme.Theme
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
  */
 interface SettingsManager :
   LibrarySettings,
+  PlaybackSettings,
   ChangeLogChecker {
   // Reactive flows for observing all settings (type-safe with sealed classes)
   val themeFlow: Flow<Theme>
@@ -23,8 +25,10 @@ interface SettingsManager :
   val incomingCallActionFlow: Flow<CallAction>
   override val libraryTrackDefaultActionFlow: Flow<TrackAction>
   override val shouldDisplayOnlyArtists: Flow<Boolean>
+  override val indexedLibraryScrollbarFlow: Flow<Boolean>
   val halfStarRatingFlow: Flow<Boolean>
   val showRatingOnPlayerFlow: Flow<Boolean>
+  override val appScrobblingEnabledFlow: Flow<Boolean>
 
   // Async update methods for changing settings (type-safe with sealed classes)
   suspend fun setTheme(theme: Theme)
@@ -33,8 +37,10 @@ interface SettingsManager :
   suspend fun setIncomingCallAction(action: CallAction)
   suspend fun setLibraryTrackDefaultAction(action: TrackAction)
   override suspend fun setShouldDisplayOnlyAlbumArtist(onlyAlbumArtist: Boolean)
+  override suspend fun setIndexedLibraryScrollbar(enabled: Boolean)
   suspend fun setHalfStarRating(enabled: Boolean)
   suspend fun setShowRatingOnPlayer(enabled: Boolean)
+  suspend fun setAppScrobblingEnabled(enabled: Boolean)
 
   // Async utility methods
   override suspend fun checkShouldShowChangeLog(): Boolean

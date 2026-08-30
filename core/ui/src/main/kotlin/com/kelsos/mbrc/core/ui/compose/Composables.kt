@@ -11,12 +11,15 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -37,6 +40,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -50,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import com.kelsos.mbrc.core.ui.R
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -290,8 +295,13 @@ fun <T : Any> SwipeRefreshScreen(
   emptyMessage: String = stringResource(R.string.no_data),
   emptyIcon: ImageVector? = null,
   key: ((T) -> Any)? = null,
+  scrollbarStyle: PagingScrollbarStyle? = null,
+  indexLabel: ((T) -> String)? = null,
   itemContent: @Composable (T) -> Unit
 ) {
+  val listState = rememberLazyListState()
+  val scope = rememberCoroutineScope()
+
   PullToRefreshBox(
     isRefreshing = isRefreshing,
     onRefresh = onRefresh,
@@ -316,34 +326,56 @@ fun <T : Any> SwipeRefreshScreen(
       }
 
       else -> {
-        LazyColumn(
-          modifier = Modifier.fillMaxSize()
-        ) {
-          items(
-            count = items.itemCount,
-            key = key?.let { keyFunc ->
-              { index ->
-                items.peek(index)?.let(keyFunc) ?: index
+        Box(modifier = Modifier.fillMaxSize()) {
+          LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize()
+          ) {
+            items(
+              count = items.itemCount,
+              key = key?.let { keyFunc ->
+                { index ->
+                  items.peek(index)?.let(keyFunc) ?: index
+                }
+              },
+              contentType = { "list_item" }
+            ) { index ->
+              val item = items[index]
+              if (item != null) {
+                itemContent(item)
+              } else {
+                Spacer(
+                  modifier = Modifier
+                    .fillMaxWidth()
+                    .height(PagingListPlaceholderHeight)
+                )
               }
-            },
-            contentType = { "list_item" }
-          ) { index ->
-            items[index]?.let { item ->
-              itemContent(item)
+            }
+
+            if (items.loadState.append is LoadState.Loading) {
+              item(contentType = "loading") {
+                Box(
+                  modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                  contentAlignment = Alignment.Center
+                ) {
+                  CircularProgressIndicator()
+                }
+              }
             }
           }
 
-          if (items.loadState.append is LoadState.Loading) {
-            item(contentType = "loading") {
-              Box(
-                modifier = Modifier
-                  .fillMaxWidth()
-                  .padding(16.dp),
-                contentAlignment = Alignment.Center
-              ) {
-                CircularProgressIndicator()
-              }
-            }
+          if (scrollbarStyle != null) {
+            PagingScrollbar(
+              totalItems = items.itemCount,
+              firstVisibleItemIndex = listState.firstVisibleItemIndex,
+              visibleItemsCount = listState.layoutInfo.visibleItemsInfo.size,
+              style = scrollbarStyle,
+              labelForIndex = { index -> items[index]?.let { indexLabel?.invoke(it) } },
+              onIndexSelected = { index -> scope.launch { listState.scrollToItem(index) } },
+              modifier = Modifier.align(Alignment.CenterEnd)
+            )
           }
         }
       }
@@ -422,8 +454,13 @@ fun <T : Any> SwipeRefreshGridScreen(
   emptyMessage: String = stringResource(R.string.no_data),
   emptyIcon: ImageVector? = null,
   key: ((T) -> Any)? = null,
+  scrollbarStyle: PagingScrollbarStyle? = null,
+  indexLabel: ((T) -> String)? = null,
   itemContent: @Composable (T) -> Unit
 ) {
+  val gridState = rememberLazyGridState()
+  val scope = rememberCoroutineScope()
+
   PullToRefreshBox(
     isRefreshing = isRefreshing,
     onRefresh = onRefresh,
@@ -448,38 +485,60 @@ fun <T : Any> SwipeRefreshGridScreen(
       }
 
       else -> {
-        LazyVerticalGrid(
-          columns = GridCells.Adaptive(minSize = 120.dp),
-          modifier = Modifier.fillMaxSize(),
-          contentPadding = PaddingValues(8.dp),
-          horizontalArrangement = Arrangement.spacedBy(8.dp),
-          verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-          items(
-            count = items.itemCount,
-            key = key?.let { keyFunc ->
-              { index ->
-                items.peek(index)?.let(keyFunc) ?: index
+        Box(modifier = Modifier.fillMaxSize()) {
+          LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 120.dp),
+            state = gridState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+          ) {
+            items(
+              count = items.itemCount,
+              key = key?.let { keyFunc ->
+                { index ->
+                  items.peek(index)?.let(keyFunc) ?: index
+                }
+              },
+              contentType = { "grid_item" }
+            ) { index ->
+              val item = items[index]
+              if (item != null) {
+                itemContent(item)
+              } else {
+                Spacer(
+                  modifier = Modifier
+                    .fillMaxWidth()
+                    .height(PagingGridPlaceholderHeight)
+                )
               }
-            },
-            contentType = { "grid_item" }
-          ) { index ->
-            items[index]?.let { item ->
-              itemContent(item)
+            }
+
+            if (items.loadState.append is LoadState.Loading) {
+              item(contentType = "loading") {
+                Box(
+                  modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                  contentAlignment = Alignment.Center
+                ) {
+                  CircularProgressIndicator()
+                }
+              }
             }
           }
 
-          if (items.loadState.append is LoadState.Loading) {
-            item(contentType = "loading") {
-              Box(
-                modifier = Modifier
-                  .fillMaxWidth()
-                  .padding(16.dp),
-                contentAlignment = Alignment.Center
-              ) {
-                CircularProgressIndicator()
-              }
-            }
+          if (scrollbarStyle != null) {
+            PagingScrollbar(
+              totalItems = items.itemCount,
+              firstVisibleItemIndex = gridState.firstVisibleItemIndex,
+              visibleItemsCount = gridState.layoutInfo.visibleItemsInfo.size,
+              style = scrollbarStyle,
+              labelForIndex = { index -> items[index]?.let { indexLabel?.invoke(it) } },
+              onIndexSelected = { index -> scope.launch { gridState.scrollToItem(index) } },
+              modifier = Modifier.align(Alignment.CenterEnd)
+            )
           }
         }
       }
@@ -573,3 +632,6 @@ fun ErrorScreen(message: String, modifier: Modifier = Modifier, onRetry: (() -> 
     }
   }
 }
+
+private val PagingListPlaceholderHeight = 72.dp
+private val PagingGridPlaceholderHeight = 184.dp

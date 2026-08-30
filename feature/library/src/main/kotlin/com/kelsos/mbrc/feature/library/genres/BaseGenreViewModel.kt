@@ -5,6 +5,7 @@ import androidx.paging.PagingData
 import com.kelsos.mbrc.core.common.settings.LibrarySettings
 import com.kelsos.mbrc.core.common.state.ConnectionStateFlow
 import com.kelsos.mbrc.core.data.library.genre.Genre
+import com.kelsos.mbrc.core.data.library.genre.GenreCategory
 import com.kelsos.mbrc.core.queue.Queue
 import com.kelsos.mbrc.feature.library.BaseLibraryViewModel
 import com.kelsos.mbrc.feature.library.queue.QueueHandler
@@ -18,9 +19,13 @@ abstract class BaseGenreViewModel(
 ) : BaseLibraryViewModel<GenreUiMessage>(librarySettings, connectionStateFlow) {
   abstract val genres: Flow<PagingData<Genre>>
 
+  fun openCategory(category: GenreCategory) {
+    launchDefault(GenreUiMessage.OpenGenres(category))
+  }
+
   fun queue(queue: Queue, genre: Genre) {
     if (queue == Queue.Default) {
-      launchDefault(GenreUiMessage.OpenArtists(genre))
+      launchDefault(GenreUiMessage.OpenAlbums(genre))
       return
     }
 
@@ -41,9 +46,5 @@ abstract class BaseGenreViewModel(
 
       emit(message)
     }
-  }
-
-  fun goToAlbums(genre: Genre) {
-    launchDefault(GenreUiMessage.OpenAlbums(genre))
   }
 }

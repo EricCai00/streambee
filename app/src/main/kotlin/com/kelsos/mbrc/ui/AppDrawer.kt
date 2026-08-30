@@ -23,9 +23,9 @@ import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.DesktopWindows
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LibraryMusic
-import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.WifiOff
@@ -459,7 +459,7 @@ private val primaryNavigationItems = listOf(
   DrawerItem(Screen.NowPlayingList, Icons.AutoMirrored.Filled.QueueMusic, R.string.nav_queue),
   DrawerItem(Screen.Library, Icons.Default.LibraryMusic, R.string.common_library),
   DrawerItem(Screen.Playlists, Icons.AutoMirrored.Filled.PlaylistPlay, R.string.nav_playlists),
-  DrawerItem(Screen.Radio, Icons.Default.Radio, R.string.nav_radio)
+  DrawerItem(Screen.History, Icons.Default.History, R.string.nav_history)
 )
 
 private val secondaryNavigationItems = listOf(

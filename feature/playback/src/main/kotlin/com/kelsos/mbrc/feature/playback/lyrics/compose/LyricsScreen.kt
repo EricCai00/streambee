@@ -1,6 +1,7 @@
 package com.kelsos.mbrc.feature.playback.lyrics.compose
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +18,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -31,6 +33,7 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -52,6 +55,8 @@ import com.kelsos.mbrc.core.ui.compose.ThinSlider
 import com.kelsos.mbrc.core.ui.compose.WaveProgressIndicator
 import com.kelsos.mbrc.feature.playback.R
 import com.kelsos.mbrc.feature.playback.lyrics.LyricsViewModel
+import com.kelsos.mbrc.feature.playback.lyrics.TimedLyricLine
+import com.kelsos.mbrc.feature.playback.lyrics.activeLyricLineIndex
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -61,6 +66,9 @@ fun LyricsScreen(
   viewModel: LyricsViewModel = koinViewModel()
 ) {
   val lyrics by viewModel.lyrics.collectAsStateWithLifecycle(initialValue = emptyList())
+  val synchronizedLyrics by viewModel.synchronizedLyrics.collectAsStateWithLifecycle(
+    initialValue = emptyList()
+  )
   val playingTrack by viewModel.playingTrack.collectAsStateWithLifecycle()
   val playingPosition by viewModel.playingPosition.collectAsStateWithLifecycle()
   val trackDetails by viewModel.trackDetails.collectAsStateWithLifecycle()
@@ -68,6 +76,7 @@ fun LyricsScreen(
 
   LyricsScreenContent(
     lyrics = lyrics,
+    synchronizedLyrics = synchronizedLyrics,
     playingTrack = playingTrack,
     playingPosition = playingPosition,
     composer = trackDetails.composer,
@@ -84,6 +93,7 @@ fun LyricsScreenContent(
   modifier: Modifier = Modifier,
   composer: String = "",
   lyrics: List<String>,
+  synchronizedLyrics: List<TimedLyricLine> = emptyList(),
   playingTrack: TrackInfo,
   playingPosition: PlayingPosition,
   isPlaying: Boolean,
@@ -91,6 +101,21 @@ fun LyricsScreenContent(
   onPlayPauseClick: () -> Unit,
   onSeek: (Float) -> Unit
 ) {
+  val listState = rememberLazyListState()
+  val activeLineIndex = if (synchronizedLyrics.isEmpty()) {
+    -1
+  } else {
+    activeLyricLineIndex(synchronizedLyrics, playingPosition.current)
+  }
+
+  LaunchedEffect(playingTrack.path, activeLineIndex) {
+    if (activeLineIndex >= 0) {
+      listState.animateScrollToItem((activeLineIndex - ACTIVE_LINE_CONTEXT).coerceAtLeast(0))
+    } else {
+      listState.scrollToItem(0)
+    }
+  }
+
   Column(
     modifier = modifier
       .fillMaxSize()
@@ -111,7 +136,7 @@ fun LyricsScreenContent(
         .weight(1f)
         .fillMaxWidth()
     ) {
-      if (lyrics.isEmpty()) {
+      if (lyrics.isEmpty() && synchronizedLyrics.isEmpty()) {
         EmptyScreen(
           message = stringResource(R.string.no_lyrics),
           icon = Icons.Default.MusicNote,
@@ -120,12 +145,26 @@ fun LyricsScreenContent(
         )
       } else {
         LazyColumn(
+          state = listState,
           modifier = Modifier.fillMaxSize(),
           contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
           verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-          items(lyrics) { line ->
-            LyricsLine(text = line)
+          if (synchronizedLyrics.isNotEmpty()) {
+            itemsIndexed(
+              items = synchronizedLyrics,
+              key = { index, line -> "${line.timestampMs}:$index" }
+            ) { index, line ->
+              LyricsLine(
+                text = line.text,
+                isActive = index == activeLineIndex,
+                onClick = { onSeek(line.timestampMs.toFloat()) }
+              )
+            }
+          } else {
+            itemsIndexed(lyrics) { _, line ->
+              LyricsLine(text = line)
+            }
           }
         }
       }
@@ -203,7 +242,12 @@ private fun LyricsHeader(
 }
 
 @Composable
-private fun LyricsLine(text: String, modifier: Modifier = Modifier) {
+private fun LyricsLine(
+  text: String,
+  modifier: Modifier = Modifier,
+  isActive: Boolean? = null,
+  onClick: (() -> Unit)? = null
+) {
   if (text.isBlank()) {
     // Spacer for empty lines (verse breaks)
     Spacer(modifier = modifier.height(16.dp))
@@ -211,16 +255,25 @@ private fun LyricsLine(text: String, modifier: Modifier = Modifier) {
     Text(
       text = text,
       style = MaterialTheme.typography.headlineSmall.copy(
-        fontWeight = FontWeight.Bold,
+        fontWeight = if (isActive == true) FontWeight.ExtraBold else FontWeight.SemiBold,
         lineHeight = 32.sp
       ),
-      color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.95f),
+      color = MaterialTheme.colorScheme.onPrimary.copy(
+        alpha = when (isActive) {
+          true -> 1f
+          false -> 0.55f
+          null -> 0.95f
+        }
+      ),
       modifier = modifier
         .fillMaxWidth()
+        .clickable(enabled = onClick != null) { onClick?.invoke() }
         .padding(vertical = 4.dp)
     )
   }
 }
+
+private const val ACTIVE_LINE_CONTEXT = 2
 
 @Composable
 private fun LyricsFooter(

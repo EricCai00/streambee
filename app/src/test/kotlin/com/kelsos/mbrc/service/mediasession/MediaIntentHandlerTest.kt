@@ -4,17 +4,8 @@ import android.content.Intent
 import android.view.KeyEvent
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
-import com.kelsos.mbrc.core.networking.protocol.actions.UserAction
-import com.kelsos.mbrc.core.networking.protocol.base.Protocol
-import com.kelsos.mbrc.core.networking.protocol.usecases.UserActionUseCase
-import com.kelsos.mbrc.core.networking.protocol.usecases.VolumeModifyUseCase
-import io.mockk.Runs
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.every
-import io.mockk.just
+import com.kelsos.mbrc.core.common.playback.LocalPlaybackController
 import io.mockk.mockk
-import io.mockk.slot
 import io.mockk.verify
 import org.junit.Before
 import org.junit.Test
@@ -24,19 +15,12 @@ import org.junit.runner.RunWith
 class MediaIntentHandlerTest {
 
   private lateinit var mediaIntentHandler: MediaIntentHandler
-  private lateinit var userActionUseCase: UserActionUseCase
-  private lateinit var volumeModifyUseCase: VolumeModifyUseCase
+  private lateinit var devicePlaybackController: LocalPlaybackController
 
   @Before
   fun setUp() {
-    userActionUseCase = mockk {
-      every { tryPerform(any()) } just Runs
-    }
-    volumeModifyUseCase = mockk {
-      coEvery { increase() } just Runs
-      coEvery { decrease() } just Runs
-    }
-    mediaIntentHandler = MediaIntentHandler(userActionUseCase, volumeModifyUseCase)
+    devicePlaybackController = mockk(relaxed = true)
+    mediaIntentHandler = MediaIntentHandler(devicePlaybackController)
   }
 
   // region Null and invalid intent tests
@@ -79,9 +63,7 @@ class MediaIntentHandlerTest {
     val result = mediaIntentHandler.handleMediaIntent(intent)
 
     assertThat(result).isTrue()
-    val slot = slot<UserAction>()
-    verify { userActionUseCase.tryPerform(capture(slot)) }
-    assertThat(slot.captured.protocol).isEqualTo(Protocol.PlayerPlayPause)
+    verify { devicePlaybackController.playPause() }
   }
 
   @Test
@@ -91,9 +73,7 @@ class MediaIntentHandlerTest {
     val result = mediaIntentHandler.handleMediaIntent(intent)
 
     assertThat(result).isTrue()
-    val slot = slot<UserAction>()
-    verify { userActionUseCase.tryPerform(capture(slot)) }
-    assertThat(slot.captured.protocol).isEqualTo(Protocol.PlayerPlay)
+    verify { devicePlaybackController.play() }
   }
 
   @Test
@@ -103,9 +83,7 @@ class MediaIntentHandlerTest {
     val result = mediaIntentHandler.handleMediaIntent(intent)
 
     assertThat(result).isTrue()
-    val slot = slot<UserAction>()
-    verify { userActionUseCase.tryPerform(capture(slot)) }
-    assertThat(slot.captured.protocol).isEqualTo(Protocol.PlayerPause)
+    verify { devicePlaybackController.pause() }
   }
 
   @Test
@@ -115,9 +93,7 @@ class MediaIntentHandlerTest {
     val result = mediaIntentHandler.handleMediaIntent(intent)
 
     assertThat(result).isTrue()
-    val slot = slot<UserAction>()
-    verify { userActionUseCase.tryPerform(capture(slot)) }
-    assertThat(slot.captured.protocol).isEqualTo(Protocol.PlayerStop)
+    verify { devicePlaybackController.stop() }
   }
 
   @Test
@@ -127,9 +103,7 @@ class MediaIntentHandlerTest {
     val result = mediaIntentHandler.handleMediaIntent(intent)
 
     assertThat(result).isTrue()
-    val slot = slot<UserAction>()
-    verify { userActionUseCase.tryPerform(capture(slot)) }
-    assertThat(slot.captured.protocol).isEqualTo(Protocol.PlayerNext)
+    verify { devicePlaybackController.next() }
   }
 
   @Test
@@ -139,9 +113,7 @@ class MediaIntentHandlerTest {
     val result = mediaIntentHandler.handleMediaIntent(intent)
 
     assertThat(result).isTrue()
-    val slot = slot<UserAction>()
-    verify { userActionUseCase.tryPerform(capture(slot)) }
-    assertThat(slot.captured.protocol).isEqualTo(Protocol.PlayerPrevious)
+    verify { devicePlaybackController.previous() }
   }
 
   // endregion
@@ -155,7 +127,7 @@ class MediaIntentHandlerTest {
     val result = mediaIntentHandler.handleMediaIntent(intent)
 
     assertThat(result).isTrue()
-    coVerify { volumeModifyUseCase.increase() }
+    verify { devicePlaybackController.adjustVolume(10) }
   }
 
   @Test
@@ -165,7 +137,7 @@ class MediaIntentHandlerTest {
     val result = mediaIntentHandler.handleMediaIntent(intent)
 
     assertThat(result).isTrue()
-    coVerify { volumeModifyUseCase.decrease() }
+    verify { devicePlaybackController.adjustVolume(-10) }
   }
 
   @Test
@@ -175,9 +147,7 @@ class MediaIntentHandlerTest {
     val result = mediaIntentHandler.handleMediaIntent(intent)
 
     assertThat(result).isTrue()
-    val slot = slot<UserAction>()
-    verify { userActionUseCase.tryPerform(capture(slot)) }
-    assertThat(slot.captured.protocol).isEqualTo(Protocol.PlayerMute)
+    verify { devicePlaybackController.toggleMute() }
   }
 
   // endregion
@@ -191,9 +161,7 @@ class MediaIntentHandlerTest {
     val result = mediaIntentHandler.handleMediaIntent(intent)
 
     assertThat(result).isTrue()
-    val slot = slot<UserAction>()
-    verify { userActionUseCase.tryPerform(capture(slot)) }
-    assertThat(slot.captured.protocol).isEqualTo(Protocol.PlayerPlayPause)
+    verify { devicePlaybackController.playPause() }
   }
 
   @Test
@@ -208,33 +176,23 @@ class MediaIntentHandlerTest {
 
     assertThat(result).isTrue()
 
-    // Should have called tryPerform twice - once for play/pause, once for next
-    val slots = mutableListOf<UserAction>()
-    verify(exactly = 2) { userActionUseCase.tryPerform(capture(slots)) }
-
-    // First call should be play/pause
-    assertThat(slots[0].protocol).isEqualTo(Protocol.PlayerPlayPause)
-    // Second call (double-click) should be next
-    assertThat(slots[1].protocol).isEqualTo(Protocol.PlayerNext)
+    verify(exactly = 1) { devicePlaybackController.playPause() }
+    verify(exactly = 1) { devicePlaybackController.next() }
   }
 
   @Test
   fun `handleMediaIntent should treat slow clicks as separate single clicks`() {
     // Create a fresh handler and mock to test single click in isolation
-    val freshUserActionUseCase: UserActionUseCase = mockk {
-      every { tryPerform(any()) } just Runs
-    }
-    val freshHandler = MediaIntentHandler(freshUserActionUseCase, volumeModifyUseCase)
+    val freshDevicePlaybackController: LocalPlaybackController = mockk(relaxed = true)
+    val freshHandler = MediaIntentHandler(freshDevicePlaybackController)
 
     // Single click on fresh handler (simulating click after timeout from previous)
     val intent = createMediaButtonIntent(KeyEvent.KEYCODE_HEADSETHOOK)
     val result = freshHandler.handleMediaIntent(intent)
 
     assertThat(result).isTrue()
-    val slot = slot<UserAction>()
-    verify { freshUserActionUseCase.tryPerform(capture(slot)) }
-    // Single click should always be play/pause, not next
-    assertThat(slot.captured.protocol).isEqualTo(Protocol.PlayerPlayPause)
+    verify { freshDevicePlaybackController.playPause() }
+    verify(exactly = 0) { freshDevicePlaybackController.next() }
   }
 
   // endregion
@@ -248,7 +206,12 @@ class MediaIntentHandlerTest {
     val result = mediaIntentHandler.handleMediaIntent(intent)
 
     assertThat(result).isFalse()
-    verify(exactly = 0) { userActionUseCase.tryPerform(any()) }
+    verify(exactly = 0) { devicePlaybackController.playPause() }
+    verify(exactly = 0) { devicePlaybackController.play() }
+    verify(exactly = 0) { devicePlaybackController.pause() }
+    verify(exactly = 0) { devicePlaybackController.stop() }
+    verify(exactly = 0) { devicePlaybackController.next() }
+    verify(exactly = 0) { devicePlaybackController.previous() }
   }
 
   @Test

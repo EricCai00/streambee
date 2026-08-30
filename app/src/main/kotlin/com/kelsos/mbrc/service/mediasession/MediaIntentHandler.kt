@@ -4,9 +4,7 @@ import android.content.Intent
 import android.view.KeyEvent
 import com.kelsos.mbrc.core.common.playback.LocalPlaybackController
 
-class MediaIntentHandler(
-  private val devicePlaybackController: LocalPlaybackController
-) {
+class MediaIntentHandler(private val devicePlaybackController: LocalPlaybackController) {
   private var previousClick: Long = 0
 
   private fun getKeyEventFromIntent(mediaIntent: Intent?): KeyEvent? {
@@ -71,7 +69,6 @@ class MediaIntentHandler(
       else -> false
     }
   }
-
 
   companion object {
     private const val DOUBLE_CLICK_INTERVAL = 350

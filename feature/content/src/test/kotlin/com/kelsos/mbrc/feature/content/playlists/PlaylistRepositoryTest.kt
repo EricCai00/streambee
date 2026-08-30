@@ -16,6 +16,7 @@ import com.kelsos.mbrc.core.data.playlist.PlaylistEntity
 import com.kelsos.mbrc.core.data.playlist.PlaylistRepository
 import com.kelsos.mbrc.core.networking.api.ContentApi
 import com.kelsos.mbrc.core.networking.dto.PlaylistDto
+import com.kelsos.mbrc.core.networking.dto.TrackDto
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -91,9 +92,14 @@ class PlaylistRepositoryTest : KoinTest {
     id = id
   )
 
-  private fun createPlaylistDto(name: String, url: String): PlaylistDto = PlaylistDto(
+  private fun createPlaylistDto(
+    name: String,
+    url: String,
+    tracks: List<TrackDto> = emptyList()
+  ): PlaylistDto = PlaylistDto(
     name = name,
-    url = url
+    url = url,
+    tracks = tracks
   )
 
   @Test
@@ -266,6 +272,35 @@ class PlaylistRepositoryTest : KoinTest {
       val storedPlaylists = dao.all()
       assertThat(storedPlaylists).hasSize(2)
       assertThat(storedPlaylists.map { it.name }).containsExactly("Playlist 1", "Playlist 2")
+    }
+  }
+
+  @Test
+  fun getRemoteShouldKeepPlaylistTracksThatAreOutsideLibrary() {
+    runTest(testDispatcher) {
+      val remoteTrack = TrackDto(
+        artist = "Artist",
+        title = "Outside Library",
+        src = "D:\\Playlists\\outside.flac",
+        trackno = 4,
+        disc = 1,
+        albumArtist = "Album Artist",
+        album = "Album",
+        genre = "Rock",
+        year = "2026"
+      )
+      every { contentApi.getPlaylists(any()) } returns flowOf(
+        listOf(createPlaylistDto("Mixed", "playlist1", listOf(remoteTrack)))
+      )
+
+      repository.getRemote(null)
+
+      val tracks = repository.getTracks("playlist1")
+      assertThat(tracks).hasSize(1)
+      assertThat(tracks.single().src).isEqualTo(remoteTrack.src)
+      assertThat(tracks.single().title).isEqualTo(remoteTrack.title)
+      assertThat(tracks.single().albumArtist).isEqualTo(remoteTrack.albumArtist)
+      assertThat(tracks.single().id).isEqualTo(0)
     }
   }
 

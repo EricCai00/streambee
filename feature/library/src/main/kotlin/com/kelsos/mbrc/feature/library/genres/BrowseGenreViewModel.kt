@@ -7,6 +7,7 @@ import com.kelsos.mbrc.core.common.settings.GenreSortPreference
 import com.kelsos.mbrc.core.common.settings.LibrarySettings
 import com.kelsos.mbrc.core.common.state.ConnectionStateFlow
 import com.kelsos.mbrc.core.data.library.genre.Genre
+import com.kelsos.mbrc.core.data.library.genre.GenreCategory
 import com.kelsos.mbrc.core.data.library.genre.GenreRepository
 import com.kelsos.mbrc.feature.library.LibrarySearchModel
 import com.kelsos.mbrc.feature.library.domain.LibrarySyncUseCase
@@ -37,6 +38,16 @@ class BrowseGenreViewModel(
           repository.getAll(sort.order)
         } else {
           repository.search(term, sort.order)
+        }
+      }.cachedIn(viewModelScope)
+
+  val categories: Flow<PagingData<GenreCategory>> =
+    combine(searchModel.term, sortPreference) { term, sort -> term to sort }
+      .flatMapLatest { (term, sort) ->
+        if (term.isEmpty()) {
+          repository.getCategories(sort.order)
+        } else {
+          repository.searchCategories(term, sort.order)
         }
       }.cachedIn(viewModelScope)
 

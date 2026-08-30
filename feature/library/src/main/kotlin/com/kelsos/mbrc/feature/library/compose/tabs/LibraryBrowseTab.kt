@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.paging.compose.LazyPagingItems
 import com.kelsos.mbrc.core.common.utilities.Outcome
+import com.kelsos.mbrc.core.ui.compose.PagingScrollbarStyle
 import com.kelsos.mbrc.core.ui.compose.QueueResultEffect
 import com.kelsos.mbrc.core.ui.compose.SwipeRefreshGridScreen
 import com.kelsos.mbrc.core.ui.compose.SwipeRefreshScreen
@@ -27,6 +28,8 @@ fun <T : Any> LibraryBrowseTab(
   syncState: SyncState,
   emptyState: EmptyState,
   itemKey: (T) -> Any,
+  indexedScrollbar: Boolean,
+  indexLabel: (T) -> String,
   modifier: Modifier = Modifier,
   isGridMode: Boolean = false,
   gridItemContent: @Composable ((T) -> Unit)? = null,
@@ -50,6 +53,12 @@ fun <T : Any> LibraryBrowseTab(
       emptyMessage = emptyState.message,
       emptyIcon = emptyState.icon,
       key = itemKey,
+      scrollbarStyle = if (indexedScrollbar) {
+        PagingScrollbarStyle.Indexed
+      } else {
+        PagingScrollbarStyle.Standard
+      },
+      indexLabel = indexLabel,
       itemContent = gridItemContent
     )
   } else {
@@ -65,6 +74,12 @@ fun <T : Any> LibraryBrowseTab(
       emptyMessage = emptyState.message,
       emptyIcon = emptyState.icon,
       key = itemKey,
+      scrollbarStyle = if (indexedScrollbar) {
+        PagingScrollbarStyle.Indexed
+      } else {
+        PagingScrollbarStyle.Standard
+      },
+      indexLabel = indexLabel,
       itemContent = itemContent
     )
   }

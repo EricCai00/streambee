@@ -54,13 +54,13 @@ class PlaylistActions(
         return@launch
       }
 
-      val paths = repository.getTrackPaths(url)
-      if (paths.isEmpty()) {
+      val tracks = repository.getTracks(url)
+      if (tracks.isEmpty()) {
         emit(PlaylistUiMessages.PlayFailed)
         return@launch
       }
 
-      val result = queueUseCase.queuePaths(paths)
+      val result = queueUseCase.queueTracks(tracks)
       if (result is Outcome.Failure) {
         emit(PlaylistUiMessages.PlayFailed)
       }

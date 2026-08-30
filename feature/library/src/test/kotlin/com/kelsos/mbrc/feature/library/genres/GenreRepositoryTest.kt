@@ -351,4 +351,54 @@ class GenreRepositoryTest : KoinTest {
       assertThat(result.map { it.genre }).containsExactly("Rock", "Pop Rock", "Hard Rock").inOrder()
     }
   }
+
+  @Test
+  fun getCategoriesShouldReturnDistinctCategoriesSortedAscending() {
+    runTest(testDispatcher) {
+      dao.insertAll(
+        listOf(
+          GenreEntity(genre = "Indie Rock", category = "Rock & Pop"),
+          GenreEntity(genre = "Alternative Rock", category = "Rock & Pop"),
+          GenreEntity(genre = "Bebop", category = "Jazz")
+        )
+      )
+
+      val result = repository.getCategories(SortOrder.ASC).asSnapshot()
+
+      assertThat(result.map { it.category }).containsExactly("Jazz", "Rock & Pop").inOrder()
+    }
+  }
+
+  @Test
+  fun getByCategoryShouldReturnGenresWithoutArtistLevel() {
+    runTest(testDispatcher) {
+      dao.insertAll(
+        listOf(
+          GenreEntity(genre = "Indie Rock", category = "Rock & Pop"),
+          GenreEntity(genre = "Alternative Rock", category = "Rock & Pop"),
+          GenreEntity(genre = "Bebop", category = "Jazz")
+        )
+      )
+
+      val result = repository.getByCategory("Rock & Pop", SortOrder.ASC).asSnapshot()
+
+      assertThat(result.map { it.genre })
+        .containsExactly("Alternative Rock", "Indie Rock")
+        .inOrder()
+      assertThat(result.map { it.category }).containsExactly("Rock & Pop", "Rock & Pop")
+    }
+  }
+
+  @Test
+  fun getRemoteShouldPersistGenreCategory() {
+    runTest(testDispatcher) {
+      every { libraryApi.getGenres(any()) } returns flowOf(
+        listOf(GenreDto(genre = "Bebop", category = "Jazz"))
+      )
+
+      repository.getRemote(null)
+
+      assertThat(dao.all().single().category).isEqualTo("Jazz")
+    }
+  }
 }

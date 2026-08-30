@@ -74,6 +74,8 @@ class BrowseGenreViewModelTest : KoinTest {
     every { repository.getAll(any()) } returns flowOf(PagingData.empty())
     every { repository.search(any()) } returns flowOf(PagingData.empty())
     every { repository.search(any(), any()) } returns flowOf(PagingData.empty())
+    every { repository.getCategories(any()) } returns flowOf(PagingData.empty())
+    every { repository.searchCategories(any(), any()) } returns flowOf(PagingData.empty())
     every { librarySettings.libraryTrackDefaultActionFlow } returns flowOf(TrackAction.PlayNow)
     every { librarySettings.genreSortPreferenceFlow } returns flowOf(
       SortPreference(GenreSortField.NAME, SortOrder.ASC)
@@ -154,7 +156,7 @@ class BrowseGenreViewModelTest : KoinTest {
   }
 
   @Test
-  fun queueShouldEmitOpenArtistsWhenQueueIsDefault() {
+  fun queueShouldEmitOpenAlbumsWhenQueueIsDefault() {
     runTest(testDispatcher) {
       // Given
       val genre = Genre(id = 1, genre = "Rock")
@@ -165,7 +167,7 @@ class BrowseGenreViewModelTest : KoinTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val event = awaitItem()
-        assertThat(event).isEqualTo(GenreUiMessage.OpenArtists(genre))
+        assertThat(event).isEqualTo(GenreUiMessage.OpenAlbums(genre))
       }
 
       // Verify queue handler is not called for default action

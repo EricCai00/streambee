@@ -21,7 +21,7 @@
 
   <!-- Last.fm -->
   <string name="lastfm_love">Love</string>
-  <string name="lastfm_scrobble">Last.fm Scrobbling</string>
+  <string name="lastfm_scrobble">Scrobble app playback to Last.fm</string>
 
   <!-- Lyrics -->
   <string name="lyrics_collapse">Collapse lyrics</string>

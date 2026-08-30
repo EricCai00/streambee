@@ -6,6 +6,7 @@ import com.kelsos.mbrc.core.common.settings.SortOrder
 import com.kelsos.mbrc.core.common.utilities.coroutines.AppCoroutineDispatchers
 import com.kelsos.mbrc.core.common.utilities.epoch
 import com.kelsos.mbrc.core.data.library.genre.Genre
+import com.kelsos.mbrc.core.data.library.genre.GenreCategory
 import com.kelsos.mbrc.core.data.library.genre.GenreDao
 import com.kelsos.mbrc.core.data.library.genre.GenreRepository
 import com.kelsos.mbrc.core.data.paged
@@ -28,7 +29,32 @@ class GenreRepositoryImpl(
       SortOrder.ASC -> dao.getAllAsc()
       SortOrder.DESC -> dao.getAllDesc()
     }
-  }) { it.toGenre() }
+  }, enablePlaceholders = true) { it.toGenre() }
+
+  override fun getCategories(sortOrder: SortOrder): Flow<PagingData<GenreCategory>> = paged({
+    when (sortOrder) {
+      SortOrder.ASC -> dao.getCategoriesAsc()
+      SortOrder.DESC -> dao.getCategoriesDesc()
+    }
+  }, enablePlaceholders = true) { it }
+
+  override fun searchCategories(
+    term: String,
+    sortOrder: SortOrder
+  ): Flow<PagingData<GenreCategory>> = paged({
+    when (sortOrder) {
+      SortOrder.ASC -> dao.searchCategoriesAsc(term)
+      SortOrder.DESC -> dao.searchCategoriesDesc(term)
+    }
+  }, enablePlaceholders = true) { it }
+
+  override fun getByCategory(category: String, sortOrder: SortOrder): Flow<PagingData<Genre>> =
+    paged({
+      when (sortOrder) {
+        SortOrder.ASC -> dao.getByCategoryAsc(category)
+        SortOrder.DESC -> dao.getByCategoryDesc(category)
+      }
+    }, enablePlaceholders = true) { it.toGenre() }
 
   override suspend fun getRemote(progress: Progress?) {
     withContext(dispatchers.network) {
@@ -69,7 +95,7 @@ class GenreRepositoryImpl(
       SortOrder.ASC -> dao.searchAsc(term)
       SortOrder.DESC -> dao.searchDesc(term)
     }
-  }) { it.toGenre() }
+  }, enablePlaceholders = true) { it.toGenre() }
 
   override suspend fun getById(id: Long): Genre? {
     return withContext(dispatchers.database) {

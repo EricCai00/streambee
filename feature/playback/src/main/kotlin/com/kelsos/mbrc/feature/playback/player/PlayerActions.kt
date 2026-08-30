@@ -1,11 +1,13 @@
 package com.kelsos.mbrc.feature.playback.player
 
+import com.kelsos.mbrc.core.common.playback.LocalPlaybackController
 import com.kelsos.mbrc.core.common.state.LfmRating
 import com.kelsos.mbrc.core.networking.protocol.actions.UserAction
 import com.kelsos.mbrc.core.networking.protocol.base.Protocol
 import com.kelsos.mbrc.core.networking.protocol.usecases.UserActionUseCase
-import com.kelsos.mbrc.core.common.playback.LocalPlaybackController
+import com.kelsos.mbrc.feature.settings.domain.SettingsManager
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -27,7 +29,8 @@ interface IPlayerActions {
 class PlayerActions(
   private val userActionUseCase: UserActionUseCase,
   private val scope: CoroutineScope,
-  private val devicePlaybackController: LocalPlaybackController
+  private val devicePlaybackController: LocalPlaybackController,
+  private val settingsManager: SettingsManager
 ) : IPlayerActions {
 
   override val playPause: () -> Unit = {
@@ -138,7 +141,8 @@ class PlayerActions(
 
   override val toggleScrobbling: () -> Unit = {
     scope.launch {
-      userActionUseCase.perform(UserAction.toggle(Protocol.PlayerScrobble))
+      val enabled = settingsManager.appScrobblingEnabledFlow.first()
+      settingsManager.setAppScrobblingEnabled(!enabled)
     }
   }
 }

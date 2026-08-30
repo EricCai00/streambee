@@ -40,7 +40,7 @@ class ArtistRepositoryImpl(
       SortOrder.ASC -> dao.getAllAsc()
       SortOrder.DESC -> dao.getAllDesc()
     }
-  }) { it.toArtist() }
+  }, enablePlaceholders = true) { it.toArtist() }
 
   override suspend fun getRemote(progress: Progress?) {
     withContext(dispatchers.network) {
@@ -68,24 +68,22 @@ class ArtistRepositoryImpl(
       SortOrder.ASC -> dao.searchAsc(term)
       SortOrder.DESC -> dao.searchDesc(term)
     }
-  }) { it.toArtist() }
+  }, enablePlaceholders = true) { it.toArtist() }
 
   override fun getAlbumArtistsOnly(sortOrder: SortOrder): Flow<PagingData<Artist>> = paged({
     when (sortOrder) {
       SortOrder.ASC -> dao.getAlbumArtistsAsc()
       SortOrder.DESC -> dao.getAlbumArtistsDesc()
     }
-  }) { it.toArtist() }
+  }, enablePlaceholders = true) { it.toArtist() }
 
-  override fun searchAlbumArtists(
-    term: String,
-    sortOrder: SortOrder
-  ): Flow<PagingData<Artist>> = paged({
-    when (sortOrder) {
-      SortOrder.ASC -> dao.searchAlbumArtistsAsc(term)
-      SortOrder.DESC -> dao.searchAlbumArtistsDesc(term)
-    }
-  }) { it.toArtist() }
+  override fun searchAlbumArtists(term: String, sortOrder: SortOrder): Flow<PagingData<Artist>> =
+    paged({
+      when (sortOrder) {
+        SortOrder.ASC -> dao.searchAlbumArtistsAsc(term)
+        SortOrder.DESC -> dao.searchAlbumArtistsDesc(term)
+      }
+    }, enablePlaceholders = true) { it.toArtist() }
 
   override suspend fun getById(id: Long): Artist? {
     return withContext(dispatchers.database) {

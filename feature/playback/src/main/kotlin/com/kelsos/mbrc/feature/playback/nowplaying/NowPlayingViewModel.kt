@@ -14,9 +14,9 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -83,7 +83,9 @@ class NowPlayingActions(
       try {
         if (position !in localPlaybackController.queue.value.indices) {
           emit(NowPlayingUiMessages.PlayFailed)
-        } else localPlaybackController.playQueueItem(position)
+        } else {
+          localPlaybackController.playQueueItem(position)
+        }
       } catch (e: IOException) {
         Timber.e(e)
         emit(NowPlayingUiMessages.PlayFailed)
@@ -148,9 +150,11 @@ class NowPlayingViewModel(
 ) : BaseViewModel<NowPlayingUiMessages>() {
   val tracks: Flow<PagingData<NowPlaying>> = localPlaybackController.queue
     .map { queue ->
-      PagingData.from(queue.mapIndexed { index, track ->
-        NowPlaying(track.title, track.artist, track.path, index, index.toLong())
-      })
+      PagingData.from(
+        queue.mapIndexed { index, track ->
+          NowPlaying(track.title, track.artist, track.path, index, index.toLong())
+        }
+      )
     }.cachedIn(viewModelScope)
   val playingTrack = appState.playingTrack
   val connectionState = connectionStateFlow.connection

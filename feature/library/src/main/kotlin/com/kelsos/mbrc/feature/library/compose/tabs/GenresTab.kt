@@ -17,12 +17,11 @@ import com.kelsos.mbrc.core.common.settings.SortOrder
 import com.kelsos.mbrc.core.common.settings.SortPreference
 import com.kelsos.mbrc.core.common.utilities.AppError
 import com.kelsos.mbrc.core.common.utilities.Outcome
-import com.kelsos.mbrc.core.data.library.genre.Genre
-import com.kelsos.mbrc.core.queue.Queue
+import com.kelsos.mbrc.core.data.library.genre.GenreCategory
 import com.kelsos.mbrc.feature.library.R
 import com.kelsos.mbrc.feature.library.compose.SortBottomSheet
 import com.kelsos.mbrc.feature.library.compose.SortOption
-import com.kelsos.mbrc.feature.library.compose.components.GenreListItem
+import com.kelsos.mbrc.feature.library.compose.components.GenreCategoryListItem
 import com.kelsos.mbrc.feature.library.genres.BrowseGenreViewModel
 import com.kelsos.mbrc.feature.library.genres.GenreUiMessage
 import kotlinx.coroutines.flow.filterIsInstance
@@ -38,14 +37,14 @@ fun GenresTab(
   snackbarHostState: SnackbarHostState,
   isSyncing: Boolean,
   showSortSheet: Boolean,
-  onNavigateToGenreArtists: (Genre) -> Unit,
-  onNavigateToGenreAlbums: (Genre) -> Unit,
+  indexedScrollbar: Boolean,
+  onNavigateToCategoryGenres: (GenreCategory) -> Unit,
   onDismissSortSheet: () -> Unit,
   onSync: () -> Unit,
   modifier: Modifier = Modifier,
   viewModel: BrowseGenreViewModel = koinViewModel()
 ) {
-  val genres = viewModel.genres.collectAsLazyPagingItems()
+  val categories = viewModel.categories.collectAsLazyPagingItems()
   val showSync by viewModel.showSync.collectAsStateWithLifecycle(initialValue = true)
   val sortPreference by viewModel.sortPreference.collectAsStateWithLifecycle(
     initialValue = SortPreference(GenreSortField.NAME, SortOrder.ASC)
@@ -55,8 +54,7 @@ fun GenresTab(
   LaunchedEffect(Unit) {
     viewModel.events.collect { event ->
       when (event) {
-        is GenreUiMessage.OpenArtists -> onNavigateToGenreArtists(event.genre)
-        is GenreUiMessage.OpenAlbums -> onNavigateToGenreAlbums(event.genre)
+        is GenreUiMessage.OpenGenres -> onNavigateToCategoryGenres(event.category)
         else -> Unit
       }
     }
@@ -75,7 +73,7 @@ fun GenresTab(
   }
 
   LibraryBrowseTab(
-    items = genres,
+    items = categories,
     queueResults = queueResults,
     snackbarHostState = snackbarHostState,
     syncState = SyncState(
@@ -84,17 +82,17 @@ fun GenresTab(
       onSync = onSync
     ),
     emptyState = EmptyState(
-      message = stringResource(R.string.genres_list_empty),
+      message = stringResource(R.string.genre_categories_list_empty),
       icon = Icons.AutoMirrored.Filled.QueueMusic
     ),
-    itemKey = { it.id },
+    itemKey = { it.category },
+    indexedScrollbar = indexedScrollbar,
+    indexLabel = { category -> alphabeticIndexLabel(category.category) },
     modifier = modifier
-  ) { genre ->
-    GenreListItem(
-      genre = genre,
-      onClick = { viewModel.queue(Queue.Default, genre) },
-      onQueue = { queue -> viewModel.queue(queue, genre) },
-      onGoToAlbums = { viewModel.goToAlbums(genre) }
+  ) { category ->
+    GenreCategoryListItem(
+      category = category,
+      onClick = { viewModel.openCategory(category) }
     )
   }
 

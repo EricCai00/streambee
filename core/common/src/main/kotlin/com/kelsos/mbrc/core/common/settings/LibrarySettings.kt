@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.Flow
 interface LibrarySettings {
   val shouldDisplayOnlyArtists: Flow<Boolean>
   val libraryTrackDefaultActionFlow: Flow<TrackAction>
+  val indexedLibraryScrollbarFlow: Flow<Boolean>
   suspend fun setShouldDisplayOnlyAlbumArtist(onlyAlbumArtist: Boolean)
+  suspend fun setIndexedLibraryScrollbar(enabled: Boolean)
 
   // Library sorting preferences
   val genreSortPreferenceFlow: Flow<GenreSortPreference>

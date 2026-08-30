@@ -1,30 +1,26 @@
 package com.kelsos.mbrc.feature.playback.nowplaying
 
-import androidx.paging.PagingData
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import com.kelsos.mbrc.core.common.playback.LocalPlaybackController
+import com.kelsos.mbrc.core.common.playback.LocalQueueTrack
 import com.kelsos.mbrc.core.common.state.AppStateFlow
 import com.kelsos.mbrc.core.common.state.BasicTrackInfo
 import com.kelsos.mbrc.core.common.state.ConnectionStateFlow
 import com.kelsos.mbrc.core.common.state.TrackInfo
 import com.kelsos.mbrc.core.common.test.testDispatcher
 import com.kelsos.mbrc.core.common.test.testDispatcherModule
-import com.kelsos.mbrc.core.data.nowplaying.NowPlaying
-import com.kelsos.mbrc.core.data.nowplaying.SearchResult
 import com.kelsos.mbrc.core.networking.protocol.SelfMutationConfig
 import com.kelsos.mbrc.core.networking.protocol.SelfMutationTracker
-import com.kelsos.mbrc.core.networking.protocol.actions.UserAction
-import com.kelsos.mbrc.core.networking.protocol.base.Protocol
-import com.kelsos.mbrc.core.networking.protocol.usecases.UserActionUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -39,11 +35,13 @@ import org.koin.test.inject
 
 @RunWith(AndroidJUnit4::class)
 class NowPlayingViewModelTest : KoinTest {
+  private val localQueue = MutableStateFlow<List<LocalQueueTrack>>(emptyList())
+
   private val testModule =
     module {
       single<NowPlayingRepository> { mockk(relaxed = true) }
       single<MoveManager> { mockk(relaxed = true) }
-      single<UserActionUseCase> { mockk(relaxed = true) }
+      single<LocalPlaybackController> { mockk(relaxed = true) }
       single<ConnectionStateFlow> { mockk(relaxed = true) }
       single<AppStateFlow> { mockk(relaxed = true) }
       single { SelfMutationTracker(clock = { 0L }, config = SelfMutationConfig()) }
@@ -53,7 +51,7 @@ class NowPlayingViewModelTest : KoinTest {
   private val viewModel: NowPlayingViewModel by inject()
   private val repository: NowPlayingRepository by inject()
   private val moveManager: MoveManager by inject()
-  private val userActionUseCase: UserActionUseCase by inject()
+  private val localPlaybackController: LocalPlaybackController by inject()
   private val connectionStateFlow: ConnectionStateFlow by inject()
   private val appStateFlow: AppStateFlow by inject()
 
@@ -63,7 +61,7 @@ class NowPlayingViewModelTest : KoinTest {
       modules(listOf(testModule, testDispatcherModule))
     }
 
-    every { repository.getAll() } returns flowOf(PagingData.empty())
+    every { localPlaybackController.queue } returns localQueue
     every { appStateFlow.playingTrack } returns MutableStateFlow<TrackInfo>(BasicTrackInfo())
     coEvery { connectionStateFlow.isConnected } returns true
   }
@@ -266,14 +264,10 @@ class NowPlayingViewModelTest : KoinTest {
   }
 
   @Test
-  fun tracksShouldReturnRepositoryPagingData() {
-    // Given
-    val mockPagingData = PagingData.empty<NowPlaying>()
-    every { repository.getAll() } returns flowOf(mockPagingData)
+  fun tracksShouldExposeLocalQueuePagingData() {
+    localQueue.value = listOf(localTrack(title = "Queued track"))
 
-    // Then
     assertThat(viewModel.tracks).isNotNull()
-    // Note: PagingData testing requires more setup, this verifies the flow is accessible
   }
 
   @Test
@@ -312,56 +306,10 @@ class NowPlayingViewModelTest : KoinTest {
   }
 
   @Test
-  fun playShouldEmitNetworkUnavailableWhenNotConnected() {
+  fun playShouldEmitPlayFailedWhenPositionIsOutsideLocalQueue() {
     runTest(testDispatcher) {
-      // Given
-      coEvery { connectionStateFlow.isConnected } returns false
+      localQueue.value = emptyList()
 
-      // When & Then
-      viewModel.events.test {
-        viewModel.actions.play(5)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val event = awaitItem()
-        assertThat(event).isEqualTo(NowPlayingUiMessages.NetworkUnavailable)
-      }
-
-      // Verify user action is not called when not connected
-      coVerify(exactly = 0) { userActionUseCase.perform(any()) }
-    }
-  }
-
-  @Test
-  fun playShouldNotEmitWhenConnectedAndUserActionSucceeds() {
-    runTest(testDispatcher) {
-      // Given
-      coEvery { connectionStateFlow.isConnected } returns true
-      coEvery { userActionUseCase.perform(any()) } returns Unit
-
-      // When & Then
-      viewModel.events.test {
-        viewModel.actions.play(5)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        // Should not emit any events on successful play
-        expectNoEvents()
-      }
-
-      // Verify user action was called with correct parameters
-      coVerify(exactly = 1) {
-        userActionUseCase.perform(UserAction(Protocol.NowPlayingListPlay, 5))
-      }
-    }
-  }
-
-  @Test
-  fun playShouldEmitPlayFailedWhenConnectedButUserActionThrowsIOException() {
-    runTest(testDispatcher) {
-      // Given
-      coEvery { connectionStateFlow.isConnected } returns true
-      coEvery { userActionUseCase.perform(any()) } throws IOException("Network error")
-
-      // When & Then
       viewModel.events.test {
         viewModel.actions.play(5)
         testDispatcher.scheduler.advanceUntilIdle()
@@ -370,64 +318,79 @@ class NowPlayingViewModelTest : KoinTest {
         assertThat(event).isEqualTo(NowPlayingUiMessages.PlayFailed)
       }
 
-      // Verify user action was called
-      coVerify(exactly = 1) {
-        userActionUseCase.perform(UserAction(Protocol.NowPlayingListPlay, 5))
-      }
+      verify(exactly = 0) { localPlaybackController.playQueueItem(any()) }
     }
   }
 
   @Test
-  fun removeTrackShouldEmitNetworkUnavailableWhenNotConnected() {
+  fun playShouldUseLocalQueueItemWithoutEmittingOnSuccess() {
     runTest(testDispatcher) {
-      // Given
-      coEvery { connectionStateFlow.isConnected } returns false
+      localQueue.value = List(6) { index -> localTrack(title = "Track $index") }
 
-      // When & Then
       viewModel.events.test {
-        viewModel.actions.removeTrack(3)
+        viewModel.actions.play(5)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        val event = awaitItem()
-        assertThat(event).isEqualTo(NowPlayingUiMessages.NetworkUnavailable)
-      }
-
-      // Verify user action is not called when not connected
-      coVerify(exactly = 0) { userActionUseCase.perform(any()) }
-    }
-  }
-
-  @Test
-  fun removeTrackShouldNotEmitWhenConnectedAndUserActionSucceeds() {
-    runTest(testDispatcher) {
-      // Given
-      coEvery { connectionStateFlow.isConnected } returns true
-      coEvery { userActionUseCase.perform(any()) } returns Unit
-
-      // When & Then
-      viewModel.events.test {
-        viewModel.actions.removeTrack(3)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        // Should not emit any events on successful remove
         expectNoEvents()
       }
 
-      // Verify user action was called with correct parameters
-      coVerify(exactly = 1) {
-        userActionUseCase.perform(UserAction(Protocol.NowPlayingListRemove, 3))
-      }
+      verify(exactly = 1) { localPlaybackController.playQueueItem(5) }
     }
   }
 
   @Test
-  fun removeTrackShouldEmitRemoveFailedWhenConnectedButUserActionThrowsIOException() {
+  fun playShouldEmitPlayFailedWhenLocalPlaybackThrowsIOException() {
     runTest(testDispatcher) {
-      // Given
-      coEvery { connectionStateFlow.isConnected } returns true
-      coEvery { userActionUseCase.perform(any()) } throws IOException("Network error")
+      localQueue.value = listOf(localTrack())
+      every { localPlaybackController.playQueueItem(0) } throws IOException("Playback error")
 
-      // When & Then
+      viewModel.events.test {
+        viewModel.actions.play(0)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val event = awaitItem()
+        assertThat(event).isEqualTo(NowPlayingUiMessages.PlayFailed)
+      }
+
+      verify(exactly = 1) { localPlaybackController.playQueueItem(0) }
+    }
+  }
+
+  @Test
+  fun removeTrackShouldWorkWhileDisconnectedBecauseQueueIsLocal() {
+    runTest(testDispatcher) {
+      coEvery { connectionStateFlow.isConnected } returns false
+
+      viewModel.events.test {
+        viewModel.actions.removeTrack(3)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        expectNoEvents()
+      }
+
+      verify(exactly = 1) { localPlaybackController.removeQueueItem(3) }
+    }
+  }
+
+  @Test
+  fun removeTrackShouldNotEmitWhenLocalRemovalSucceeds() {
+    runTest(testDispatcher) {
+      viewModel.events.test {
+        viewModel.actions.removeTrack(3)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        expectNoEvents()
+      }
+
+      verify(exactly = 1) { localPlaybackController.removeQueueItem(3) }
+    }
+  }
+
+  @Test
+  fun removeTrackShouldEmitRemoveFailedWhenLocalRemovalThrowsIOException() {
+    runTest(testDispatcher) {
+      every { localPlaybackController.removeQueueItem(3) } throws IOException("Removal error")
+
       viewModel.events.test {
         viewModel.actions.removeTrack(3)
         testDispatcher.scheduler.advanceUntilIdle()
@@ -436,91 +399,67 @@ class NowPlayingViewModelTest : KoinTest {
         assertThat(event).isEqualTo(NowPlayingUiMessages.RemoveFailed)
       }
 
-      // Verify user action was called
-      coVerify(exactly = 1) {
-        userActionUseCase.perform(UserAction(Protocol.NowPlayingListRemove, 3))
-      }
+      verify(exactly = 1) { localPlaybackController.removeQueueItem(3) }
     }
   }
 
   @Test
-  fun searchShouldCallPlayAndEmitSuccessWhenTrackFound() {
+  fun searchShouldPlayMatchingLocalTrackAndEmitSuccess() {
     runTest(testDispatcher) {
-      // Given
       val query = "test song"
-      val foundPosition = 10
       val trackTitle = "Test Song Title"
-      coEvery { repository.searchTrack(query) } returns SearchResult(foundPosition, trackTitle)
-      coEvery { connectionStateFlow.isConnected } returns true
-      coEvery { userActionUseCase.perform(any()) } returns Unit
+      localQueue.value = listOf(
+        localTrack(title = "Other"),
+        localTrack(title = trackTitle)
+      )
 
-      // When & Then
       viewModel.events.test {
         viewModel.actions.search(query)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Should emit SearchSuccess with track title
         val event = awaitItem()
         assertThat(event).isEqualTo(NowPlayingUiMessages.SearchSuccess(trackTitle))
       }
 
-      // Verify repository search was called
-      coVerify(exactly = 1) { repository.searchTrack(query) }
-      // Verify play was called with found position
-      coVerify(exactly = 1) {
-        userActionUseCase.perform(UserAction(Protocol.NowPlayingListPlay, foundPosition))
-      }
+      verify(exactly = 1) { localPlaybackController.playQueueItem(1) }
     }
   }
 
   @Test
   fun searchShouldEmitNotFoundWhenNoTrackMatches() {
     runTest(testDispatcher) {
-      // Given
       val query = "nonexistent song"
-      coEvery { repository.searchTrack(query) } returns null
+      localQueue.value = listOf(localTrack(title = "Different title", artist = "Different artist"))
 
-      // When & Then
       viewModel.events.test {
         viewModel.actions.search(query)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Should emit SearchNotFound
         val event = awaitItem()
         assertThat(event).isEqualTo(NowPlayingUiMessages.SearchNotFound)
       }
 
-      // Verify repository search was called
-      coVerify(exactly = 1) { repository.searchTrack(query) }
-      // Verify play was not called
-      coVerify(exactly = 0) { userActionUseCase.perform(any()) }
+      verify(exactly = 0) { localPlaybackController.playQueueItem(any()) }
     }
   }
 
   @Test
-  fun searchShouldEmitNetworkUnavailableWhenTrackFoundButNotConnected() {
+  fun searchShouldMatchArtistAndPlayWhileDisconnected() {
     runTest(testDispatcher) {
-      // Given
-      val query = "test song"
-      val foundPosition = 10
-      val trackTitle = "Test Song Title"
-      coEvery { repository.searchTrack(query) } returns SearchResult(foundPosition, trackTitle)
+      val query = "matching artist"
+      val trackTitle = "Local title"
+      localQueue.value = listOf(localTrack(title = trackTitle, artist = "Matching Artist"))
       coEvery { connectionStateFlow.isConnected } returns false
 
-      // When & Then
       viewModel.events.test {
         viewModel.actions.search(query)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Should emit NetworkUnavailable only (search aborts when not connected)
         val event = awaitItem()
-        assertThat(event).isEqualTo(NowPlayingUiMessages.NetworkUnavailable)
+        assertThat(event).isEqualTo(NowPlayingUiMessages.SearchSuccess(trackTitle))
       }
 
-      // Verify repository search was called
-      coVerify(exactly = 1) { repository.searchTrack(query) }
-      // Verify user action is not called when not connected
-      coVerify(exactly = 0) { userActionUseCase.perform(any()) }
+      verify(exactly = 1) { localPlaybackController.playQueueItem(0) }
     }
   }
 
@@ -545,22 +484,18 @@ class NowPlayingViewModelTest : KoinTest {
   }
 
   @Test
-  fun moveShouldEmitNetworkUnavailableWhenNotConnected() {
+  fun moveShouldCommitWhileDisconnectedBecauseQueueIsLocal() {
     runTest(testDispatcher) {
-      // Given
       coEvery { connectionStateFlow.isConnected } returns false
 
-      // When & Then
       viewModel.events.test {
         viewModel.actions.move()
         testDispatcher.scheduler.advanceUntilIdle()
 
-        val event = awaitItem()
-        assertThat(event).isEqualTo(NowPlayingUiMessages.NetworkUnavailable)
+        expectNoEvents()
       }
 
-      // Verify moveManager.commit is not called when not connected
-      coVerify(exactly = 0) { moveManager.commit() }
+      coVerify(exactly = 1) { moveManager.commit() }
     }
   }
 
@@ -590,10 +525,14 @@ class NowPlayingViewModelTest : KoinTest {
       // Given — a real MoveManagerImpl batches every per-row swap during the drag
       // and submits one (originalPosition, finalPosition) tuple on commit().
       val realMoveManager = MoveManagerImpl()
+      val realLocalQueue = MutableStateFlow<List<LocalQueueTrack>>(emptyList())
+      val realLocalPlaybackController: LocalPlaybackController = mockk(relaxed = true) {
+        every { queue } returns realLocalQueue
+      }
       val realModule = module {
         single<NowPlayingRepository> { mockk(relaxed = true) }
         single<MoveManager> { realMoveManager }
-        single<UserActionUseCase> { mockk(relaxed = true) }
+        single<LocalPlaybackController> { realLocalPlaybackController }
         single<ConnectionStateFlow> { mockk(relaxed = true) }
         single<AppStateFlow> { mockk(relaxed = true) }
         single { SelfMutationTracker(clock = { 0L }, config = SelfMutationConfig()) }
@@ -604,16 +543,13 @@ class NowPlayingViewModelTest : KoinTest {
       startKoin { modules(listOf(realModule, testDispatcherModule)) }
 
       val realRepository: NowPlayingRepository by inject()
-      val realUserAction: UserActionUseCase by inject()
       val realConnectionState: ConnectionStateFlow by inject()
       val realAppState: AppStateFlow by inject()
       val realViewModel: NowPlayingViewModel by inject()
 
-      every { realRepository.getAll() } returns flowOf(PagingData.empty())
       every { realAppState.playingTrack } returns MutableStateFlow<TrackInfo>(BasicTrackInfo())
       coEvery { realConnectionState.isConnected } returns true
-      coEvery { realUserAction.perform(any()) } returns Unit
-      coEvery { realRepository.move(any(), any()) } returns Unit
+      coEvery { realRepository.getRemote() } returns Unit
 
       // When — simulate a drag through several intermediate positions
       realViewModel.actions.moveTrack(from = 10, to = 9)
@@ -623,10 +559,15 @@ class NowPlayingViewModelTest : KoinTest {
       realViewModel.actions.move()
       testDispatcher.scheduler.advanceUntilIdle()
 
-      // Then — exactly one network call carrying (originalPosition=10, finalPosition=6).
-      coVerify(exactly = 1) { realUserAction.perform(any()) }
-      // And exactly one local DB swap.
-      coVerify(exactly = 1) { realRepository.move(11, 7) }
+      // Then — exactly one local queue move carrying the original and final positions.
+      verify(exactly = 1) { realLocalPlaybackController.moveQueueItem(10, 6) }
     }
   }
+
+  private fun localTrack(
+    title: String = "Title",
+    artist: String = "Artist",
+    album: String = "Album",
+    path: String = "D:/Music/song.flac"
+  ) = LocalQueueTrack(title = title, artist = artist, album = album, path = path)
 }

@@ -8,7 +8,23 @@ import androidx.room.PrimaryKey
 import okio.ByteString.Companion.encodeUtf8
 
 @Immutable
-data class Album(val id: Long, val artist: String, val album: String, val cover: String?)
+data class Album(
+  val id: Long,
+  val artist: String,
+  val album: String,
+  val cover: String?,
+  val year: String = ""
+)
+
+data class AlbumBrowseRow(
+  val artist: String,
+  val album: String,
+  val cover: String?,
+  @ColumnInfo(name = "date_added")
+  val dateAdded: Long,
+  val id: Long,
+  val year: String
+)
 
 @Entity(
   tableName = "album",

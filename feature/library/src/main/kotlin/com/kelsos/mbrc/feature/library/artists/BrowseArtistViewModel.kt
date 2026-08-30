@@ -19,10 +19,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-private data class ArtistSearchParams(
-  val keyword: String,
-  val sortOrder: SortOrder
-)
+private data class ArtistSearchParams(val keyword: String, val sortOrder: SortOrder)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BrowseArtistViewModel(

@@ -80,6 +80,22 @@ class LyricsViewModelTest : KoinTest {
     }
   }
 
+  @Test
+  fun synchronizedLyricsShouldExposeParsedTimeline() {
+    runTest(testDispatcher) {
+      viewModel.synchronizedLyrics.test {
+        assertThat(awaitItem()).isEmpty()
+
+        lyricsFlow.emit(listOf("[00:01.25]First", "[00:02.500]Second"))
+
+        assertThat(awaitItem()).containsExactly(
+          TimedLyricLine("First", 1_250L),
+          TimedLyricLine("Second", 2_500L)
+        ).inOrder()
+      }
+    }
+  }
+
   @Test fun playingTrackShouldReflectAppState() {
     runTest(testDispatcher) {
       // Given

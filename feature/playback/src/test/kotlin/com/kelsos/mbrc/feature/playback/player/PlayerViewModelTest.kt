@@ -3,6 +3,7 @@ package com.kelsos.mbrc.feature.playback.player
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import com.kelsos.mbrc.core.common.playback.LocalPlaybackController
 import com.kelsos.mbrc.core.common.settings.ChangeLogChecker
 import com.kelsos.mbrc.core.common.state.AppStateFlow
 import com.kelsos.mbrc.core.common.state.BasicTrackInfo
@@ -22,6 +23,7 @@ import com.kelsos.mbrc.feature.settings.domain.SettingsManager
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -47,6 +49,7 @@ class PlayerViewModelTest : KoinTest {
   private val playerStatusFlow = MutableStateFlow(PlayerStatusModel())
   private val trackDetailsFlow = MutableStateFlow(TrackDetails.EMPTY)
   private val showRatingOnPlayerFlow = MutableStateFlow(false)
+  private val appScrobblingEnabledFlow = MutableStateFlow(false)
 
   private val testModule = module {
     single<AppStateFlow> {
@@ -59,10 +62,13 @@ class PlayerViewModelTest : KoinTest {
       }
     }
     single<UserActionUseCase> { mockk(relaxed = true) }
+    single<LocalPlaybackController> { mockk(relaxed = true) }
     single<ChangeLogChecker> { mockk(relaxed = true) }
     single<SettingsManager> {
       mockk(relaxed = true) {
         every { showRatingOnPlayerFlow } returns this@PlayerViewModelTest.showRatingOnPlayerFlow
+        every { appScrobblingEnabledFlow } returns
+          this@PlayerViewModelTest.appScrobblingEnabledFlow
       }
     }
     singleOf(::PlayerViewModel)
@@ -70,6 +76,8 @@ class PlayerViewModelTest : KoinTest {
 
   private val viewModel: PlayerViewModel by inject()
   private val userActionUseCase: UserActionUseCase by inject()
+  private val localPlaybackController: LocalPlaybackController by inject()
+  private val settingsManager: SettingsManager by inject()
 
   @Before
   fun setUp() {
@@ -219,16 +227,15 @@ class PlayerViewModelTest : KoinTest {
   }
 
   @Test
-  fun `isScrobbling should update when player status changes scrobbling`() =
-    runTest(testDispatcher) {
-      viewModel.isScrobbling.test {
-        awaitItem() // initial false
+  fun `isScrobbling should update when app playback setting changes`() = runTest(testDispatcher) {
+    viewModel.isScrobbling.test {
+      awaitItem() // initial false
 
-        playerStatusFlow.emit(PlayerStatusModel(scrobbling = true))
+      appScrobblingEnabledFlow.emit(true)
 
-        assertThat(awaitItem()).isTrue()
-      }
+      assertThat(awaitItem()).isTrue()
     }
+  }
 
   @Test
   fun `showRatingOnPlayer should update when settings change`() = runTest(testDispatcher) {
@@ -292,101 +299,70 @@ class PlayerViewModelTest : KoinTest {
   // region Player Actions Tests
 
   @Test
-  fun `playPause action should send PlayerPlayPause user action`() = runTest(testDispatcher) {
+  fun `playPause action should control local playback`() = runTest(testDispatcher) {
     viewModel.actions.playPause()
     advanceUntilIdle()
 
-    coVerify {
-      userActionUseCase.perform(
-        match { it.protocol == Protocol.PlayerPlayPause && it.data == true }
-      )
-    }
+    verify { localPlaybackController.playPause() }
   }
 
   @Test
-  fun `previous action should send PlayerPrevious user action`() = runTest(testDispatcher) {
+  fun `previous action should control local playback`() = runTest(testDispatcher) {
     viewModel.actions.previous()
     advanceUntilIdle()
 
-    coVerify {
-      userActionUseCase.perform(
-        match { it.protocol == Protocol.PlayerPrevious && it.data == true }
-      )
-    }
+    verify { localPlaybackController.previous() }
   }
 
   @Test
-  fun `next action should send PlayerNext user action`() = runTest(testDispatcher) {
+  fun `next action should control local playback`() = runTest(testDispatcher) {
     viewModel.actions.next()
     advanceUntilIdle()
 
-    coVerify {
-      userActionUseCase.perform(
-        match { it.protocol == Protocol.PlayerNext && it.data == true }
-      )
-    }
+    verify { localPlaybackController.next() }
   }
 
   @Test
-  fun `stop action should send PlayerStop user action`() = runTest(testDispatcher) {
+  fun `stop action should control local playback`() = runTest(testDispatcher) {
     viewModel.actions.stop()
     advanceUntilIdle()
 
-    coVerify {
-      userActionUseCase.perform(
-        match { it.protocol == Protocol.PlayerStop && it.data == true }
-      )
-    }
+    verify { localPlaybackController.stop() }
   }
 
   @Test
-  fun `shuffle action should send PlayerShuffle toggle user action`() = runTest(testDispatcher) {
+  fun `shuffle action should control local playback`() = runTest(testDispatcher) {
     viewModel.actions.shuffle()
     advanceUntilIdle()
 
-    coVerify {
-      userActionUseCase.perform(
-        match { it.protocol == Protocol.PlayerShuffle && it.data == Protocol.TOGGLE }
-      )
-    }
+    verify { localPlaybackController.toggleShuffle() }
   }
 
   @Test
-  fun `repeat action should send PlayerRepeat toggle user action`() = runTest(testDispatcher) {
+  fun `repeat action should control local playback`() = runTest(testDispatcher) {
     viewModel.actions.repeat()
     advanceUntilIdle()
 
-    coVerify {
-      userActionUseCase.perform(
-        match { it.protocol == Protocol.PlayerRepeat && it.data == Protocol.TOGGLE }
-      )
-    }
+    verify { localPlaybackController.toggleRepeat() }
   }
 
   @Test
-  fun `mute action should send PlayerMute toggle user action`() = runTest(testDispatcher) {
+  fun `mute action should control local playback`() = runTest(testDispatcher) {
     viewModel.actions.mute()
     advanceUntilIdle()
 
-    coVerify {
-      userActionUseCase.perform(
-        match { it.protocol == Protocol.PlayerMute && it.data == Protocol.TOGGLE }
-      )
-    }
+    verify { localPlaybackController.toggleMute() }
   }
 
   @Test
-  fun `toggleScrobbling action should send PlayerScrobble toggle user action`() =
-    runTest(testDispatcher) {
-      viewModel.actions.toggleScrobbling()
-      advanceUntilIdle()
+  fun `toggleScrobbling action should update app playback setting`() = runTest(testDispatcher) {
+    viewModel.actions.toggleScrobbling()
+    advanceUntilIdle()
 
-      coVerify {
-        userActionUseCase.perform(
-          match { it.protocol == Protocol.PlayerScrobble && it.data == Protocol.TOGGLE }
-        )
-      }
+    coVerify {
+      settingsManager.setAppScrobblingEnabled(true)
     }
+  }
 
   // endregion
 

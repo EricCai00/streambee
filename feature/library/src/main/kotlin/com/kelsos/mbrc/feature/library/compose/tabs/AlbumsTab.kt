@@ -42,6 +42,7 @@ fun AlbumsTab(
   isSyncing: Boolean,
   showSortSheet: Boolean,
   isGridMode: Boolean,
+  indexedScrollbar: Boolean,
   onNavigateToAlbumTracks: (Album) -> Unit,
   onDismissSortSheet: () -> Unit,
   onSync: () -> Unit,
@@ -87,6 +88,14 @@ fun AlbumsTab(
       icon = Icons.Default.Album
     ),
     itemKey = { it.id },
+    indexedScrollbar = indexedScrollbar,
+    indexLabel = { album ->
+      when (sortPreference.field) {
+        AlbumSortField.NAME -> alphabeticIndexLabel(album.album)
+        AlbumSortField.ARTIST -> alphabeticIndexLabel(album.artist, ignoreLeadingThe = true)
+        AlbumSortField.YEAR -> yearIndexLabel(album.year)
+      }
+    },
     modifier = modifier,
     isGridMode = isGridMode,
     gridItemContent = { album ->

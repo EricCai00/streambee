@@ -300,5 +300,4 @@ class BrowseArtistViewModelTest : KoinTest {
       coVerify(exactly = 1) { librarySettings.setArtistSortPreference(newPreference) }
     }
   }
-
 }

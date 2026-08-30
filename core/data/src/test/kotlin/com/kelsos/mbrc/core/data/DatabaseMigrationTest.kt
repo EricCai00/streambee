@@ -12,7 +12,10 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class DatabaseMigrationTest {
 
-  private val migrationTestDb = "migration-test"
+  private val migrationTestDb: String
+    get() = InstrumentationRegistry.getInstrumentation().targetContext
+      .getDatabasePath("migration-test")
+      .absolutePath
 
   @get:Rule
   val helper: MigrationTestHelper = MigrationTestHelper(
@@ -400,6 +403,49 @@ class DatabaseMigrationTest {
       assertThat(e.message).contains("UNIQUE constraint failed")
     }
 
+    db.close()
+  }
+
+  @Test
+  fun migrate4To5CreatesAppPlaybackHistory() {
+    var db = helper.createDatabase(migrationTestDb, 4)
+    db.close()
+
+    db = helper.runMigrationsAndValidate(migrationTestDb, 5, true, MIGRATION_4_5)
+    db.execSQL(
+      """
+      INSERT INTO playback_history (
+        title, artist, album, album_artist, path, duration_ms, listened_ms,
+        started_at, played_at, scrobble_requested, id
+      ) VALUES (
+        'Title', 'Artist', 'Album', 'Album Artist', 'D:/Music/song.flac',
+        180000, 90000, 1000, 91000, 1, 1
+      )
+      """.trimIndent()
+    )
+
+    val cursor = db.query("SELECT * FROM playback_history")
+    assertThat(cursor.moveToFirst()).isTrue()
+    assertThat(cursor.getString(cursor.getColumnIndex("title"))).isEqualTo("Title")
+    assertThat(cursor.getLong(cursor.getColumnIndex("listened_ms"))).isEqualTo(90_000L)
+    assertThat(cursor.getInt(cursor.getColumnIndex("scrobble_requested"))).isEqualTo(1)
+    cursor.close()
+    db.close()
+  }
+
+  @Test
+  fun migrate5To6AddsGenreCategory() {
+    var db = helper.createDatabase(migrationTestDb, 5)
+    db.execSQL("INSERT INTO genre (genre, date_added, id) VALUES ('Rock', 123, 1)")
+    db.close()
+
+    db = helper.runMigrationsAndValidate(migrationTestDb, 6, true, MIGRATION_5_6)
+
+    val cursor = db.query("SELECT genre, category FROM genre WHERE id = 1")
+    assertThat(cursor.moveToFirst()).isTrue()
+    assertThat(cursor.getString(cursor.getColumnIndex("genre"))).isEqualTo("Rock")
+    assertThat(cursor.getString(cursor.getColumnIndex("category"))).isEmpty()
+    cursor.close()
     db.close()
   }
 }

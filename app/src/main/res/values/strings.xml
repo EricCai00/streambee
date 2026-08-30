@@ -43,7 +43,7 @@
   <string name="nav_help">Help &amp; Feedback</string>
   <string name="nav_now_playing">Now playing</string>
   <string name="nav_playlists">Playlists</string>
-  <string name="nav_radio">Radio</string>
+  <string name="nav_history">History</string>
   <string name="nav_connections">Connections</string>
 
   <!-- Notification -->

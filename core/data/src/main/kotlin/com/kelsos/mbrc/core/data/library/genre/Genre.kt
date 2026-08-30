@@ -7,7 +7,10 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Immutable
-data class Genre(val genre: String, val id: Long)
+data class Genre(val genre: String, val id: Long, val category: String = "")
+
+@Immutable
+data class GenreCategory(val category: String)
 
 @Entity(
   tableName = "genre",
@@ -16,6 +19,8 @@ data class Genre(val genre: String, val id: Long)
 data class GenreEntity(
   @ColumnInfo
   val genre: String,
+  @ColumnInfo
+  val category: String = "",
   @ColumnInfo(name = "date_added")
   val dateAdded: Long = 0,
   @PrimaryKey(autoGenerate = true)

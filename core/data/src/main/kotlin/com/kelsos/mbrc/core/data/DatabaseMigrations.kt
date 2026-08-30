@@ -266,3 +266,38 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
     db.execSQL("CREATE INDEX now_playing_date_added_idx ON now_playing (date_added)")
   }
 }
+
+val MIGRATION_4_5 = object : Migration(4, 5) {
+  override fun migrate(db: SupportSQLiteDatabase) {
+    db.execSQL(
+      """
+      CREATE TABLE IF NOT EXISTS playback_history (
+        title TEXT NOT NULL,
+        artist TEXT NOT NULL,
+        album TEXT NOT NULL,
+        album_artist TEXT NOT NULL,
+        path TEXT NOT NULL,
+        duration_ms INTEGER NOT NULL,
+        listened_ms INTEGER NOT NULL,
+        started_at INTEGER NOT NULL,
+        played_at INTEGER NOT NULL,
+        scrobble_requested INTEGER NOT NULL,
+        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL
+      )
+      """
+    )
+    db.execSQL(
+      "CREATE INDEX IF NOT EXISTS playback_history_played_at_idx " +
+        "ON playback_history (played_at)"
+    )
+    db.execSQL(
+      "CREATE INDEX IF NOT EXISTS playback_history_path_idx ON playback_history (path)"
+    )
+  }
+}
+
+val MIGRATION_5_6 = object : Migration(5, 6) {
+  override fun migrate(db: SupportSQLiteDatabase) {
+    db.execSQL("ALTER TABLE genre ADD COLUMN category TEXT NOT NULL DEFAULT ''")
+  }
+}

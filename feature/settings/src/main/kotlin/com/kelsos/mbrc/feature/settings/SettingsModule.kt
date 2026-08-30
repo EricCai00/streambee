@@ -2,6 +2,7 @@ package com.kelsos.mbrc.feature.settings
 
 import com.kelsos.mbrc.core.common.settings.ChangeLogChecker
 import com.kelsos.mbrc.core.common.settings.LibrarySettings
+import com.kelsos.mbrc.core.common.settings.PlaybackSettings
 import com.kelsos.mbrc.feature.settings.data.ClientInformationStore
 import com.kelsos.mbrc.feature.settings.data.ClientInformationStoreImpl
 import com.kelsos.mbrc.feature.settings.data.SettingsManagerDataStore
@@ -43,6 +44,7 @@ val settingsModule = module {
   singleOf(::SettingsManagerDataStore) {
     bind<SettingsManager>()
     bind<LibrarySettings>()
+    bind<PlaybackSettings>()
     bind<ChangeLogChecker>()
   }
 

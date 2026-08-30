@@ -1,6 +1,26 @@
 Changelog
 -----------
 
+## [2.1.0] - 2026-08-30
+### Added
+- Adds an on-device playback history for tracks completed in StreamBee, with unavailable-library entries handled gracefully.
+- Adds MusicBee Genre Category browsing with category-to-genre drill-down navigation.
+- Adds indexed fast scrolling for large artist, album, track, and genre lists, showing the current letter or year while dragging.
+- Adds synchronized LRC lyric parsing, automatic active-line following, and tap-to-seek while retaining plain-lyrics support.
+- Reports qualifying phone playback to MusicBee so Play Count and Last Played stay accurate, with optional Last.fm scrobbling through MusicBee's configured account.
+- Allows on-device playback of local files referenced by MusicBee playlists even when they are not part of the main library.
+
+### Changed
+- Persists large local queues in a compact atomic file and feeds Media3 in bounded chunks, preserving the selected track, position, shuffle, and repeat state across restarts.
+- Reworks playlist playback and queue actions so a selected playlist track starts in its correct surrounding context.
+- Loads notification artwork through Coil with cancellation and stale-result protection.
+- Uses MusicBee's synchronized, unsynchronized, cached, or supported provider lyrics for phone playback.
+
+### Fixed
+- Handles MP4/M4A audio stored behind an ID3 header in a file with an `.mp3` extension so Media3 can detect and seek the real container.
+- Prevents stale or malformed genre caches from hiding MusicBee Genre Category updates.
+- Improves local favorite, lyrics, stream preflight, completion tracking, and queue restoration error handling.
+
 ## [2.0.0] - 2026-08-16
 ### Added
 - Adds on-device streaming from the MusicBee library. StreamBee now plays the selected track on the phone instead of only controlling MusicBee on the computer.
@@ -315,8 +335,9 @@ Changelog
 - Removes the dialogs that used to appear on each new setup.
 
 
-[Unreleased]: https://github.com/musicbeeremote/mbrc/compare/v2.0.0...HEAD
-[2.0.0]: https://github.com/musicbeeremote/mbrc/compare/v1.6.1...v2.0.0
+[Unreleased]: https://github.com/EricCai00/mbrc/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/EricCai00/mbrc/compare/v2.0.0...v2.1.0
+[2.0.0]: https://github.com/EricCai00/mbrc/compare/v1.6.1...v2.0.0
 [1.6.1]: https://github.com/musicbeeremote/mbrc/compare/v1.6.0...v1.6.1
 [1.6.0]: https://github.com/musicbeeremote/mbrc/compare/v1.6.0-rc.4...v1.6.0
 [1.6.0-rc.4]: https://github.com/musicbeeremote/mbrc/compare/v1.6.0-rc.3...v1.6.0-rc.4

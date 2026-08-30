@@ -12,15 +12,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.kelsos.mbrc.R
 import com.kelsos.mbrc.core.data.library.track.TrackRepository
-import com.kelsos.mbrc.feature.content.playlists.compose.PlaylistScreen
 import com.kelsos.mbrc.feature.content.playlists.compose.PlaylistDetailScreen
-import com.kelsos.mbrc.feature.content.radio.compose.RadioScreen
+import com.kelsos.mbrc.feature.content.playlists.compose.PlaylistScreen
 import com.kelsos.mbrc.feature.library.albums.AlbumInfo
 import com.kelsos.mbrc.feature.library.compose.LibraryScreen
 import com.kelsos.mbrc.feature.library.compose.drilldown.AlbumTracksScreen
 import com.kelsos.mbrc.feature.library.compose.drilldown.ArtistAlbumsScreen
+import com.kelsos.mbrc.feature.library.compose.drilldown.CategoryGenresScreen
 import com.kelsos.mbrc.feature.library.compose.drilldown.GenreAlbumsScreen
 import com.kelsos.mbrc.feature.library.compose.drilldown.GenreArtistsScreen
+import com.kelsos.mbrc.feature.library.history.compose.PlaybackHistoryScreen
 import com.kelsos.mbrc.feature.misc.help.compose.HelpFeedbackScreen
 import com.kelsos.mbrc.feature.playback.nowplaying.compose.NowPlayingScreen
 import com.kelsos.mbrc.feature.playback.player.compose.PlayerScreen
@@ -67,13 +68,10 @@ fun AppNavGraph(
     composable(Screen.Library.route) {
       LibraryScreen(
         onOpenDrawer = onOpenDrawer,
-        onNavigateToGenreArtists = { genre ->
-          val encodedName = Uri.encode(genre.genre)
-          navController.navigate("genre_artists/${genre.id}/$encodedName")
-        },
-        onNavigateToGenreAlbums = { genre ->
-          val encodedName = Uri.encode(genre.genre)
-          navController.navigate("genre_albums/${genre.id}/$encodedName")
+        onNavigateToCategoryGenres = { category ->
+          navController.navigate(
+            "genre_category_genres?category=${Uri.encode(category.category)}"
+          )
         },
         onNavigateToArtistAlbums = { artist ->
           val encodedName = Uri.encode(artist.artist)
@@ -102,11 +100,11 @@ fun AppNavGraph(
       )
     }
 
-    composable(Screen.Radio.route) {
-      RadioScreen(
+    composable(Screen.History.route) {
+      PlaybackHistoryScreen(
+        onOpenDrawer = onOpenDrawer,
         onNavigateToPlayer = { navController.navigate(Screen.Home.route) },
-        snackbarHostState = snackbarHostState,
-        onOpenDrawer = onOpenDrawer
+        snackbarHostState = snackbarHostState
       )
     }
 
@@ -193,6 +191,28 @@ fun AppNavGraph(
           val encodedAlbum = Uri.encode(album.album)
           val encodedArtist = Uri.encode(album.artist)
           navController.navigate("album_tracks/${album.id}/$encodedAlbum/$encodedArtist")
+        },
+        onNavigateToPlayer = { navController.navigate(Screen.Home.route) },
+        snackbarHostState = snackbarHostState
+      )
+    }
+
+    composable(
+      route = Screen.CategoryGenres.ROUTE,
+      arguments = listOf(
+        navArgument("category") {
+          type = NavType.StringType
+          defaultValue = ""
+        }
+      )
+    ) { backStackEntry ->
+      val categoryName = backStackEntry.arguments?.getString("category").orEmpty()
+      CategoryGenresScreen(
+        categoryName = categoryName,
+        onNavigateBack = { navController.popBackStack() },
+        onNavigateToGenreAlbums = { genre ->
+          val encodedName = Uri.encode(genre.genre)
+          navController.navigate("genre_albums/${genre.id}/$encodedName")
         },
         onNavigateToPlayer = { navController.navigate(Screen.Home.route) },
         snackbarHostState = snackbarHostState
@@ -290,7 +310,7 @@ sealed class Screen(val route: String) {
   data object Home : Screen("home")
   data object Library : Screen("library")
   data object Playlists : Screen("playlists")
-  data object Radio : Screen("radio")
+  data object History : Screen("history")
   data object Settings : Screen("settings")
   data object Help : Screen("help")
 
@@ -322,6 +342,13 @@ sealed class Screen(val route: String) {
     }
   }
 
+  data class CategoryGenres(val category: String) :
+    Screen("genre_category_genres?category=$category") {
+    companion object {
+      const val ROUTE = "genre_category_genres?category={category}"
+    }
+  }
+
   data class GenreArtists(val genreId: Long, val genreName: String) :
     Screen("genre_artists/$genreId/$genreName") {
     companion object {
@@ -344,7 +371,7 @@ val drawerScreens = listOf(
   Screen.Home,
   Screen.Library,
   Screen.Playlists,
-  Screen.Radio,
+  Screen.History,
   Screen.Settings,
   Screen.Help
 )

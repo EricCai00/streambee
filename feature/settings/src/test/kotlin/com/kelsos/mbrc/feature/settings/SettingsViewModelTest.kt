@@ -42,6 +42,7 @@ class SettingsViewModelTest : KoinTest {
   private val debugLoggingFlow = MutableStateFlow(false)
   private val incomingCallActionFlow = MutableStateFlow<CallAction>(CallAction.None)
   private val trackDefaultActionFlow = MutableStateFlow<TrackAction>(TrackAction.PlayNow)
+  private val indexedLibraryScrollbarFlow = MutableStateFlow(true)
   private val halfStarRatingFlow = MutableStateFlow(false)
   private val showRatingOnPlayerFlow = MutableStateFlow(false)
 
@@ -60,6 +61,8 @@ class SettingsViewModelTest : KoinTest {
       every { incomingCallActionFlow } returns this@SettingsViewModelTest.incomingCallActionFlow
       every { libraryTrackDefaultActionFlow } returns
         this@SettingsViewModelTest.trackDefaultActionFlow
+      every { indexedLibraryScrollbarFlow } returns
+        this@SettingsViewModelTest.indexedLibraryScrollbarFlow
       every { halfStarRatingFlow } returns this@SettingsViewModelTest.halfStarRatingFlow
       every { showRatingOnPlayerFlow } returns this@SettingsViewModelTest.showRatingOnPlayerFlow
     }
@@ -96,6 +99,10 @@ class SettingsViewModelTest : KoinTest {
 
     viewModel.trackDefaultAction.test {
       assertThat(awaitItem()).isEqualTo(TrackAction.PlayNow)
+    }
+
+    viewModel.indexedLibraryScrollbarEnabled.test {
+      assertThat(awaitItem()).isTrue()
     }
 
     viewModel.visibleDialog.test {
@@ -158,6 +165,14 @@ class SettingsViewModelTest : KoinTest {
 
       coVerify { settingsManager.setLibraryTrackDefaultAction(TrackAction.QueueNext) }
     }
+
+  @Test
+  fun `updateIndexedLibraryScrollbar should persist the selected mode`() = runTest(testDispatcher) {
+    viewModel.updateIndexedLibraryScrollbar(false)
+    advanceUntilIdle()
+
+    coVerify { settingsManager.setIndexedLibraryScrollbar(false) }
+  }
 
   @Test
   fun `showDialog should update visibleDialog state`() = runTest(testDispatcher) {

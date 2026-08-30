@@ -83,38 +83,66 @@ class QueueHandler(
     AppError.OperationFailed.asFailure()
   }
 
-  suspend fun queueTrack(track: Track, type: Queue, queueAlbum: Boolean = false): Outcome<Int> = try {
-    val tracks = when (type) {
-      Queue.AddAll -> withContext(dispatchers.database) {
-        val paths = if (queueAlbum) {
-          trackRepository.getTrackPaths(TrackQuery.Album(track.album, track.albumArtist))
-        } else trackRepository.getTrackPaths(TrackQuery.All)
-        paths.mapNotNull { trackRepository.getByPath(it) }
-      }
-      Queue.PlayAlbum -> withContext(dispatchers.database) {
-        trackRepository.getTrackPaths(TrackQuery.Album(track.album, track.albumArtist))
-          .mapNotNull { trackRepository.getByPath(it) }
-      }
-      Queue.PlayArtist -> withContext(dispatchers.database) {
-        trackRepository.getTrackPaths(TrackQuery.Artist(track.artist))
-          .mapNotNull { trackRepository.getByPath(it) }
-      }
-      else -> listOf(track)
-    }
-    val start = tracks.indexOfFirst { it.src == track.src }.coerceAtLeast(0)
-    when (type) {
-      Queue.AddAll, Queue.PlayAlbum, Queue.PlayArtist -> playTracks(tracks, start)
-      else -> playOrQueue(type, tracks)
-    }
+  override suspend fun queueTracks(tracks: List<Track>): Outcome<Int> = try {
+    playOrQueue(Queue.Now, tracks)
   } catch (e: CancellationException) {
     throw e
   } catch (e: Exception) {
-    Timber.e(e, "Local track queue failed")
+    Timber.e(e, "Local playlist track playback failed")
     AppError.OperationFailed.asFailure()
   }
 
-  suspend fun queueTrack(track: Track, queueAlbum: Boolean = false): Outcome<Int> =
-    queueTrack(track, Queue.fromTrackAction(settings.libraryTrackDefaultActionFlow.first()), queueAlbum)
+  override suspend fun queueTracks(tracks: List<Track>, startIndex: Int): Outcome<Int> = try {
+    if (tracks.isEmpty()) return AppError.OperationFailed.asFailure()
+    playTracks(tracks, startIndex.coerceIn(0, tracks.lastIndex))
+  } catch (e: CancellationException) {
+    throw e
+  } catch (e: Exception) {
+    Timber.e(e, "Local playlist track playback from selected track failed")
+    AppError.OperationFailed.asFailure()
+  }
+
+  suspend fun queueTrack(track: Track, type: Queue, queueAlbum: Boolean = false): Outcome<Int> =
+    try {
+      val tracks = when (type) {
+        Queue.AddAll -> withContext(dispatchers.database) {
+          val paths = if (queueAlbum) {
+            trackRepository.getTrackPaths(TrackQuery.Album(track.album, track.albumArtist))
+          } else {
+            trackRepository.getTrackPaths(TrackQuery.All)
+          }
+          paths.mapNotNull { trackRepository.getByPath(it) }
+        }
+
+        Queue.PlayAlbum -> withContext(dispatchers.database) {
+          trackRepository.getTrackPaths(TrackQuery.Album(track.album, track.albumArtist))
+            .mapNotNull { trackRepository.getByPath(it) }
+        }
+
+        Queue.PlayArtist -> withContext(dispatchers.database) {
+          trackRepository.getTrackPaths(TrackQuery.Artist(track.artist))
+            .mapNotNull { trackRepository.getByPath(it) }
+        }
+
+        else -> listOf(track)
+      }
+      val start = tracks.indexOfFirst { it.src == track.src }.coerceAtLeast(0)
+      when (type) {
+        Queue.AddAll, Queue.PlayAlbum, Queue.PlayArtist -> playTracks(tracks, start)
+        else -> playOrQueue(type, tracks)
+      }
+    } catch (e: CancellationException) {
+      throw e
+    } catch (e: Exception) {
+      Timber.e(e, "Local track queue failed")
+      AppError.OperationFailed.asFailure()
+    }
+
+  suspend fun queueTrack(track: Track, queueAlbum: Boolean = false): Outcome<Int> = queueTrack(
+    track,
+    Queue.fromTrackAction(settings.libraryTrackDefaultActionFlow.first()),
+    queueAlbum
+  )
 
   private suspend fun playOrQueue(type: Queue, tracks: List<Track>): Outcome<Int> {
     if (tracks.isEmpty()) return AppError.OperationFailed.asFailure()
@@ -126,12 +154,22 @@ class QueueHandler(
   }
 
   private suspend fun playTracks(tracks: List<Track>, start: Int): Outcome<Int> =
-    if (devicePlaybackController.playTracks(tracks, start)) tracks.size.asSuccess()
-    else AppError.OperationFailed.asFailure()
+    if (devicePlaybackController.playTracks(tracks, start)) {
+      tracks.size.asSuccess()
+    } else {
+      AppError.OperationFailed.asFailure()
+    }
 
   private suspend fun enqueue(tracks: List<Track>, next: Boolean): Outcome<Int> {
-    val success = if (next) devicePlaybackController.enqueueNext(tracks)
-    else devicePlaybackController.enqueueLast(tracks)
-    return if (success) tracks.size.asSuccess() else AppError.OperationFailed.asFailure()
+    val success = if (next) {
+      devicePlaybackController.enqueueNext(tracks)
+    } else {
+      devicePlaybackController.enqueueLast(tracks)
+    }
+    return if (success) {
+      tracks.size.asSuccess()
+    } else {
+      AppError.OperationFailed.asFailure()
+    }
   }
 }

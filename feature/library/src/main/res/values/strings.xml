@@ -13,6 +13,7 @@
   <string name="artists_list_empty">No artists found</string>
   <string name="common_empty_no_tracks">No tracks found</string>
   <string name="genres_list_empty">No genres found</string>
+  <string name="genre_categories_list_empty">No genre categories found</string>
 
   <!-- Library -->
   <string name="common_library">Library</string>
@@ -36,7 +37,6 @@
 
   <!-- Menu -->
   <string name="menu_overflow_description">More options</string>
-  <string name="menu_go_to_albums">Go to Albums</string>
   <string name="menu_play">Play Now</string>
   <string name="menu_play_artist">Play Now (Artist)</string>
   <string name="menu_play_queue_all">Play Now (Queue All)</string>
@@ -68,6 +68,13 @@
   <string name="unknown_album">Unknown album</string>
   <string name="unknown_artist">Unknown artist</string>
   <string name="unknown_title">Unknown title</string>
+  <string name="unknown_genre_category">Uncategorized</string>
+
+  <!-- App playback history -->
+  <string name="history_title">History</string>
+  <string name="history_empty">Tracks completed on this device will appear here</string>
+  <string name="history_track_unavailable">This track is no longer in the synced library</string>
+  <string name="history_play_failed">Could not start this track</string>
 
   <!-- Sorting -->
   <string name="sort_title">Sort by</string>

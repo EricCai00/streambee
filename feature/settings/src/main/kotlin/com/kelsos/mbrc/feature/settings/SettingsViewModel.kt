@@ -56,6 +56,10 @@ class SettingsViewModel(
   val trackDefaultAction: StateFlow<TrackAction> = settingsManager.libraryTrackDefaultActionFlow
     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TrackAction.PlayNow)
 
+  val indexedLibraryScrollbarEnabled: StateFlow<Boolean> =
+    settingsManager.indexedLibraryScrollbarFlow
+      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
   val halfStarRatingEnabled: StateFlow<Boolean> = settingsManager.halfStarRatingFlow
     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
@@ -110,6 +114,12 @@ class SettingsViewModel(
   fun updateTrackDefaultAction(action: TrackAction) {
     viewModelScope.launch {
       settingsManager.setLibraryTrackDefaultAction(action)
+    }
+  }
+
+  fun updateIndexedLibraryScrollbar(enabled: Boolean) {
+    viewModelScope.launch {
+      settingsManager.setIndexedLibraryScrollbar(enabled)
     }
   }
 

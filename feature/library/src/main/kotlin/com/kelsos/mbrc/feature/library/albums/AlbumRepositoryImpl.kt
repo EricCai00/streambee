@@ -70,7 +70,8 @@ class AlbumRepositoryImpl(
     it.toAlbum()
   }
 
-  override fun getAll(): Flow<PagingData<Album>> = paged({ dao.getAll() }) { it.toAlbum() }
+  override fun getAll(): Flow<PagingData<Album>> =
+    paged({ dao.getAll() }, enablePlaceholders = true) { it.toAlbum() }
 
   override fun getAll(field: AlbumSortField, order: SortOrder): Flow<PagingData<Album>> = paged({
     when (field) {
@@ -89,7 +90,7 @@ class AlbumRepositoryImpl(
         SortOrder.DESC -> dao.getAllByYearDesc()
       }
     }
-  }) { it.toAlbum() }
+  }, enablePlaceholders = true) { it.toAlbum() }
 
   override suspend fun getRemote(progress: Progress?) {
     withContext(dispatchers.network) {
@@ -153,7 +154,7 @@ class AlbumRepositoryImpl(
         SortOrder.DESC -> dao.searchByYearDesc(term)
       }
     }
-  }) { it.toAlbum() }
+  }, enablePlaceholders = true) { it.toAlbum() }
 
   override suspend fun updateCovers(updated: List<AlbumCover>) {
     dao.updateCovers(updated)

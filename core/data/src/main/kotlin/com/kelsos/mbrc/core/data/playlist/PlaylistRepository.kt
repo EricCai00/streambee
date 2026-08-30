@@ -2,6 +2,7 @@ package com.kelsos.mbrc.core.data.playlist
 
 import androidx.paging.PagingData
 import com.kelsos.mbrc.core.data.Repository
+import com.kelsos.mbrc.core.data.library.track.Track
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -16,6 +17,9 @@ interface PlaylistRepository : Repository<Playlist> {
    */
   fun getBrowserItemsAtPath(path: String): Flow<PagingData<PlaylistBrowserItem>>
 
-  /** Returns the MusicBee library paths belonging to a remotely refreshed playlist. */
+  /** Returns every track belonging to a remotely refreshed playlist, in playlist order. */
+  suspend fun getTracks(url: String): List<Track>
+
+  /** Returns the paths belonging to a remotely refreshed playlist. */
   suspend fun getTrackPaths(url: String): List<String>
 }

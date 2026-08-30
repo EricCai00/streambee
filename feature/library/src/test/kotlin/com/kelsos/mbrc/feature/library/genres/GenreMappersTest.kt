@@ -11,9 +11,10 @@ class GenreMappersTest {
 
   @Test
   fun `toEntity should map genre name from dto`() {
-    val dto = GenreDto(genre = "Progressive Rock")
+    val dto = GenreDto(genre = "Progressive Rock", category = "Rock & Pop")
     val entity = dto.toEntity()
     assertThat(entity.genre).isEqualTo("Progressive Rock")
+    assertThat(entity.category).isEqualTo("Rock & Pop")
   }
 
   @Test
@@ -87,9 +88,10 @@ class GenreMappersTest {
 
   @Test
   fun `toGenre should map genre name from entity`() {
-    val entity = GenreEntity(genre = "Electronic")
+    val entity = GenreEntity(genre = "Electronic", category = "Electronic")
     val genre = entity.toGenre()
     assertThat(genre.genre).isEqualTo("Electronic")
+    assertThat(genre.category).isEqualTo("Electronic")
   }
 
   @Test

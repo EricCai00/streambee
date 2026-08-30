@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -57,6 +58,7 @@ fun PlaylistDetailScreen(
 ) {
   val tracks by viewModel.tracks.collectAsStateWithLifecycle()
   val loaded by viewModel.loaded.collectAsStateWithLifecycle()
+  val startingTrackIndex by viewModel.startingTrackIndex.collectAsStateWithLifecycle()
   val playFailedMessage = stringResource(R.string.playlist_play_failed)
   val networkUnavailableMessage =
     stringResource(CoreUiR.string.connection_error_network_unavailable)
@@ -85,15 +87,18 @@ fun PlaylistDetailScreen(
     Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
       when {
         !loaded -> LoadingScreen(modifier = Modifier.weight(1f))
+
         tracks.isEmpty() -> EmptyScreen(
           message = stringResource(R.string.playlist_tracks_empty),
           icon = Icons.Default.MusicNote,
           modifier = Modifier.weight(1f)
         )
+
         else -> LazyColumn(modifier = Modifier.weight(1f)) {
           itemsIndexed(tracks, key = { _, track -> track.src }) { index, track ->
             PlaylistTrackRow(
               track = track,
+              isStarting = startingTrackIndex == index,
               onClick = { viewModel.play(index) },
               onNavigateToAlbum = onNavigateToAlbum,
               onNavigateToArtist = onNavigateToArtist
@@ -112,6 +117,7 @@ fun PlaylistDetailScreen(
 @Composable
 private fun PlaylistTrackRow(
   track: Track,
+  isStarting: Boolean,
   onClick: () -> Unit,
   onNavigateToAlbum: (album: String, artist: String) -> Unit,
   onNavigateToArtist: (artist: String) -> Unit
@@ -126,12 +132,19 @@ private fun PlaylistTrackRow(
     subtitle = "$artist - $album",
     onClick = onClick,
     leadingContent = {
-      Icon(
-        imageVector = Icons.Default.MusicNote,
-        contentDescription = null,
-        modifier = Modifier.size(24.dp),
-        tint = MaterialTheme.colorScheme.primary
-      )
+      if (isStarting) {
+        CircularProgressIndicator(
+          modifier = Modifier.size(24.dp),
+          strokeWidth = 2.dp
+        )
+      } else {
+        Icon(
+          imageVector = Icons.Default.MusicNote,
+          contentDescription = null,
+          modifier = Modifier.size(24.dp),
+          tint = MaterialTheme.colorScheme.primary
+        )
+      }
     },
     trailingContent = {
       Box {

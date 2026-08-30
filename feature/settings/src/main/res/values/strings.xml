@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="setting_indexed_library_scrollbar">Indexed library scrollbar</string>
+    <string name="setting_indexed_library_scrollbar_summary">Show the year or first letter while dragging. Turn this off for a standard scrollbar.</string>
   <!-- Navigation -->
   <string name="nav_connections">Connections</string>
 

@@ -1,247 +1,158 @@
-<!-- Shields -->
-![CI](https://github.com/musicbeeremote/mbrc/workflows/CI/badge.svg)
-[![codecov](https://codecov.io/gh/musicbeeremote/mbrc/branch/main/graph/badge.svg)](https://codecov.io/gh/musicbeeremote/mbrc)
-![GitHub](https://img.shields.io/github/license/musicbeeremote/mbrc.svg)
-![GitHub release](https://img.shields.io/github/release/musicbeeremote/mbrc.svg)
-[![Discord](https://img.shields.io/discord/420977901215678474.svg?style=flat)](https://discord.gg/rceTb57)
-
-<br/>
-<p align="center">
-    <a href="https://github.com/musicbeeremote/mbrc">
-        <img src="logo.png" alt="Logo" width="80" height="80" />
-    </a>
-</p>
-
-<h3 align="center">MusicBee Remote</h3>
+[![CI](https://github.com/EricCai00/mbrc/actions/workflows/flow.yml/badge.svg)](https://github.com/EricCai00/mbrc/actions/workflows/flow.yml)
+[![License: GPL v3](https://img.shields.io/github/license/EricCai00/mbrc.svg)](LICENSE)
+[![GitHub release](https://img.shields.io/github/v/release/EricCai00/mbrc)](https://github.com/EricCai00/mbrc/releases)
 
 <p align="center">
-        Application for controlling MusicBee through your Android Device 
-        <br/>
-        <a href="https://play.google.com/store/apps/details?id=com.kelsos.mbrc">
-            <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" height="60"/>
-        </a>
-        <br/>
-        <a href="https://mbrc.kelsos.net/help/">Help</a>
-        ·
-        <a href="https://getmusicbee.com/forum/index.php?topic=7221.0">MusicBee Forum</a>
-        ·
-        <a href="https://github.com/musicbeeremote/mbrc/issues">Report Bug</a>
-        ·
-        <a href="https://github.com/musicbeeremote/mbrc/issues">Request Feature</a>
-    </p>
+  <a href="https://github.com/EricCai00/mbrc">
+    <img src="logo.png" alt="StreamBee logo" width="88" height="88" />
+  </a>
 </p>
 
-<!-- TABLE OF CONTENTS -->
-## Table of Contents
+<h1 align="center">StreamBee</h1>
 
-* [About the Project](#about-the-project)
-  * [Built With](#built-with)
-* [Getting Started](#getting-started)
-  * [Prerequisites](#prerequisites)
-  * [Installation](#installation)
-* [Development](#development)
-  * [Build Variants](#build-variants)
-  * [Common Commands](#common-commands)
-  * [Screenshot Testing](#screenshot-testing)
-* [Usage](#usage)
-* [Contributing](#contributing)
-* [License](#license)
-* [Contact](#contact)
-* [Acknowledgements](#acknowledgements)
+<p align="center">
+  A modern Android companion for MusicBee: control playback on your computer or stream your
+  MusicBee library directly to your phone.
+  <br />
+  <a href="https://github.com/EricCai00/mbrc/releases"><strong>Download the Android app</strong></a>
+  ·
+  <a href="https://github.com/EricCai00/mbrc-plugin"><strong>Get the MusicBee plugin</strong></a>
+  ·
+  <a href="https://github.com/EricCai00/mbrc/issues">Report an issue</a>
+</p>
 
-## About the Project
+StreamBee is a community fork of
+[MusicBee Remote](https://github.com/musicbeeremote/mbrc). It keeps the full remote-control
+experience and adds a phone-first playback path, richer library navigation, and a paired
+[StreamBee plugin](https://github.com/EricCai00/mbrc-plugin) for MusicBee on Windows.
 
-[![MusicBee Remote Screenshot][project-screenshot]](https://mbrc.kelsos.net)
+## Features
 
-MusicBee Remote is an application that allows you to control [MusicBee](https://getmusicbee.com/) player.
-This is achieved by using a [plugin](https://github.com/musicbeeremote/mbrc-plugin) that acts as a server.
-The plugin exposes a TCP socket server and uses a JSON based protocol to communicate with the Android application.
+- Control MusicBee playback, volume, output, ratings, shuffle, repeat, and the now-playing queue.
+- Browse artists, albums, tracks, playlists, genres, and MusicBee Genre Categories.
+- Drag an indexed scrollbar through large libraries by letter or year.
+- Stream files from the MusicBee library and playlists to Android with seeking and Media3 playback.
+- Start an album, artist, playlist, or the full library from any selected track.
+- Restore large local queues, the paused track, playback position, shuffle, and repeat after restart.
+- Display plain or synchronized LRC lyrics, follow the active line, and tap a line to seek.
+- Fetch lyrics exposed by MusicBee and supported MusicBee lyrics-provider plugins.
+- Keep an on-device playback history and report completed plays to MusicBee, with optional Last.fm
+  scrobbling through MusicBee's configured account.
+- Load artwork progressively for the library, player, media session, and Android notification.
+- Use a privacy-focused GitHub build without Firebase, Crashlytics, or analytics.
 
-The application development started in 2011 for personal usage and then it was open sourced and published on the Play Store so others could use it. The application was also presented as part of my thesis title "*Android and application development for mobile devices*".
+## StreamBee 2.1.0 highlights
 
-### Built With
+- Adds on-device playback history in place of the old Radio drawer entry.
+- Adds MusicBee Genre Category browsing and indexed fast scrolling for large libraries.
+- Adds synchronized lyric parsing, active-line following, and tap-to-seek.
+- Makes local playback queues scalable and safely restorable from an atomic on-disk format.
+- Records qualifying phone playback in MusicBee and optionally scrobbles it to Last.fm.
+- Streams files referenced only by MusicBee playlists, not just files already in the library.
+- Improves local-player queue actions, notification artwork, playlist playback, and stream format
+  compatibility.
 
-* [Kotlin](https://kotlinlang.org/) - Primary language
-* [Jetpack Compose](https://developer.android.com/jetpack/compose) - Modern declarative UI toolkit with Material 3
-* [Coroutines & Flow](https://kotlinlang.org/docs/coroutines-overview.html) - Asynchronous programming
-* [Koin](https://insert-koin.io/) - Dependency injection
-* [Room](https://developer.android.com/training/data-storage/room) - Local database with Paging 3 support
-* [Moshi](https://github.com/square/moshi) - JSON serialization
-* [Coil](https://coil-kt.github.io/coil/) - Image loading
-* [Glance](https://developer.android.com/jetpack/compose/glance) - Compose-based app widgets
-* [Media3](https://developer.android.com/media/media3) - Media session handling
-* [DataStore](https://developer.android.com/topic/libraries/architecture/datastore) - Preferences storage
+## Requirements
 
-#### Testing
+- Android 6.0 (API 23) or newer.
+- MusicBee 3.1 or newer on Windows.
+- The [StreamBee MusicBee plugin](https://github.com/EricCai00/mbrc-plugin).
+- The phone and computer must be on the same trusted local network without client/AP isolation.
 
-* [MockK](https://mockk.io/) - Mocking framework
-* [Robolectric](https://robolectric.org/) - Android unit testing
-* [Turbine](https://github.com/cashapp/turbine) - Flow testing
-* [Truth](https://truth.dev/) - Assertions
+## Installation
 
-## Getting Started
+### Android app
 
-In order to get started with the project as a developer there are a few steps you need to follow.
+Download `StreamBee-vX.Y.Z.apk` from
+[GitHub Releases](https://github.com/EricCai00/mbrc/releases) and open it on the Android device.
 
-### Prerequisites
+Official StreamBee APKs use the package name `com.kelsos.mbrc` and a dedicated release signing key.
+Development builds use `com.kelsos.mbrc.dev`, so a release and a development build can be installed
+side by side with separate data. An old debug-signed build that used `com.kelsos.mbrc` must be
+uninstalled before the first official StreamBee release can be installed.
 
-**Android Requirements:**
-- Minimum: Android 6.0 (API 23 - Marshmallow)
-- Target: Android 16 (API 36)
+### MusicBee plugin
 
-**Development Environment:**
-- Android Studio (stable version preferred) should be installed and up to date
+Install the matching plugin from the
+[StreamBee plugin repository](https://github.com/EricCai00/mbrc-plugin), restart MusicBee, and verify
+that it appears under **Edit > Preferences > Plugins**.
 
-To get started with the project you first have to clone the repository.
+Create or select a connection in StreamBee using the computer's LAN address and the command port
+configured by the plugin. Network discovery can also find compatible plugin instances automatically.
 
-```bash
-git clone https://github.com/musicbeeremote/mbrc.git
-```
+## On-device playback
 
-Then you can open the project with Android Studio.
+Open a track's overflow menu and choose **Play on this device**. StreamBee queues the surrounding
+album, artist, playlist, or library context and asks the plugin to serve the original file over HTTP.
+The command service uses the configured MusicBee Remote port; the audio service uses the next port
+(for example, command port `3000` and audio port `3001`). Both ports must be reachable from the
+phone.
 
-### Installation
-
-There are several ways to install the application on your device:
-
-1. **[Play Store](https://play.google.com/store/apps/details?id=com.kelsos.mbrc)** (Recommended) - Install the latest stable version. The Play Store build includes Firebase and Crashlytics for crash reporting and anonymous analytics.
-
-2. **GitHub Releases** - Download APKs from [releases](https://github.com/musicbeeremote/mbrc/releases). This build is for privacy-conscious users and doesn't include crash reporting or analytics.
-
-3. **Android Studio** - If you are a developer, you can build and install directly from Android Studio.
+The audio endpoint supports `GET`, `HEAD`, and single byte-range requests for seeking. It only
+exposes paths found in the current MusicBee library or one of its playlists and applies the plugin's
+client-address filter. The endpoint is intended for a trusted LAN and is not encrypted or separately
+authenticated: **do not port-forward either StreamBee port to the internet**.
 
 ## Development
 
-### Build Variants
-
-The project has two product flavors:
-
-- **github** - Clean build without Firebase/Crashlytics, suitable for privacy-conscious users
-- **play** - Play Store build with Firebase/Crashlytics for crash reporting and analytics
-
-### Common Commands
+Clone this fork and open it in Android Studio:
 
 ```bash
-# Build the project
-./gradlew build
+git clone https://github.com/EricCai00/mbrc.git
+cd mbrc
+```
 
-# Run unit tests
+The project uses Kotlin, Jetpack Compose, Coroutines/Flow, Koin, Room, Paging 3, Media3, Coil,
+DataStore, and Glance.
+
+### Build variants
+
+| Variant | Package | Purpose |
+| --- | --- | --- |
+| `githubDebug` | `com.kelsos.mbrc.dev` | Normal USB development without Firebase |
+| `playDebug` | `com.kelsos.mbrc.dev` | USB development with Google services |
+| `githubRelease` | `com.kelsos.mbrc` | Signed GitHub APK |
+| `playRelease` | `com.kelsos.mbrc` | Signed Play build |
+
+Use `githubDebug` for day-to-day USB debugging. Release builds must be signed with the same private
+release key as earlier StreamBee releases; never commit signing credentials to Git.
+
+### Common commands
+
+```bash
+# Build and test
+./gradlew build
 ./gradlew test
 
-# Run static analysis (detekt + lint)
+# Static analysis and local verification
 ./gradlew staticAnalysis
-
-# Run all local checks (format, lint, detekt, unit tests, screenshot tests)
 ./gradlew verifyLocal
 
-# Run all checks including instrumentation tests
-./gradlew verifyAll
+# Build the privacy-focused APK
+./gradlew :app:assembleGithubRelease
 
-# Generate test coverage report
-./gradlew koverHtmlReport
-
-# Check for dependency updates
-./gradlew dependencyUpdates
-
-# Format code
+# Formatting
 ./gradlew formatKotlin
-
-# Check code formatting
 ./gradlew lintKotlin
 ```
 
-### Screenshot Testing
-
-The project uses Google Compose Preview Screenshot Testing for visual regression testing.
+### Screenshot tests
 
 ```bash
-# Record reference screenshots (run after UI changes)
 ./gradlew updateGithubDebugScreenshotTest
-
-# Validate screenshots against reference images
 ./gradlew validateGithubDebugScreenshotTest
 ```
 
-Screenshot tests are located in `app/src/screenshotTest/kotlin/` and use `@PreviewTest` annotations on Composable preview functions. Reference images are stored in `app/src/screenshotTestGithubDebug/reference/`.
-
-## Usage
-
-In order to use the application you need a working WiFi connection, that doesn't have [access point isolation](https://www.howtogeek.com/179089/lock-down-your-wi-fi-network-with-your-routers-wireless-isolation-option/).
-
-You have to first install the [plugin](https://github.com/musicbeeremote/mbrc-plugin).
-
-After installing the plugin if you are not prompted to allow MusicBee or the plugin through the Windows Firewall you might have to manually configure Windows Firewall to allow the plugin to receive connections.
-
-### Play library audio on Android
-
-Open a track's overflow menu and choose **Play on this device**. The plugin serves the original
-library file over HTTP with byte-range support and Android decodes it locally with Media3. The
-audio service listens on the configured MusicBee Remote port plus one (for example, command port
-`3000` uses audio port `3001`). Both ports must be reachable on the local network. Only local files
-currently present in the MusicBee library are exposed. This MVP uses unauthenticated HTTP on the
-LAN; do not port-forward the audio port to the internet.
-
-For more detailed information you can check the [help](https://mbrc.kelsos.net/help/) page.
-
 ## Contributing
 
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details on:
+Issues and pull requests are welcome. Please keep changes focused, add tests for behavior changes,
+and run the relevant Gradle checks before submitting. See [CONTRIBUTING.md](CONTRIBUTING.md) and
+[CHANGELOG.md](CHANGELOG.md) for more information.
 
-- How to report bugs and suggest features
-- Development setup and code style
-- Testing requirements
-- Pull request process
+## License and upstream
 
-See the [open issues](https://github.com/musicbeeremote/mbrc/issues) for a list of known issues and feature requests.
+StreamBee remains licensed under [GPLv3](LICENSE). This fork builds on the long-running MusicBee
+Remote project created by Konstantinos Paparas and its contributors. Original copyright and license
+notices are retained in the source tree.
 
-See [CHANGELOG.md](CHANGELOG.md) for release notes.
-
-## License
-
-The source code of the application is licensed under the [GPLv3](https://www.gnu.org/licenses/gpl.html) license. See `LICENSE` for more information.
-
-    MusicBee Remote (for Android)
-    Copyright (C) 2011-2026  Konstantinos Paparas
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-## Contact
-
-MusicBee Remote - [@musicbeeremote.bsky.social](https://bsky.app/profile/musicbeeremote.bsky.social)
-
-Project Link: [https://github.com/musicbeeremote/mbrc](https://github.com/musicbeeremote/mbrc)
-
-## Acknowledgements
-
-* [Tasos Papazoglou Chalikias](https://github.com/sushiperv)
-
-Tasos created many of the icons, and was responsible for the Holo design of the application. Most of the icons are licenced under the [Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported License.](https://creativecommons.org/licenses/by-nc-nd/3.0/deed.en_US).
-
-* [Jordan Georgiades](https://www.linkedin.com/in/jordan-georgiadis)
-
-Jordan is responsible for the conception and creation of the application logo.
-
-* Carlos Parga
-
-Carlos created some really nice mockups from where I drew inspiration while working on the UI.
-
-* Cyanogen Apollo player
-
-Apollo Player was one of the original sources of inspiration for the UI of MusicBee Remote.
-
-* Google Play Music for Android (discontinued)
-
-Google Play Music was another early influence on the UI design of MusicBee Remote.
-
-[project-screenshot]: https://raw.githubusercontent.com/musicbeeremote/mbrc/main/screenshot.jpg
+MusicBee is a separate product and is not affiliated with this repository.

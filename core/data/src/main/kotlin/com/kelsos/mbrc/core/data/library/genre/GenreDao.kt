@@ -21,10 +21,46 @@ interface GenreDao {
   @Query("select * from genre order by genre collate nocase desc")
   fun getAllDesc(): PagingSource<Int, GenreEntity>
 
+  @Query("select category from genre group by category order by category collate nocase asc")
+  fun getCategoriesAsc(): PagingSource<Int, GenreCategory>
+
+  @Query("select category from genre group by category order by category collate nocase desc")
+  fun getCategoriesDesc(): PagingSource<Int, GenreCategory>
+
+  @Query(
+    """
+    select category from genre
+    where category like '%' || :term || '%'
+    group by category
+    order by category collate nocase asc
+    """
+  )
+  fun searchCategoriesAsc(term: String): PagingSource<Int, GenreCategory>
+
+  @Query(
+    """
+    select category from genre
+    where category like '%' || :term || '%'
+    group by category
+    order by category collate nocase desc
+    """
+  )
+  fun searchCategoriesDesc(term: String): PagingSource<Int, GenreCategory>
+
+  @Query(
+    "select * from genre where category = :category order by genre collate nocase asc"
+  )
+  fun getByCategoryAsc(category: String): PagingSource<Int, GenreEntity>
+
+  @Query(
+    "select * from genre where category = :category order by genre collate nocase desc"
+  )
+  fun getByCategoryDesc(category: String): PagingSource<Int, GenreEntity>
+
   @Query("select * from genre order by genre collate nocase")
   fun all(): List<GenreEntity>
 
-  @Query("select id, genre from genre order by genre collate nocase")
+  @Query("select id, genre, category from genre order by genre collate nocase")
   fun genres(): List<Genre>
 
   @Query(

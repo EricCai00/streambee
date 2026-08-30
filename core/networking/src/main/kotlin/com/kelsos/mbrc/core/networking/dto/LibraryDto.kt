@@ -7,6 +7,8 @@ import com.squareup.moshi.JsonClass
 data class GenreDto(
   @Json(name = "genre")
   val genre: String = "",
+  @Json(name = "category")
+  val category: String = "",
   @Json(name = "count")
   val count: Int = 0
 )

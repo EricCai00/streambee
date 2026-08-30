@@ -1,8 +1,8 @@
 package com.kelsos.mbrc.feature.library.compose.components
 
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -17,13 +17,13 @@ import coil3.compose.AsyncImage
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.size.Size
-import com.kelsos.mbrc.core.ui.R
 import com.kelsos.mbrc.core.data.library.track.TrackRepository
-import com.kelsos.mbrc.feature.library.data.HighResolutionCoverCache
+import com.kelsos.mbrc.core.ui.R
 import com.kelsos.mbrc.feature.library.data.CoverCache
+import com.kelsos.mbrc.feature.library.data.HighResolutionCoverCache
 import java.io.File
-import org.koin.compose.koinInject
 import okio.ByteString.Companion.encodeUtf8
+import org.koin.compose.koinInject
 
 /**
  * Displays an album cover by computing the cover key from artist and album names.
@@ -81,7 +81,7 @@ fun AlbumCoverByKey(
       .data(sourceFile)
       .size(Size(sizePx, sizePx))
       .memoryCacheKey("cover_${key}_${sourceToken}_$sizePx")
-      .diskCacheKey("cover_${key}_${sourceToken}")
+      .diskCacheKey("cover_${key}_$sourceToken")
       .memoryCachePolicy(CachePolicy.ENABLED)
       .diskCachePolicy(CachePolicy.ENABLED)
       .build()
@@ -125,11 +125,7 @@ fun HighResolutionAlbumCover(
 
 /** Loads original artwork only while a grid item is composed (visible or prefetched). */
 @Composable
-fun HighResolutionAlbumGridCover(
-  artist: String,
-  album: String,
-  modifier: Modifier = Modifier
-) {
+fun HighResolutionAlbumGridCover(artist: String, album: String, modifier: Modifier = Modifier) {
   val coverCache: HighResolutionCoverCache = koinInject()
   val trackRepository: TrackRepository = koinInject()
   val key = remember(artist, album) {
@@ -172,11 +168,14 @@ private fun ProgressiveAlbumCover(
     ImageRequest.Builder(context)
       .data(sourceFile)
       .size(
-        if (highResolutionFile != null && decodeOriginal) Size.ORIGINAL
-        else Size(sizePx, sizePx)
+        if (highResolutionFile != null && decodeOriginal) {
+          Size.ORIGINAL
+        } else {
+          Size(sizePx, sizePx)
+        }
       )
       .memoryCacheKey("cover_high_${key}_${sourceToken}_$sizePx")
-      .diskCacheKey("cover_high_${key}_${sourceToken}")
+      .diskCacheKey("cover_high_${key}_$sourceToken")
       .memoryCachePolicy(CachePolicy.ENABLED)
       .diskCachePolicy(CachePolicy.ENABLED)
       .build()

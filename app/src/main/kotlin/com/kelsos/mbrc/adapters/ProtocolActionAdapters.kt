@@ -21,8 +21,8 @@ import com.kelsos.mbrc.core.networking.protocol.actions.PlayerStateHandler
 import com.kelsos.mbrc.core.networking.protocol.actions.PluginVersionHandler
 import com.kelsos.mbrc.core.networking.protocol.actions.TrackChangeNotifier
 import com.kelsos.mbrc.core.platform.state.toPlayingTrack
-import com.kelsos.mbrc.feature.playback.nowplaying.NowPlayingRepository
 import com.kelsos.mbrc.feature.library.playback.DevicePlaybackController
+import com.kelsos.mbrc.feature.playback.nowplaying.NowPlayingRepository
 import com.kelsos.mbrc.feature.settings.domain.PluginUpdateCheckUseCase
 import com.kelsos.mbrc.feature.widgets.WidgetUpdater
 import com.kelsos.mbrc.state.PlayingTrackCache

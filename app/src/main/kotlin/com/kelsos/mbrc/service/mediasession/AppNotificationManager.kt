@@ -4,13 +4,13 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.graphics.Bitmap.Config
-import android.graphics.BitmapFactory
-import android.graphics.BitmapFactory.decodeFile
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.net.toUri
+import coil3.imageLoader
+import coil3.request.ImageRequest
+import coil3.request.allowHardware
+import coil3.toBitmap
 import com.kelsos.mbrc.R
 import com.kelsos.mbrc.core.common.state.PlayerState
 import com.kelsos.mbrc.core.common.state.PlayingPosition
@@ -18,8 +18,11 @@ import com.kelsos.mbrc.core.common.state.TrackInfo
 import com.kelsos.mbrc.core.common.utilities.coroutines.AppCoroutineDispatchers
 import com.kelsos.mbrc.core.platform.mediasession.NotificationData
 import com.kelsos.mbrc.core.platform.state.toPlayingTrack
+import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 interface AppNotificationManager {
   fun initialize()
@@ -51,6 +54,7 @@ class AppNotificationManagerImpl(
 ) : AppNotificationManager {
   private var notification: Notification? = null
   private var notificationData: NotificationData = NotificationData()
+  private var coverLoadJob: Job? = null
 
   init {
     ensureChannelExists()
@@ -70,6 +74,7 @@ class AppNotificationManagerImpl(
   }
 
   override fun destroy() {
+    coverLoadJob?.cancel()
     mediaSessionManager.destroy()
   }
 
@@ -78,24 +83,35 @@ class AppNotificationManagerImpl(
   }
 
   override fun updatePlayingTrack(playingTrack: TrackInfo) {
-    mediaSessionManager.scope.launch {
-      val coverUrl = playingTrack.coverUrl
-      val cover =
-        if (coverUrl.isEmpty()) {
-          null
-        } else {
-          val uri = coverUrl.toUri()
-          runCatching {
-            decodeFile(
-              checkNotNull(uri.path),
-              BitmapFactory.Options().apply {
-                inPreferredConfig = Config.RGB_565
-              }
-            )
-          }.getOrNull()
-        }
-      notificationData = notificationData.copy(track = playingTrack.toPlayingTrack(), cover = cover)
+    coverLoadJob?.cancel()
+    coverLoadJob = mediaSessionManager.scope.launch {
+      val track = playingTrack.toPlayingTrack()
+      notificationData = notificationData.copy(track = track, cover = null)
       update(notificationData)
+
+      val cover = loadCover(playingTrack.coverUrl)
+      if (notificationData.track.path == track.path) {
+        notificationData = notificationData.copy(cover = cover)
+        update(notificationData)
+      }
+    }
+  }
+
+  @Suppress("TooGenericExceptionCaught")
+  private suspend fun loadCover(coverUrl: String) = withContext(dispatchers.io) {
+    if (coverUrl.isBlank()) return@withContext null
+    try {
+      val request = ImageRequest.Builder(context)
+        .data(coverUrl)
+        .size(NOTIFICATION_ARTWORK_SIZE_PX)
+        .allowHardware(false)
+        .build()
+      context.imageLoader.execute(request).image?.toBitmap()
+    } catch (error: CancellationException) {
+      throw error
+    } catch (error: Exception) {
+      Timber.w(error, "Failed to load notification artwork")
+      null
     }
   }
 
@@ -153,5 +169,9 @@ class AppNotificationManagerImpl(
       enableVibration(false)
       setSound(null, null)
     }
+  }
+
+  companion object {
+    private const val NOTIFICATION_ARTWORK_SIZE_PX = 512
   }
 }

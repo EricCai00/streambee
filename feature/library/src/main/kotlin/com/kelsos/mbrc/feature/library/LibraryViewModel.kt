@@ -33,6 +33,8 @@ class LibraryViewModel(
 
   val albumArtistsOnly: Flow<Boolean> = librarySettings.shouldDisplayOnlyArtists
 
+  val indexedScrollbar: Flow<Boolean> = librarySettings.indexedLibraryScrollbarFlow
+
   fun search(string: String = "") {
     viewModelScope.launch {
       searchModel.setTerm(string)

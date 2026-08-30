@@ -9,6 +9,7 @@ import com.kelsos.mbrc.core.data.library.track.Track
 import com.kelsos.mbrc.core.data.library.track.TrackRepository
 import com.kelsos.mbrc.core.data.playlist.PlaylistRepository
 import com.kelsos.mbrc.core.queue.PathQueueUseCase
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,39 +27,46 @@ class PlaylistDetailViewModel(
   val tracks: StateFlow<List<Track>> = _tracks.asStateFlow()
   private val _loaded = MutableStateFlow(false)
   val loaded: StateFlow<Boolean> = _loaded.asStateFlow()
+  private val _startingTrackIndex = MutableStateFlow<Int?>(null)
+  val startingTrackIndex: StateFlow<Int?> = _startingTrackIndex.asStateFlow()
 
   private var loadedUrl: String? = null
-  private var playlistPaths: List<String> = emptyList()
+  private var playJob: Job? = null
+  private var playRequestId = 0L
 
   fun load(url: String) {
     if (loadedUrl == url) return
     loadedUrl = url
     _loaded.value = false
     viewModelScope.launch(dispatchers.network) {
-      playlistPaths = playlistRepository.getTrackPaths(url)
+      val playlistTracks = playlistRepository.getTracks(url)
       _tracks.value = withContext(dispatchers.database) {
-        playlistPaths.mapNotNull { trackRepository.getByPath(it) }
+        playlistTracks.map { track -> trackRepository.getByPath(track.src) ?: track }
       }
       _loaded.value = true
     }
   }
 
   fun play(index: Int) {
-    viewModelScope.launch(dispatchers.network) {
-      if (!connectionStateFlow.isConnected) {
-        emit(PlaylistUiMessages.NetworkUnavailable)
-        return@launch
+    playJob?.cancel()
+    val requestId = ++playRequestId
+    _startingTrackIndex.value = index
+    playJob = viewModelScope.launch(dispatchers.network) {
+      try {
+        if (!connectionStateFlow.isConnected) {
+          emit(PlaylistUiMessages.NetworkUnavailable)
+          return@launch
+        }
+        val tracks = _tracks.value
+        if (tracks.isEmpty() || index !in tracks.indices) {
+          emit(PlaylistUiMessages.PlayFailed)
+          return@launch
+        }
+        val result = queueUseCase.queueTracks(tracks, index)
+        if (result is Outcome.Failure) emit(PlaylistUiMessages.PlayFailed)
+      } finally {
+        if (playRequestId == requestId) _startingTrackIndex.value = null
       }
-      // Queue only tracks that can be resolved from the local library. This keeps
-      // the clicked row index aligned with the queue start index when a playlist
-      // contains a file that is no longer present in the library.
-      val paths = _tracks.value.map { it.src }
-      if (paths.isEmpty()) {
-        emit(PlaylistUiMessages.PlayFailed)
-        return@launch
-      }
-      val result = queueUseCase.queuePaths(paths, index)
-      if (result is Outcome.Failure) emit(PlaylistUiMessages.PlayFailed)
     }
   }
 }

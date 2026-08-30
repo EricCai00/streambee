@@ -55,7 +55,7 @@ fun PlaylistScreen(
   val refreshSuccessMessage = stringResource(R.string.playlists_load_success)
   val networkUnavailableMessage =
     stringResource(CoreUiR.string.connection_error_network_unavailable)
-  val playFailedMessage = stringResource(R.string.radio__play_failed)
+  val playFailedMessage = stringResource(R.string.playlist_play_failed)
   val baseTitle = stringResource(R.string.nav_playlists)
 
   // Dynamic title based on current path

@@ -38,6 +38,7 @@ fun ArtistsTab(
   snackbarHostState: SnackbarHostState,
   isSyncing: Boolean,
   showSortSheet: Boolean,
+  indexedScrollbar: Boolean,
   onNavigateToArtistAlbums: (Artist) -> Unit,
   onDismissSortSheet: () -> Unit,
   onSync: () -> Unit,
@@ -83,6 +84,10 @@ fun ArtistsTab(
       icon = Icons.Default.Person
     ),
     itemKey = { it.id },
+    indexedScrollbar = indexedScrollbar,
+    indexLabel = { artist ->
+      alphabeticIndexLabel(artist.artist, ignoreLeadingThe = true)
+    },
     modifier = modifier
   ) { artist ->
     ArtistListItem(

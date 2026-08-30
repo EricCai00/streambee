@@ -8,4 +8,7 @@ import kotlinx.coroutines.flow.Flow
 interface GenreRepository : Repository<Genre> {
   fun getAll(sortOrder: SortOrder): Flow<PagingData<Genre>>
   fun search(term: String, sortOrder: SortOrder): Flow<PagingData<Genre>>
+  fun getCategories(sortOrder: SortOrder): Flow<PagingData<GenreCategory>>
+  fun searchCategories(term: String, sortOrder: SortOrder): Flow<PagingData<GenreCategory>>
+  fun getByCategory(category: String, sortOrder: SortOrder): Flow<PagingData<Genre>>
 }

@@ -91,12 +91,22 @@ class SettingsManagerDataStore(
     preferences[PreferenceKeys.ALBUM_ARTISTS_ONLY] ?: DefaultValues.ALBUM_ARTISTS_ONLY
   }
 
+  override val indexedLibraryScrollbarFlow: Flow<Boolean> = dataStore.data.map { preferences ->
+    preferences[PreferenceKeys.INDEXED_LIBRARY_SCROLLBAR]
+      ?: DefaultValues.INDEXED_LIBRARY_SCROLLBAR
+  }
+
   override val halfStarRatingFlow: Flow<Boolean> = dataStore.data.map { preferences ->
     preferences[PreferenceKeys.HALF_STAR_RATING] ?: DefaultValues.HALF_STAR_RATING
   }
 
   override val showRatingOnPlayerFlow: Flow<Boolean> = dataStore.data.map { preferences ->
     preferences[PreferenceKeys.SHOW_RATING_ON_PLAYER] ?: DefaultValues.SHOW_RATING_ON_PLAYER
+  }
+
+  override val appScrobblingEnabledFlow: Flow<Boolean> = dataStore.data.map { preferences ->
+    preferences[PreferenceKeys.APP_SCROBBLING_ENABLED]
+      ?: DefaultValues.APP_SCROBBLING_ENABLED
   }
 
   override val genreSortPreferenceFlow: Flow<GenreSortPreference> = dataStore.data.map { prefs ->
@@ -172,6 +182,12 @@ class SettingsManagerDataStore(
     }
   }
 
+  override suspend fun setIndexedLibraryScrollbar(enabled: Boolean) {
+    dataStore.edit { preferences ->
+      preferences[PreferenceKeys.INDEXED_LIBRARY_SCROLLBAR] = enabled
+    }
+  }
+
   override suspend fun setHalfStarRating(enabled: Boolean) {
     dataStore.edit { preferences ->
       preferences[PreferenceKeys.HALF_STAR_RATING] = enabled
@@ -181,6 +197,12 @@ class SettingsManagerDataStore(
   override suspend fun setShowRatingOnPlayer(enabled: Boolean) {
     dataStore.edit { preferences ->
       preferences[PreferenceKeys.SHOW_RATING_ON_PLAYER] = enabled
+    }
+  }
+
+  override suspend fun setAppScrobblingEnabled(enabled: Boolean) {
+    dataStore.edit { preferences ->
+      preferences[PreferenceKeys.APP_SCROBBLING_ENABLED] = enabled
     }
   }
 

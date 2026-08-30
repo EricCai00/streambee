@@ -37,7 +37,8 @@ interface AlbumDao {
       album,
       MIN(date_added) AS date_added,
       MIN(id) AS id,
-      NULL AS cover
+      NULL AS cover,
+      '' AS year
     FROM album
     GROUP BY
       CASE WHEN album = '' THEN '' ELSE artist END,
@@ -45,7 +46,7 @@ interface AlbumDao {
     ORDER BY album COLLATE NOCASE ASC
     """
   )
-  fun getAllByNameAsc(): PagingSource<Int, AlbumEntity>
+  fun getAllByNameAsc(): PagingSource<Int, AlbumBrowseRow>
 
   // Sort by album name DESC
   @Query(
@@ -55,7 +56,8 @@ interface AlbumDao {
       album,
       MIN(date_added) AS date_added,
       MIN(id) AS id,
-      NULL AS cover
+      NULL AS cover,
+      '' AS year
     FROM album
     GROUP BY
       CASE WHEN album = '' THEN '' ELSE artist END,
@@ -63,7 +65,7 @@ interface AlbumDao {
     ORDER BY album COLLATE NOCASE DESC
     """
   )
-  fun getAllByNameDesc(): PagingSource<Int, AlbumEntity>
+  fun getAllByNameDesc(): PagingSource<Int, AlbumBrowseRow>
 
   // Sort by artist ASC (ignoring "The" prefix)
   @Query(
@@ -73,7 +75,8 @@ interface AlbumDao {
       album,
       MIN(date_added) AS date_added,
       MIN(id) AS id,
-      NULL AS cover
+      NULL AS cover,
+      '' AS year
     FROM album
     GROUP BY
       CASE WHEN album = '' THEN '' ELSE artist END,
@@ -87,7 +90,7 @@ interface AlbumDao {
       album COLLATE NOCASE ASC
     """
   )
-  fun getAllByArtistAsc(): PagingSource<Int, AlbumEntity>
+  fun getAllByArtistAsc(): PagingSource<Int, AlbumBrowseRow>
 
   // Sort by artist DESC (ignoring "The" prefix)
   @Query(
@@ -97,7 +100,8 @@ interface AlbumDao {
       album,
       MIN(date_added) AS date_added,
       MIN(id) AS id,
-      NULL AS cover
+      NULL AS cover,
+      '' AS year
     FROM album
     GROUP BY
       CASE WHEN album = '' THEN '' ELSE artist END,
@@ -111,7 +115,7 @@ interface AlbumDao {
       album COLLATE NOCASE ASC
     """
   )
-  fun getAllByArtistDesc(): PagingSource<Int, AlbumEntity>
+  fun getAllByArtistDesc(): PagingSource<Int, AlbumBrowseRow>
 
   // Search by album name ASC
   @Query(
@@ -121,7 +125,8 @@ interface AlbumDao {
       album,
       MIN(date_added) AS date_added,
       MIN(id) AS id,
-      NULL AS cover
+      NULL AS cover,
+      '' AS year
     FROM album
     WHERE album LIKE '%' || :term || '%' OR artist LIKE '%' || :term || '%'
     GROUP BY
@@ -130,7 +135,7 @@ interface AlbumDao {
     ORDER BY album COLLATE NOCASE ASC
     """
   )
-  fun searchByNameAsc(term: String): PagingSource<Int, AlbumEntity>
+  fun searchByNameAsc(term: String): PagingSource<Int, AlbumBrowseRow>
 
   // Search by album name DESC
   @Query(
@@ -140,7 +145,8 @@ interface AlbumDao {
       album,
       MIN(date_added) AS date_added,
       MIN(id) AS id,
-      NULL AS cover
+      NULL AS cover,
+      '' AS year
     FROM album
     WHERE album LIKE '%' || :term || '%' OR artist LIKE '%' || :term || '%'
     GROUP BY
@@ -149,7 +155,7 @@ interface AlbumDao {
     ORDER BY album COLLATE NOCASE DESC
     """
   )
-  fun searchByNameDesc(term: String): PagingSource<Int, AlbumEntity>
+  fun searchByNameDesc(term: String): PagingSource<Int, AlbumBrowseRow>
 
   // Search by artist ASC (ignoring "The" prefix)
   @Query(
@@ -159,7 +165,8 @@ interface AlbumDao {
       album,
       MIN(date_added) AS date_added,
       MIN(id) AS id,
-      NULL AS cover
+      NULL AS cover,
+      '' AS year
     FROM album
     WHERE album LIKE '%' || :term || '%' OR artist LIKE '%' || :term || '%'
     GROUP BY
@@ -174,7 +181,7 @@ interface AlbumDao {
       album COLLATE NOCASE ASC
     """
   )
-  fun searchByArtistAsc(term: String): PagingSource<Int, AlbumEntity>
+  fun searchByArtistAsc(term: String): PagingSource<Int, AlbumBrowseRow>
 
   // Search by artist DESC (ignoring "The" prefix)
   @Query(
@@ -184,7 +191,8 @@ interface AlbumDao {
       album,
       MIN(date_added) AS date_added,
       MIN(id) AS id,
-      NULL AS cover
+      NULL AS cover,
+      '' AS year
     FROM album
     WHERE album LIKE '%' || :term || '%' OR artist LIKE '%' || :term || '%'
     GROUP BY
@@ -199,7 +207,7 @@ interface AlbumDao {
       album COLLATE NOCASE ASC
     """
   )
-  fun searchByArtistDesc(term: String): PagingSource<Int, AlbumEntity>
+  fun searchByArtistDesc(term: String): PagingSource<Int, AlbumBrowseRow>
 
   @Query("select count(*) from album")
   fun count(): Long
@@ -355,7 +363,8 @@ interface AlbumDao {
       album.album AS album,
       MIN(album.date_added) AS date_added,
       MIN(album.id) AS id,
-      NULL AS cover
+      NULL AS cover,
+      COALESCE(MAX(NULLIF(track.sortable_year, '')), '') AS year
     FROM album
     LEFT JOIN track ON album.album = track.album AND album.artist = track.album_artist
     GROUP BY CASE WHEN album.album = '' THEN '' ELSE album.artist END, album.album
@@ -365,7 +374,7 @@ interface AlbumDao {
       album.album COLLATE NOCASE ASC
     """
   )
-  fun getAllByYearAsc(): PagingSource<Int, AlbumEntity>
+  fun getAllByYearAsc(): PagingSource<Int, AlbumBrowseRow>
 
   @Query(
     """
@@ -374,7 +383,8 @@ interface AlbumDao {
       album.album AS album,
       MIN(album.date_added) AS date_added,
       MIN(album.id) AS id,
-      NULL AS cover
+      NULL AS cover,
+      COALESCE(MAX(NULLIF(track.sortable_year, '')), '') AS year
     FROM album
     LEFT JOIN track ON album.album = track.album AND album.artist = track.album_artist
     GROUP BY CASE WHEN album.album = '' THEN '' ELSE album.artist END, album.album
@@ -384,7 +394,7 @@ interface AlbumDao {
       album.album COLLATE NOCASE ASC
     """
   )
-  fun getAllByYearDesc(): PagingSource<Int, AlbumEntity>
+  fun getAllByYearDesc(): PagingSource<Int, AlbumBrowseRow>
 
   @Query(
     """
@@ -393,7 +403,8 @@ interface AlbumDao {
       album.album AS album,
       MIN(album.date_added) AS date_added,
       MIN(album.id) AS id,
-      NULL AS cover
+      NULL AS cover,
+      COALESCE(MAX(NULLIF(track.sortable_year, '')), '') AS year
     FROM album
     LEFT JOIN track ON album.album = track.album AND album.artist = track.album_artist
     WHERE album.album LIKE '%' || :term || '%' OR album.artist LIKE '%' || :term || '%'
@@ -404,7 +415,7 @@ interface AlbumDao {
       album.album COLLATE NOCASE ASC
     """
   )
-  fun searchByYearAsc(term: String): PagingSource<Int, AlbumEntity>
+  fun searchByYearAsc(term: String): PagingSource<Int, AlbumBrowseRow>
 
   @Query(
     """
@@ -413,7 +424,8 @@ interface AlbumDao {
       album.album AS album,
       MIN(album.date_added) AS date_added,
       MIN(album.id) AS id,
-      NULL AS cover
+      NULL AS cover,
+      COALESCE(MAX(NULLIF(track.sortable_year, '')), '') AS year
     FROM album
     LEFT JOIN track ON album.album = track.album AND album.artist = track.album_artist
     WHERE album.album LIKE '%' || :term || '%' OR album.artist LIKE '%' || :term || '%'
@@ -424,7 +436,7 @@ interface AlbumDao {
       album.album COLLATE NOCASE ASC
     """
   )
-  fun searchByYearDesc(term: String): PagingSource<Int, AlbumEntity>
+  fun searchByYearDesc(term: String): PagingSource<Int, AlbumBrowseRow>
 
   @Query(
     """

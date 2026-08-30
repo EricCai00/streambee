@@ -131,6 +131,9 @@ fun PlayerScreen(
 
   // Lyrics state
   val lyrics by lyricsViewModel.lyrics.collectAsStateWithLifecycle(initialValue = emptyList())
+  val synchronizedLyrics by lyricsViewModel.synchronizedLyrics.collectAsStateWithLifecycle(
+    initialValue = emptyList()
+  )
   val lyricsPlayingTrack by lyricsViewModel.playingTrack.collectAsStateWithLifecycle()
   val lyricsPlayingPosition by lyricsViewModel.playingPosition.collectAsStateWithLifecycle()
   val isPlaying by lyricsViewModel.isPlaying.collectAsStateWithLifecycle()
@@ -228,6 +231,7 @@ fun PlayerScreen(
       ) {
         LyricsScreenContent(
           lyrics = lyrics,
+          synchronizedLyrics = synchronizedLyrics,
           playingTrack = lyricsPlayingTrack,
           playingPosition = lyricsPlayingPosition,
           composer = trackDetails.composer,

@@ -42,7 +42,7 @@ import com.kelsos.mbrc.core.common.utilities.AppError
 import com.kelsos.mbrc.core.common.utilities.Outcome
 import com.kelsos.mbrc.core.data.library.album.Album
 import com.kelsos.mbrc.core.data.library.artist.Artist
-import com.kelsos.mbrc.core.data.library.genre.Genre
+import com.kelsos.mbrc.core.data.library.genre.GenreCategory
 import com.kelsos.mbrc.core.ui.compose.ActionItem
 import com.kelsos.mbrc.core.ui.compose.DynamicScreenScaffold
 import com.kelsos.mbrc.core.ui.compose.MenuItem
@@ -64,8 +64,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun LibraryScreen(
   onOpenDrawer: () -> Unit,
-  onNavigateToGenreArtists: (Genre) -> Unit,
-  onNavigateToGenreAlbums: (Genre) -> Unit,
+  onNavigateToCategoryGenres: (GenreCategory) -> Unit,
   onNavigateToArtistAlbums: (Artist) -> Unit,
   onNavigateToAlbumTracks: (Album) -> Unit,
   onNavigateToPlayer: () -> Unit,
@@ -91,6 +90,9 @@ fun LibraryScreen(
 
   val syncProgress by viewModel.progress.collectAsStateWithLifecycle(
     initialValue = LibrarySyncProgress.Idle
+  )
+  val indexedScrollbar by viewModel.indexedScrollbar.collectAsStateWithLifecycle(
+    initialValue = true
   )
 
   val pagerState = rememberPagerState(pageCount = { LibraryTab.entries.size })
@@ -239,9 +241,9 @@ fun LibraryScreen(
       isSyncing = syncProgress.running,
       showSortSheet = showSortSheet,
       isGridMode = isGridMode,
+      indexedScrollbar = indexedScrollbar,
       onDismissSortSheet = { showSortSheet = false },
-      onNavigateToGenreArtists = onNavigateToGenreArtists,
-      onNavigateToGenreAlbums = onNavigateToGenreAlbums,
+      onNavigateToCategoryGenres = onNavigateToCategoryGenres,
       onNavigateToArtistAlbums = onNavigateToArtistAlbums,
       onNavigateToAlbumTracks = onNavigateToAlbumTracks,
       onNavigateToPlayer = onNavigateToPlayer,
@@ -338,9 +340,9 @@ private fun LibraryContent(
   isSyncing: Boolean,
   showSortSheet: Boolean,
   isGridMode: Boolean,
+  indexedScrollbar: Boolean,
   onDismissSortSheet: () -> Unit,
-  onNavigateToGenreArtists: (Genre) -> Unit,
-  onNavigateToGenreAlbums: (Genre) -> Unit,
+  onNavigateToCategoryGenres: (GenreCategory) -> Unit,
   onNavigateToArtistAlbums: (Artist) -> Unit,
   onNavigateToAlbumTracks: (Album) -> Unit,
   onNavigateToPlayer: () -> Unit,
@@ -370,9 +372,9 @@ private fun LibraryContent(
         isSyncing = isSyncing,
         showSortSheet = showSortSheet && pagerState.currentPage == page,
         isGridMode = isGridMode,
+        indexedScrollbar = indexedScrollbar,
         onDismissSortSheet = onDismissSortSheet,
-        onNavigateToGenreArtists = onNavigateToGenreArtists,
-        onNavigateToGenreAlbums = onNavigateToGenreAlbums,
+        onNavigateToCategoryGenres = onNavigateToCategoryGenres,
         onNavigateToArtistAlbums = onNavigateToArtistAlbums,
         onNavigateToAlbumTracks = onNavigateToAlbumTracks,
         onSync = onSync
@@ -393,9 +395,9 @@ private fun LibraryTabPage(
   isSyncing: Boolean,
   showSortSheet: Boolean,
   isGridMode: Boolean,
+  indexedScrollbar: Boolean,
   onDismissSortSheet: () -> Unit,
-  onNavigateToGenreArtists: (Genre) -> Unit,
-  onNavigateToGenreAlbums: (Genre) -> Unit,
+  onNavigateToCategoryGenres: (GenreCategory) -> Unit,
   onNavigateToArtistAlbums: (Artist) -> Unit,
   onNavigateToAlbumTracks: (Album) -> Unit,
   onSync: () -> Unit
@@ -405,8 +407,8 @@ private fun LibraryTabPage(
       snackbarHostState = snackbarHostState,
       isSyncing = isSyncing,
       showSortSheet = showSortSheet,
-      onNavigateToGenreArtists = onNavigateToGenreArtists,
-      onNavigateToGenreAlbums = onNavigateToGenreAlbums,
+      indexedScrollbar = indexedScrollbar,
+      onNavigateToCategoryGenres = onNavigateToCategoryGenres,
       onDismissSortSheet = onDismissSortSheet,
       onSync = onSync
     )
@@ -415,6 +417,7 @@ private fun LibraryTabPage(
       snackbarHostState = snackbarHostState,
       isSyncing = isSyncing,
       showSortSheet = showSortSheet,
+      indexedScrollbar = indexedScrollbar,
       onNavigateToArtistAlbums = onNavigateToArtistAlbums,
       onDismissSortSheet = onDismissSortSheet,
       onSync = onSync
@@ -425,6 +428,7 @@ private fun LibraryTabPage(
       isSyncing = isSyncing,
       showSortSheet = showSortSheet,
       isGridMode = isGridMode,
+      indexedScrollbar = indexedScrollbar,
       onNavigateToAlbumTracks = onNavigateToAlbumTracks,
       onDismissSortSheet = onDismissSortSheet,
       onSync = onSync
@@ -434,6 +438,7 @@ private fun LibraryTabPage(
       snackbarHostState = snackbarHostState,
       isSyncing = isSyncing,
       showSortSheet = showSortSheet,
+      indexedScrollbar = indexedScrollbar,
       onDismissSortSheet = onDismissSortSheet,
       onSync = onSync
     )

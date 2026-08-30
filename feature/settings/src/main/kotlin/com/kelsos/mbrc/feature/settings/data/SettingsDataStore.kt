@@ -61,12 +61,14 @@ object SettingsDataStore {
     val INCOMING_CALL_ACTION = stringPreferencesKey("incoming_call_action")
     val LIBRARY_TRACK_DEFAULT_ACTION = stringPreferencesKey("mbrc.library_track_default")
     val ALBUM_ARTISTS_ONLY = booleanPreferencesKey("mbrc.settings.album_artist_only")
+    val INDEXED_LIBRARY_SCROLLBAR = booleanPreferencesKey("mbrc.library.indexed_scrollbar")
     val LAST_UPDATE_CHECK = longPreferencesKey("last_update_check")
     val LAST_VERSION_RUN = longPreferencesKey(LAST_VERSION_RUN_KEY_NAME)
     val REQUIRED_UPDATE_CHECK = longPreferencesKey("update_required_check")
     val CLIENT_UUID = stringPreferencesKey("uuid")
     val HALF_STAR_RATING = booleanPreferencesKey("mbrc.settings.half_star_rating")
     val SHOW_RATING_ON_PLAYER = booleanPreferencesKey("mbrc.settings.show_rating_on_player")
+    val APP_SCROBBLING_ENABLED = booleanPreferencesKey("mbrc.playback.app_scrobbling_enabled")
 
     // Library sorting preferences
     val GENRE_SORT = stringPreferencesKey("mbrc.library.sort.genre")
@@ -85,11 +87,13 @@ object SettingsDataStore {
     const val INCOMING_CALL_ACTION = "none"
     const val LIBRARY_TRACK_DEFAULT_ACTION = "now"
     const val ALBUM_ARTISTS_ONLY = false
+    const val INDEXED_LIBRARY_SCROLLBAR = true
     const val LAST_UPDATE_CHECK = 0L
     const val LAST_VERSION_RUN = 0L
     const val REQUIRED_UPDATE_CHECK = 0L
     const val HALF_STAR_RATING = true
     const val SHOW_RATING_ON_PLAYER = false
+    const val APP_SCROBBLING_ENABLED = false
 
     // Library sorting defaults (format: "field:order")
     const val GENRE_SORT = "name:asc"

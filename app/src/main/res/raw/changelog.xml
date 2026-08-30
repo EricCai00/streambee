@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog>
   <version
+    version="2.1.0"
+    release="Aug 30, 2026">
+    <feature>Adds on-device playback history for tracks completed in StreamBee.</feature>
+    <feature>Adds MusicBee Genre Category browsing and drill-down navigation.</feature>
+    <feature>Adds indexed library scrollbars that show a letter or year while dragging.</feature>
+    <feature>Adds synchronized LRC lyrics with active-line following and tap-to-seek.</feature>
+    <feature>Reports qualifying phone playback to MusicBee and optionally scrobbles it through MusicBee's configured Last.fm account.</feature>
+    <feature>Streams files referenced by MusicBee playlists even when they are not part of the main library.</feature>
+    <feature>Restores very large local playback queues from a compact, atomic on-disk format.</feature>
+    <bug>Improves queue loading and persistence so large libraries do not overwhelm Android's player or preferences storage.</bug>
+    <bug>Improves notification artwork loading and prevents an older cover from being applied after a fast track change.</bug>
+    <bug>Improves local lyrics, favorite state, playlist playback, and disguised MP4/M4A stream compatibility.</bug>
+  </version>
+  <version
     version="2.0.0"
     release="Aug 16, 2026">
     <feature>Adds on-device streaming from your MusicBee library, with audio playing on the phone through StreamBee.</feature>

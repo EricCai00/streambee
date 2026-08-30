@@ -4,23 +4,24 @@ import androidx.paging.PagingData
 import com.kelsos.mbrc.core.common.data.Progress
 import com.kelsos.mbrc.core.common.utilities.coroutines.AppCoroutineDispatchers
 import com.kelsos.mbrc.core.common.utilities.epoch
+import com.kelsos.mbrc.core.data.library.track.Track
 import com.kelsos.mbrc.core.data.paged
 import com.kelsos.mbrc.core.data.playlist.Playlist
 import com.kelsos.mbrc.core.data.playlist.PlaylistBrowserItem
 import com.kelsos.mbrc.core.data.playlist.PlaylistDao
 import com.kelsos.mbrc.core.data.playlist.PlaylistRepository
 import com.kelsos.mbrc.core.networking.api.ContentApi
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.withContext
-import java.util.concurrent.ConcurrentHashMap
 
 class PlaylistRepositoryImpl(
   private val dao: PlaylistDao,
   private val contentApi: ContentApi,
   private val dispatchers: AppCoroutineDispatchers
 ) : PlaylistRepository {
-  private val playlistTrackPaths = ConcurrentHashMap<String, List<String>>()
+  private val playlistTracks = ConcurrentHashMap<String, List<Track>>()
 
   override suspend fun count(): Long = withContext(dispatchers.database) { dao.count() }
 
@@ -38,7 +39,7 @@ class PlaylistRepositoryImpl(
         }.collect { items ->
           val playlists = items.map { it.toEntity().copy(dateAdded = added) }
           items.forEach { playlist ->
-            playlistTrackPaths[playlist.url] = playlist.tracks.map { it.src }
+            playlistTracks[playlist.url] = playlist.tracks.map { it.toTrack() }
           }
           withContext(dispatchers.database) {
             dao.insertAll(playlists)
@@ -66,6 +67,7 @@ class PlaylistRepositoryImpl(
     }
   }) { it }
 
-  override suspend fun getTrackPaths(url: String): List<String> =
-    playlistTrackPaths[url].orEmpty()
+  override suspend fun getTracks(url: String): List<Track> = playlistTracks[url].orEmpty()
+
+  override suspend fun getTrackPaths(url: String): List<String> = getTracks(url).map { it.src }
 }

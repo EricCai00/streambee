@@ -50,9 +50,9 @@ import kotlinx.coroutines.flow.map
 import org.koin.androidx.compose.koinViewModel
 
 private val albumSortOptions = listOf(
-    SortOption(AlbumSortField.NAME, R.string.sort_by_name),
-    SortOption(AlbumSortField.ARTIST, R.string.sort_by_artist),
-    SortOption(AlbumSortField.YEAR, R.string.sort_by_year)
+  SortOption(AlbumSortField.NAME, R.string.sort_by_name),
+  SortOption(AlbumSortField.ARTIST, R.string.sort_by_artist),
+  SortOption(AlbumSortField.YEAR, R.string.sort_by_year)
 )
 
 @Composable

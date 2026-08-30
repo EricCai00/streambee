@@ -22,7 +22,7 @@ val dataModule = module {
   single {
     Room
       .databaseBuilder(get<Context>(), Database::class.java, Database.NAME)
-      .addMigrations(MIGRATION_3_4)
+      .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
       .build()
   }
 
@@ -35,6 +35,7 @@ val dataModule = module {
   single { get<Database>().playlistDao() }
   single { get<Database>().radioStationDao() }
   single { get<Database>().connectionDao() }
+  single { get<Database>().playbackHistoryDao() }
 
   // Migration utilities
   singleOf(::DefaultConnectionMigration)

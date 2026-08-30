@@ -78,6 +78,7 @@ data class SettingsContentState(
   val debugLoggingEnabled: Boolean = false,
   val incomingCallAction: CallAction = CallAction.None,
   val trackDefaultAction: TrackAction = TrackAction.PlayNow,
+  val indexedLibraryScrollbarEnabled: Boolean = true,
   val halfStarRatingEnabled: Boolean = true,
   val showRatingOnPlayerEnabled: Boolean = false,
   val visibleDialog: SettingsDialogType? = null
@@ -98,6 +99,8 @@ interface ISettingsActions {
   val onShowRatingOnPlayerChanged: (Boolean) -> Unit
   val onTrackDefaultActionClick: () -> Unit
   val onTrackDefaultActionSelected: (TrackAction) -> Unit
+  val onIndexedLibraryScrollbarChanged: (Boolean) -> Unit
+    get() = {}
   val onNavigateToLicenses: () -> Unit
   val onNavigateToAppLicense: () -> Unit
   val onDismissDialog: () -> Unit
@@ -117,6 +120,7 @@ object EmptySettingsActions : ISettingsActions {
   override val onShowRatingOnPlayerChanged: (Boolean) -> Unit = {}
   override val onTrackDefaultActionClick: () -> Unit = {}
   override val onTrackDefaultActionSelected: (TrackAction) -> Unit = {}
+  override val onIndexedLibraryScrollbarChanged: (Boolean) -> Unit = {}
   override val onNavigateToLicenses: () -> Unit = {}
   override val onNavigateToAppLicense: () -> Unit = {}
   override val onDismissDialog: () -> Unit = {}
@@ -247,6 +251,8 @@ private fun RatingSettingsSection(viewModel: SettingsViewModel) {
 @Composable
 private fun LibrarySettingsSection(viewModel: SettingsViewModel) {
   val trackDefaultAction by viewModel.trackDefaultAction.collectAsStateWithLifecycle()
+  val indexedScrollbarEnabled by
+    viewModel.indexedLibraryScrollbarEnabled.collectAsStateWithLifecycle()
   val visibleDialog by viewModel.visibleDialog.collectAsStateWithLifecycle()
 
   SettingsSection(title = stringResource(R.string.common_library)) {
@@ -254,6 +260,13 @@ private fun LibrarySettingsSection(viewModel: SettingsViewModel) {
       title = stringResource(R.string.preferences_library_track_default_action_title),
       subtitle = getTrackActionDisplayName(trackDefaultAction),
       onClick = { viewModel.showDialog(SettingsDialogType.TrackDefaultAction) }
+    )
+
+    SettingsToggleItem(
+      title = stringResource(R.string.setting_indexed_library_scrollbar),
+      subtitle = stringResource(R.string.setting_indexed_library_scrollbar_summary),
+      checked = indexedScrollbarEnabled,
+      onCheckedChange = viewModel::updateIndexedLibraryScrollbar
     )
   }
 
@@ -457,7 +470,9 @@ fun SettingsScreenContent(
     // Library Settings Section
     LibraryContentSection(
       trackDefaultAction = state.trackDefaultAction,
-      onTrackDefaultActionClick = actions.onTrackDefaultActionClick
+      indexedScrollbarEnabled = state.indexedLibraryScrollbarEnabled,
+      onTrackDefaultActionClick = actions.onTrackDefaultActionClick,
+      onIndexedScrollbarChanged = actions.onIndexedLibraryScrollbarChanged
     )
 
     SettingsDivider()
@@ -585,13 +600,22 @@ private fun RatingContentSection(
 @Composable
 private fun LibraryContentSection(
   trackDefaultAction: TrackAction,
-  onTrackDefaultActionClick: () -> Unit
+  indexedScrollbarEnabled: Boolean,
+  onTrackDefaultActionClick: () -> Unit,
+  onIndexedScrollbarChanged: (Boolean) -> Unit
 ) {
   SettingsSection(title = stringResource(R.string.common_library)) {
     SettingsItem(
       title = stringResource(R.string.preferences_library_track_default_action_title),
       subtitle = getTrackActionDisplayName(trackDefaultAction),
       onClick = onTrackDefaultActionClick
+    )
+
+    SettingsToggleItem(
+      title = stringResource(R.string.setting_indexed_library_scrollbar),
+      subtitle = stringResource(R.string.setting_indexed_library_scrollbar_summary),
+      checked = indexedScrollbarEnabled,
+      onCheckedChange = onIndexedScrollbarChanged
     )
   }
 }

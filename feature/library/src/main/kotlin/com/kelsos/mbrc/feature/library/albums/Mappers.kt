@@ -2,6 +2,7 @@ package com.kelsos.mbrc.feature.library.albums
 
 import com.kelsos.mbrc.core.common.data.Mapper
 import com.kelsos.mbrc.core.data.library.album.Album
+import com.kelsos.mbrc.core.data.library.album.AlbumBrowseRow
 import com.kelsos.mbrc.core.data.library.album.AlbumEntity
 import com.kelsos.mbrc.core.networking.dto.AlbumDto
 
@@ -22,5 +23,13 @@ object AlbumEntityMapper : Mapper<AlbumEntity, Album> {
 }
 
 fun AlbumEntity.toAlbum(): Album = AlbumEntityMapper.map(this)
+
+fun AlbumBrowseRow.toAlbum(): Album = Album(
+  id = id,
+  artist = artist,
+  album = album,
+  cover = cover,
+  year = year
+)
 
 fun AlbumDto.toEntity(): AlbumEntity = AlbumDtoMapper.map(this)

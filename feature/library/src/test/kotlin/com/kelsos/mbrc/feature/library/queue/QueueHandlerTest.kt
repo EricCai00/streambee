@@ -7,7 +7,6 @@ import com.kelsos.mbrc.core.common.test.testDispatchers
 import com.kelsos.mbrc.core.data.library.track.Track
 import com.kelsos.mbrc.core.data.library.track.TrackRepository
 import com.kelsos.mbrc.core.networking.api.QueueApi
-import com.kelsos.mbrc.core.networking.dto.QueueResponse
 import com.kelsos.mbrc.core.queue.Queue
 import com.kelsos.mbrc.feature.library.playback.DevicePlaybackController
 import io.mockk.coEvery
@@ -57,7 +56,12 @@ class QueueHandlerTest {
   @Test
   fun `local playback failure is reported without escaping the coroutine`() =
     runTest(testDispatcher) {
-      coEvery { devicePlayback.playTracks(listOf(track), 0) } throws IllegalStateException("player unavailable")
+      coEvery {
+        devicePlayback.playTracks(
+          listOf(track),
+          0
+        )
+      } throws IllegalStateException("player unavailable")
 
       val result = handler.queueTrack(track, Queue.Local)
 
@@ -78,16 +82,28 @@ class QueueHandlerTest {
   }
 
   @Test
-  fun `album playback uses device player without queueing MusicBee`() =
-    runTest(testDispatcher) {
-      every { trackRepository.getTrackPaths(any()) } returns listOf(track.src)
-      coEvery { trackRepository.getByPath(track.src) } returns track
-      coEvery { devicePlayback.playTracks(listOf(track), 0) } returns true
+  fun `album playback uses device player without queueing MusicBee`() = runTest(testDispatcher) {
+    every { trackRepository.getTrackPaths(any()) } returns listOf(track.src)
+    coEvery { trackRepository.getByPath(track.src) } returns track
+    coEvery { devicePlayback.playTracks(listOf(track), 0) } returns true
 
-      val result = handler.queueAlbum(Queue.Now, track.album, track.albumArtist)
+    val result = handler.queueAlbum(Queue.Now, track.album, track.albumArtist)
+
+    assertThat(result.isSuccess).isTrue()
+    coVerify(exactly = 1) { devicePlayback.playTracks(listOf(track), 0) }
+    coVerify(exactly = 0) { queueApi.queue(any()) }
+  }
+
+  @Test
+  fun `playlist tracks outside library are sent directly to device player`() =
+    runTest(testDispatcher) {
+      val outsideLibrary = track.copy(id = 0, src = "D:\\Playlists\\outside.flac")
+      coEvery { devicePlayback.playTracks(listOf(outsideLibrary), 0) } returns true
+
+      val result = handler.queueTracks(listOf(outsideLibrary))
 
       assertThat(result.isSuccess).isTrue()
-      coVerify(exactly = 1) { devicePlayback.playTracks(listOf(track), 0) }
-      coVerify(exactly = 0) { queueApi.queue(any()) }
+      coVerify(exactly = 1) { devicePlayback.playTracks(listOf(outsideLibrary), 0) }
+      coVerify(exactly = 0) { trackRepository.getByPath(any()) }
     }
 }

@@ -24,7 +24,8 @@ class TrackRepositoryImpl(
 ) : TrackRepository {
   override suspend fun count(): Long = withContext(dispatchers.database) { dao.count() }
 
-  override fun getAll(): Flow<PagingData<Track>> = paged({ dao.getAll() }) { it.toTrack() }
+  override fun getAll(): Flow<PagingData<Track>> =
+    paged({ dao.getAll() }, enablePlaceholders = true) { it.toTrack() }
 
   override fun getTracks(query: PagingTrackQuery): Flow<PagingData<Track>> = when (query) {
     is PagingTrackQuery.Album ->
@@ -74,7 +75,7 @@ class TrackRepositoryImpl(
 
   override fun search(term: String): Flow<PagingData<Track>> = paged({
     dao.search(term)
-  }) { it.toTrack() }
+  }, enablePlaceholders = true) { it.toTrack() }
 
   override fun getAll(field: TrackSortField, order: SortOrder): Flow<PagingData<Track>> = paged({
     when (field) {
@@ -103,7 +104,7 @@ class TrackRepositoryImpl(
         SortOrder.DESC -> dao.getAllByYearDesc()
       }
     }
-  }) { it.toTrack() }
+  }, enablePlaceholders = true) { it.toTrack() }
 
   override fun search(
     term: String,
@@ -136,7 +137,7 @@ class TrackRepositoryImpl(
         SortOrder.DESC -> dao.searchByYearDesc(term)
       }
     }
-  }) { it.toTrack() }
+  }, enablePlaceholders = true) { it.toTrack() }
 
   override fun getTrackPaths(query: TrackQuery): List<String> = when (query) {
     is TrackQuery.All -> dao.getAllTrackPaths()

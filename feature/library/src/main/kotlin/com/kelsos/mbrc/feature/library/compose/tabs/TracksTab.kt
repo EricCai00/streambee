@@ -39,6 +39,7 @@ fun TracksTab(
   snackbarHostState: SnackbarHostState,
   isSyncing: Boolean,
   showSortSheet: Boolean,
+  indexedScrollbar: Boolean,
   onDismissSortSheet: () -> Unit,
   onSync: () -> Unit,
   modifier: Modifier = Modifier,
@@ -74,6 +75,22 @@ fun TracksTab(
       icon = Icons.Default.MusicNote
     ),
     itemKey = { it.id },
+    indexedScrollbar = indexedScrollbar,
+    indexLabel = { track ->
+      when (sortPreference.field) {
+        TrackSortField.TITLE -> alphabeticIndexLabel(track.title)
+
+        TrackSortField.ARTIST -> alphabeticIndexLabel(track.artist, ignoreLeadingThe = true)
+
+        TrackSortField.ALBUM -> alphabeticIndexLabel(track.album)
+
+        TrackSortField.ALBUM_ARTIST -> {
+          alphabeticIndexLabel(track.albumArtist, ignoreLeadingThe = true)
+        }
+
+        TrackSortField.YEAR -> yearIndexLabel(track.year)
+      }
+    },
     modifier = modifier
   ) { track ->
     TrackListItem(
