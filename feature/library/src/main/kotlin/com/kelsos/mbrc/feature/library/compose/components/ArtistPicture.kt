@@ -12,6 +12,8 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,31 +25,42 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
+import com.kelsos.mbrc.core.common.utilities.coroutines.AppCoroutineDispatchers
+import com.kelsos.mbrc.core.common.data.ConnectionSettings
 import com.kelsos.mbrc.core.networking.DefaultConnectionProvider
 import java.nio.charset.StandardCharsets
+import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
 
 /** Displays MusicBee's local artist picture, falling back to the person icon. */
 @Composable
 fun ArtistPicture(artist: String, modifier: Modifier = Modifier, size: Dp = 48.dp) {
   val connectionProvider: DefaultConnectionProvider = koinInject()
-  val connection = connectionProvider.getDefault()
-  val uri = remember(artist, connection) {
-    if (artist.isBlank() || connection == null || connection.port >= MAX_PORT) {
+  val dispatchers: AppCoroutineDispatchers = koinInject()
+  val connection by produceState<ConnectionSettings?>(
+    initialValue = null,
+    key1 = connectionProvider,
+    key2 = dispatchers
+  ) {
+    value = withContext(dispatchers.database) { connectionProvider.getDefault() }
+  }
+  val currentConnection = connection
+  val uri = remember(artist, currentConnection) {
+    if (artist.isBlank() || currentConnection == null || currentConnection.port >= MAX_PORT) {
       null
     } else {
       val encodedArtist = Base64.encodeToString(
         artist.toByteArray(StandardCharsets.UTF_8),
         Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
       )
-      val host = if (connection.address.contains(':') && !connection.address.startsWith("[")) {
-        "[${connection.address}]"
+      val host = if (currentConnection.address.contains(':') && !currentConnection.address.startsWith("[")) {
+        "[${currentConnection.address}]"
       } else {
-        connection.address
+        currentConnection.address
       }
       Uri.Builder()
         .scheme("http")
-        .encodedAuthority("$host:${connection.port + 1}")
+        .encodedAuthority("$host:${currentConnection.port + 1}")
         .appendPath("artist")
         .appendPath(encodedArtist)
         .build()
