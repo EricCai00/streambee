@@ -18,7 +18,10 @@ interface ArtistDao {
     """
       select distinct artist.id, artist.artist, artist.date_added
       from artist
-        inner join track on artist.artist = track.album_artist
+        inner join track on instr(
+          ';' || replace(replace(track.album_artist, '; ', ';'), ' ;', ';') || ';',
+          ';' || artist.artist || ';'
+        ) > 0
         inner join genre on genre.genre = track.genre
       where genre.id = :genreId group by artist.artist
       order by
@@ -34,7 +37,10 @@ interface ArtistDao {
     """
       select distinct artist.id, artist.artist, artist.date_added
       from artist
-        inner join track on artist.artist = track.album_artist
+        inner join track on instr(
+          ';' || replace(replace(track.album_artist, '; ', ';'), ' ;', ';') || ';',
+          ';' || artist.artist || ';'
+        ) > 0
         inner join genre on genre.genre = track.genre
       where genre.id = :genreId group by artist.artist
       order by
@@ -117,7 +123,10 @@ interface ArtistDao {
   @Query(
     """
       select distinct artist.id, artist.artist, artist.date_added
-      from artist inner join track on artist.artist = track.album_artist
+      from artist inner join track on instr(
+        ';' || replace(replace(track.album_artist, '; ', ';'), ' ;', ';') || ';',
+        ';' || artist.artist || ';'
+      ) > 0
       group by artist.artist
       order by
         CASE
@@ -131,7 +140,10 @@ interface ArtistDao {
   @Query(
     """
       select distinct artist.id, artist.artist, artist.date_added
-      from artist inner join track on artist.artist = track.album_artist
+      from artist inner join track on instr(
+        ';' || replace(replace(track.album_artist, '; ', ';'), ' ;', ';') || ';',
+        ';' || artist.artist || ';'
+      ) > 0
       group by artist.artist
       order by
         CASE
@@ -145,7 +157,10 @@ interface ArtistDao {
   @Query(
     """
       select distinct artist.id, artist.artist, artist.date_added
-      from artist inner join track on artist.artist = track.album_artist
+      from artist inner join track on instr(
+        ';' || replace(replace(track.album_artist, '; ', ';'), ' ;', ';') || ';',
+        ';' || artist.artist || ';'
+      ) > 0
       where artist.artist like '%' || :term || '%'
       group by artist.artist
       order by
@@ -160,7 +175,10 @@ interface ArtistDao {
   @Query(
     """
       select distinct artist.id, artist.artist, artist.date_added
-      from artist inner join track on artist.artist = track.album_artist
+      from artist inner join track on instr(
+        ';' || replace(replace(track.album_artist, '; ', ';'), ' ;', ';') || ';',
+        ';' || artist.artist || ';'
+      ) > 0
       where artist.artist like '%' || :term || '%'
       group by artist.artist
       order by

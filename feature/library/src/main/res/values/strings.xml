@@ -68,6 +68,7 @@
   <string name="unknown_album">Unknown album</string>
   <string name="unknown_artist">Unknown artist</string>
   <string name="unknown_title">Unknown title</string>
+  <string name="select_artist_title">Select artist</string>
   <string name="unknown_genre_category">Uncategorized</string>
   <string name="track_loved_description">Loved track</string>
 

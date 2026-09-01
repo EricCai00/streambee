@@ -1,6 +1,7 @@
 package com.kelsos.mbrc.feature.library.artists
 
 import com.kelsos.mbrc.core.common.data.Mapper
+import com.kelsos.mbrc.core.common.data.splitArtistNames
 import com.kelsos.mbrc.core.data.library.artist.Artist
 import com.kelsos.mbrc.core.data.library.artist.ArtistEntity
 import com.kelsos.mbrc.core.networking.dto.ArtistDto
@@ -17,5 +18,14 @@ object ArtistEntityMapper : Mapper<ArtistEntity, Artist> {
 }
 
 fun ArtistDto.toEntity(): ArtistEntity = ArtistDtoMapper.map(this)
+
+fun ArtistDto.toEntities(): List<ArtistEntity> {
+  val names = artist.splitArtistNames()
+  return if (names.isEmpty()) {
+    listOf(ArtistEntity(artist = artist.trim()))
+  } else {
+    names.map(::ArtistEntity)
+  }
+}
 
 fun ArtistEntity.toArtist(): Artist = ArtistEntityMapper.map(this)

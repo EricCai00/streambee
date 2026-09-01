@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledIconButton
@@ -25,9 +26,13 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -36,8 +41,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.kelsos.mbrc.core.common.data.splitArtistNames
+import com.kelsos.mbrc.core.common.state.AppStateFlow
 import com.kelsos.mbrc.core.common.utilities.AppError
 import com.kelsos.mbrc.core.common.utilities.Outcome
 import com.kelsos.mbrc.core.queue.Queue
@@ -55,6 +63,7 @@ import com.kelsos.mbrc.feature.library.tracks.TrackUiMessage
 import com.kelsos.mbrc.feature.minicontrol.MiniControl
 import kotlinx.coroutines.flow.map
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 @Composable
 fun AlbumTracksScreen(
@@ -68,7 +77,10 @@ fun AlbumTracksScreen(
   viewModel: AlbumTracksViewModel = koinViewModel()
 ) {
   val tracks = viewModel.tracks.collectAsLazyPagingItems()
+  val appState: AppStateFlow = koinInject()
+  val playingTrack by appState.playingTrack.collectAsStateWithLifecycle()
   val title = albumInfo.album.ifEmpty { stringResource(R.string.non_album_tracks) }
+  var artistChoices by remember(albumInfo.artist) { mutableStateOf(emptyList<String>()) }
 
   // Load album tracks
   LaunchedEffect(albumInfo) {
@@ -131,7 +143,14 @@ fun AlbumTracksScreen(
                 trackPath = representativeTrack?.src,
                 genre = genre,
                 year = year,
-                onArtistClick = onNavigateToArtist,
+                onArtistClick = { artist ->
+                  val artists = artist.splitArtistNames()
+                  when {
+                    artists.isEmpty() -> Unit
+                    artists.size == 1 -> onNavigateToArtist(artists.first())
+                    else -> artistChoices = artists
+                  }
+                },
                 onGenreClick = onNavigateToGenre,
                 onPlayClick = { viewModel.queueAlbum(albumInfo) },
                 modifier = Modifier.fillMaxWidth()
@@ -150,7 +169,9 @@ fun AlbumTracksScreen(
                   onQueue = { queue -> viewModel.queue(queue, track) },
                   showCover = false,
                   showAlbum = false,
-                  showExtendedActions = false
+                  showExtendedActions = false,
+                  trackNumber = index + 1,
+                  isPlaying = track.src == playingTrack.path
                 )
               }
             }
@@ -164,6 +185,46 @@ fun AlbumTracksScreen(
       )
     }
   }
+
+  if (artistChoices.isNotEmpty()) {
+    ArtistSelectionDialog(
+      artists = artistChoices,
+      onArtistSelected = { artist ->
+        artistChoices = emptyList()
+        onNavigateToArtist(artist)
+      },
+      onDismiss = { artistChoices = emptyList() }
+    )
+  }
+}
+
+@Composable
+private fun ArtistSelectionDialog(
+  artists: List<String>,
+  onArtistSelected: (String) -> Unit,
+  onDismiss: () -> Unit
+) {
+  AlertDialog(
+    onDismissRequest = onDismiss,
+    title = { Text(stringResource(R.string.select_artist_title)) },
+    text = {
+      Column {
+        artists.forEach { artist ->
+          TextButton(
+            onClick = { onArtistSelected(artist) },
+            modifier = Modifier.fillMaxWidth()
+          ) {
+            Text(text = artist, modifier = Modifier.fillMaxWidth())
+          }
+        }
+      }
+    },
+    confirmButton = {
+      TextButton(onClick = onDismiss) {
+        Text(stringResource(android.R.string.cancel))
+      }
+    }
+  )
 }
 
 @Composable

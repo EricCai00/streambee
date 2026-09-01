@@ -95,7 +95,7 @@ class NotificationActionReceiver(
       when (callAction) {
         CallAction.Pause -> performAction(Protocol.PlayerPause)
         CallAction.Stop -> performAction(Protocol.PlayerStop)
-        CallAction.Reduce -> devicePlaybackController.adjustVolume(-50)
+        CallAction.Reduce -> devicePlaybackController.adjustVolume(CALL_VOLUME_REDUCTION)
         else -> Timber.v("No call action set, nothing to do.")
       }
     }
@@ -111,5 +111,9 @@ class NotificationActionReceiver(
       Protocol.PlayerPrevious -> devicePlaybackController.previous()
       else -> Unit
     }
+  }
+
+  private companion object {
+    const val CALL_VOLUME_REDUCTION = -50
   }
 }

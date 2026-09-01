@@ -225,7 +225,10 @@ interface AlbumDao {
         album.date_added AS date_added, album.id AS id, album.cover AS cover
         FROM album
         INNER JOIN track ON album.album = track.album AND track.album_artist = album.artist
-        WHERE track.artist = :artist OR track.album_artist = :artist
+        WHERE track.album_artist = :artist OR instr(
+          ';' || replace(replace(track.album_artist, '; ', ';'), ' ;', ';') || ';',
+          ';' || :artist || ';'
+        ) > 0
         GROUP BY album.id
         ORDER BY album.album COLLATE NOCASE ASC
     """
@@ -239,7 +242,10 @@ interface AlbumDao {
         album.date_added AS date_added, album.id AS id, album.cover AS cover
         FROM album
         INNER JOIN track ON album.album = track.album AND track.album_artist = album.artist
-        WHERE track.artist = :artist OR track.album_artist = :artist
+        WHERE track.album_artist = :artist OR instr(
+          ';' || replace(replace(track.album_artist, '; ', ';'), ' ;', ';') || ';',
+          ';' || :artist || ';'
+        ) > 0
         GROUP BY album.id
         ORDER BY album.album COLLATE NOCASE DESC
     """
@@ -285,6 +291,36 @@ interface AlbumDao {
     """
   )
   fun getAlbumsByGenre(genreId: Long): PagingSource<Int, AlbumEntity>
+
+  @Query(
+    """
+    SELECT DISTINCT album.artist AS artist, album.album AS album,
+      album.date_added AS date_added, album.id AS id, album.cover AS cover
+    FROM album
+    INNER JOIN track ON album.album = track.album AND track.album_artist = album.artist
+    INNER JOIN genre ON genre.genre = track.genre
+    WHERE genre.id = :genreId AND album.album <> ''
+    GROUP BY album.id
+    ORDER BY album.album COLLATE NOCASE ASC
+    LIMIT :limit
+    """
+  )
+  fun getPreviewAlbumsByGenre(genreId: Long, limit: Int): List<AlbumEntity>
+
+  @Query(
+    """
+    SELECT DISTINCT album.artist AS artist, album.album AS album,
+      album.date_added AS date_added, album.id AS id, album.cover AS cover
+    FROM album
+    INNER JOIN track ON album.album = track.album AND track.album_artist = album.artist
+    INNER JOIN genre ON genre.genre = track.genre
+    WHERE genre.category = :category AND album.album <> ''
+    GROUP BY album.id
+    ORDER BY album.album COLLATE NOCASE ASC
+    LIMIT :limit
+    """
+  )
+  fun getPreviewAlbumsByCategory(category: String, limit: Int): List<AlbumEntity>
 
   // Get albums by genre sorted by album name ASC
   @Query(
@@ -444,7 +480,10 @@ interface AlbumDao {
       album.date_added AS date_added, album.id AS id, album.cover AS cover
     FROM album
     INNER JOIN track ON album.album = track.album AND track.album_artist = album.artist
-    WHERE track.artist = :artist OR track.album_artist = :artist
+    WHERE track.album_artist = :artist OR instr(
+      ';' || replace(replace(track.album_artist, '; ', ';'), ' ;', ';') || ';',
+      ';' || :artist || ';'
+    ) > 0
     GROUP BY album.id
     ORDER BY
       CASE WHEN MAX(NULLIF(track.sortable_year, '')) IS NULL THEN 1 ELSE 0 END,
@@ -460,7 +499,10 @@ interface AlbumDao {
       album.date_added AS date_added, album.id AS id, album.cover AS cover
     FROM album
     INNER JOIN track ON album.album = track.album AND track.album_artist = album.artist
-    WHERE track.artist = :artist OR track.album_artist = :artist
+    WHERE track.album_artist = :artist OR instr(
+      ';' || replace(replace(track.album_artist, '; ', ';'), ' ;', ';') || ';',
+      ';' || :artist || ';'
+    ) > 0
     GROUP BY album.id
     ORDER BY
       CASE WHEN MAX(NULLIF(track.sortable_year, '')) IS NULL THEN 1 ELSE 0 END,

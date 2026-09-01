@@ -46,6 +46,15 @@ class ArtistMappersTest {
   }
 
   @Test
+  fun `toEntities should split semicolon separated artist names`() {
+    val dto = ArtistDto(artist = "Artist A; Artist B;Artist A")
+
+    val entities = dto.toEntities()
+
+    assertThat(entities.map { it.artist }).containsExactly("Artist A", "Artist B").inOrder()
+  }
+
+  @Test
   fun `toEntity should not preserve count from dto`() {
     val dto = ArtistDto(artist = "Test", count = 42)
     val entity = dto.toEntity()

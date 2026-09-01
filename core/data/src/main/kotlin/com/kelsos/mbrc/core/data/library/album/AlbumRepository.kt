@@ -19,6 +19,12 @@ interface AlbumRepository : Repository<Album> {
     order: SortOrder
   ): Flow<PagingData<Album>>
 
+  /** Returns the small set of covers used as a visual preview for a genre. */
+  suspend fun getPreviewAlbumsByGenre(genreId: Long, limit: Int = 3): List<Album>
+
+  /** Returns the small set of covers used as a visual preview for a genre category. */
+  suspend fun getPreviewAlbumsByCategory(category: String, limit: Int = 3): List<Album>
+
   fun getAll(field: AlbumSortField, order: SortOrder): Flow<PagingData<Album>>
 
   fun search(term: String, field: AlbumSortField, order: SortOrder): Flow<PagingData<Album>>

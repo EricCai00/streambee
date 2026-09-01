@@ -301,6 +301,7 @@ fun <T : Any> SwipeRefreshScreen(
 ) {
   val listState = rememberLazyListState()
   val scope = rememberCoroutineScope()
+  val scrollbarState = rememberPagingScrollbarState()
 
   PullToRefreshBox(
     isRefreshing = isRefreshing,
@@ -326,7 +327,19 @@ fun <T : Any> SwipeRefreshScreen(
       }
 
       else -> {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+          modifier = Modifier
+            .fillMaxSize()
+            .pagingScrollbarDragGesture(
+              enabled = scrollbarStyle != null,
+              totalItems = items.itemCount,
+              visibleItemsCount = listState.layoutInfo.visibleItemsInfo.size,
+              state = scrollbarState,
+              onIndexSelected = { index ->
+                scope.launch { listState.scrollToItem(index) }
+              }
+            )
+        ) {
           LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize()
@@ -372,8 +385,8 @@ fun <T : Any> SwipeRefreshScreen(
               firstVisibleItemIndex = listState.firstVisibleItemIndex,
               visibleItemsCount = listState.layoutInfo.visibleItemsInfo.size,
               style = scrollbarStyle,
+              state = scrollbarState,
               labelForIndex = { index -> items[index]?.let { indexLabel?.invoke(it) } },
-              onIndexSelected = { index -> scope.launch { listState.scrollToItem(index) } },
               modifier = Modifier.align(Alignment.CenterEnd)
             )
           }
@@ -460,6 +473,7 @@ fun <T : Any> SwipeRefreshGridScreen(
 ) {
   val gridState = rememberLazyGridState()
   val scope = rememberCoroutineScope()
+  val scrollbarState = rememberPagingScrollbarState()
 
   PullToRefreshBox(
     isRefreshing = isRefreshing,
@@ -485,7 +499,19 @@ fun <T : Any> SwipeRefreshGridScreen(
       }
 
       else -> {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+          modifier = Modifier
+            .fillMaxSize()
+            .pagingScrollbarDragGesture(
+              enabled = scrollbarStyle != null,
+              totalItems = items.itemCount,
+              visibleItemsCount = gridState.layoutInfo.visibleItemsInfo.size,
+              state = scrollbarState,
+              onIndexSelected = { index ->
+                scope.launch { gridState.scrollToItem(index) }
+              }
+            )
+        ) {
           LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 120.dp),
             state = gridState,
@@ -535,8 +561,8 @@ fun <T : Any> SwipeRefreshGridScreen(
               firstVisibleItemIndex = gridState.firstVisibleItemIndex,
               visibleItemsCount = gridState.layoutInfo.visibleItemsInfo.size,
               style = scrollbarStyle,
+              state = scrollbarState,
               labelForIndex = { index -> items[index]?.let { indexLabel?.invoke(it) } },
-              onIndexSelected = { index -> scope.launch { gridState.scrollToItem(index) } },
               modifier = Modifier.align(Alignment.CenterEnd)
             )
           }

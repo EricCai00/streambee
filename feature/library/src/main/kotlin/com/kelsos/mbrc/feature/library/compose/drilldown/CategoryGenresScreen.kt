@@ -24,6 +24,7 @@ import com.kelsos.mbrc.core.common.settings.SortOrder
 import com.kelsos.mbrc.core.common.settings.SortPreference
 import com.kelsos.mbrc.core.common.utilities.AppError
 import com.kelsos.mbrc.core.common.utilities.Outcome
+import com.kelsos.mbrc.core.data.library.album.AlbumRepository
 import com.kelsos.mbrc.core.data.library.genre.Genre
 import com.kelsos.mbrc.core.queue.Queue
 import com.kelsos.mbrc.core.ui.compose.ActionItem
@@ -35,12 +36,14 @@ import com.kelsos.mbrc.feature.library.R
 import com.kelsos.mbrc.feature.library.compose.SortBottomSheet
 import com.kelsos.mbrc.feature.library.compose.SortOption
 import com.kelsos.mbrc.feature.library.compose.components.GenreListItem
+import com.kelsos.mbrc.feature.library.compose.components.rememberGenreAlbumPreviews
 import com.kelsos.mbrc.feature.library.genres.CategoryGenresViewModel
 import com.kelsos.mbrc.feature.library.genres.GenreUiMessage
 import com.kelsos.mbrc.feature.minicontrol.MiniControl
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 private val genreSortOptions = listOf(
   SortOption(GenreSortField.NAME, R.string.sort_by_name)
@@ -56,6 +59,7 @@ fun CategoryGenresScreen(
   modifier: Modifier = Modifier,
   viewModel: CategoryGenresViewModel = koinViewModel()
 ) {
+  val albumRepository: AlbumRepository = koinInject()
   val genres = viewModel.genres.collectAsLazyPagingItems()
   val sortPreference by viewModel.sortPreference.collectAsStateWithLifecycle(
     initialValue = SortPreference(GenreSortField.NAME, SortOrder.ASC)
@@ -109,7 +113,11 @@ fun CategoryGenresScreen(
         GenreListItem(
           genre = genre,
           onClick = { viewModel.queue(Queue.Default, genre) },
-          onQueue = { queue -> viewModel.queue(queue, genre) }
+          onQueue = { queue -> viewModel.queue(queue, genre) },
+          albumPreviews = rememberGenreAlbumPreviews(
+            repository = albumRepository,
+            genreId = genre.id
+          )
         )
       }
 

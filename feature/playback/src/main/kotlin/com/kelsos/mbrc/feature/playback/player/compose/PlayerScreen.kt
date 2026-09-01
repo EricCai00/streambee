@@ -169,7 +169,10 @@ fun PlayerScreen(
     PlayerBottomSheet(
       isScrobbling = isScrobbling,
       onScrobbleToggle = viewModel.actions.toggleScrobbling,
-      onShowTrackDetails = { showTrackDetails = true },
+      onShowTrackDetails = {
+        viewModel.refreshTrackDetails()
+        showTrackDetails = true
+      },
       onGoToAlbum = playingTrack.album.takeIf { it.isNotEmpty() }?.let {
         { onNavigateToAlbum(playingTrack.album, playingTrack.artist) }
       },
@@ -200,7 +203,9 @@ fun PlayerScreen(
 
   if (showTrackDetails) {
     TrackDetailsBottomSheet(
+      trackInfo = playingTrack,
       trackDetails = trackDetails,
+      trackRating = trackRating,
       onDismiss = { showTrackDetails = false }
     )
   }

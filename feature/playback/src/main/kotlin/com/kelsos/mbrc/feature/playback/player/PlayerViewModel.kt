@@ -11,6 +11,7 @@ import com.kelsos.mbrc.core.common.state.PlayingPosition
 import com.kelsos.mbrc.core.common.state.TrackDetails
 import com.kelsos.mbrc.core.common.state.TrackInfo
 import com.kelsos.mbrc.core.common.state.TrackRating
+import com.kelsos.mbrc.core.networking.protocol.actions.TrackChangeNotifier
 import com.kelsos.mbrc.core.networking.protocol.usecases.UserActionUseCase
 import com.kelsos.mbrc.feature.settings.domain.SettingsManager
 import kotlinx.coroutines.FlowPreview
@@ -24,10 +25,11 @@ import kotlinx.coroutines.launch
 @OptIn(FlowPreview::class)
 class PlayerViewModel(
   changeLogChecker: ChangeLogChecker,
-  appState: AppStateFlow,
+  private val appState: AppStateFlow,
   private val userActionUseCase: UserActionUseCase,
   settingsManager: SettingsManager,
-  private val devicePlaybackController: LocalPlaybackController
+  private val devicePlaybackController: LocalPlaybackController,
+  private val trackChangeNotifier: TrackChangeNotifier
 ) : BaseViewModel<PlayerUiMessage>() {
   // Separate flows for granular recomposition
   val playingTrack: StateFlow<TrackInfo> = appState.playingTrack
@@ -78,6 +80,18 @@ class PlayerViewModel(
 
   fun playQueueItem(index: Int) {
     devicePlaybackController.playQueueItem(index)
+  }
+
+  /** Refreshes metadata for the exact track currently shown by the player. */
+  fun refreshTrackDetails() {
+    val path = if (devicePlaybackController.hasLocalPlayback) {
+      appState.playingTrack.value.path.takeIf { it.isNotBlank() }
+    } else {
+      null
+    }
+    viewModelScope.launch {
+      trackChangeNotifier.requestTrackDetails(path)
+    }
   }
 
   companion object {

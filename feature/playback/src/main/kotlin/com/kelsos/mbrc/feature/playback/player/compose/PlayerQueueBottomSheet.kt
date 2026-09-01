@@ -38,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.kelsos.mbrc.core.common.playback.LocalQueueTrack
+import com.kelsos.mbrc.core.ui.compose.TrackPositionIndicator
 import com.kelsos.mbrc.feature.playback.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -105,6 +106,7 @@ fun PlayerQueueBottomSheet(
           ) { index, track ->
             QuickQueueTrackRow(
               track = track,
+              trackNumber = index + 1,
               isPlaying = index == playingIndex,
               onClick = { onTrackClick(index) }
             )
@@ -142,7 +144,12 @@ private fun QueueSheetHeader(trackCount: Int) {
 }
 
 @Composable
-private fun QuickQueueTrackRow(track: LocalQueueTrack, isPlaying: Boolean, onClick: () -> Unit) {
+private fun QuickQueueTrackRow(
+  track: LocalQueueTrack,
+  trackNumber: Int,
+  isPlaying: Boolean,
+  onClick: () -> Unit
+) {
   val background = if (isPlaying) {
     MaterialTheme.colorScheme.surfaceContainerHighest
   } else {
@@ -164,17 +171,10 @@ private fun QuickQueueTrackRow(track: LocalQueueTrack, isPlaying: Boolean, onCli
         .background(if (isPlaying) MaterialTheme.colorScheme.primary else Color.Transparent)
     )
 
-    Icon(
-      imageVector = Icons.AutoMirrored.Filled.QueueMusic,
-      contentDescription = null,
-      tint = if (isPlaying) {
-        MaterialTheme.colorScheme.primary
-      } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
-      },
-      modifier = Modifier
-        .padding(start = 16.dp)
-        .size(24.dp)
+    TrackPositionIndicator(
+      position = trackNumber,
+      isPlaying = isPlaying,
+      modifier = Modifier.padding(start = 4.dp)
     )
 
     Spacer(modifier = Modifier.width(12.dp))

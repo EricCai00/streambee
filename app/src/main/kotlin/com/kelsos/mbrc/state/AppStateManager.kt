@@ -3,7 +3,6 @@ package com.kelsos.mbrc.state
 import com.kelsos.mbrc.core.common.state.AppStatePublisher
 import com.kelsos.mbrc.core.common.state.ConnectionStateFlow
 import com.kelsos.mbrc.core.common.state.ConnectionStatus
-import com.kelsos.mbrc.core.common.state.PlayerState
 import com.kelsos.mbrc.core.common.utilities.coroutines.AppCoroutineDispatchers
 import com.kelsos.mbrc.core.common.utilities.coroutines.ScopeBase
 import com.kelsos.mbrc.service.ServiceLifecycleManager

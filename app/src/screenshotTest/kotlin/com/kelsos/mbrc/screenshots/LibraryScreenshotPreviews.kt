@@ -14,11 +14,13 @@ import com.android.tools.screenshot.PreviewTest
 import com.kelsos.mbrc.core.data.library.album.Album
 import com.kelsos.mbrc.core.data.library.artist.Artist
 import com.kelsos.mbrc.core.data.library.genre.Genre
+import com.kelsos.mbrc.core.data.library.genre.GenreCategory
 import com.kelsos.mbrc.core.data.library.track.Track
 import com.kelsos.mbrc.core.ui.compose.EmptyScreen
 import com.kelsos.mbrc.core.ui.theme.RemoteTheme
 import com.kelsos.mbrc.feature.library.compose.components.AlbumListItem
 import com.kelsos.mbrc.feature.library.compose.components.ArtistListItem
+import com.kelsos.mbrc.feature.library.compose.components.GenreCategoryListItem
 import com.kelsos.mbrc.feature.library.compose.components.GenreListItem
 import com.kelsos.mbrc.feature.library.compose.components.TrackListItem
 
@@ -47,6 +49,34 @@ fun GenreListItemDark() {
         genre = Genre(genre = "Rock", id = 1),
         onClick = {},
         onQueue = {}
+      )
+    }
+  }
+}
+
+@PreviewTest
+@Preview(showBackground = true)
+@Composable
+fun GenreCategoryListItemLight() {
+  RemoteTheme(darkTheme = false) {
+    Surface {
+      GenreCategoryListItem(
+        category = GenreCategory(category = "Rock"),
+        onClick = {}
+      )
+    }
+  }
+}
+
+@PreviewTest
+@Preview(showBackground = true)
+@Composable
+fun GenreCategoryListItemDark() {
+  RemoteTheme(darkTheme = true) {
+    Surface {
+      GenreCategoryListItem(
+        category = GenreCategory(category = "Rock"),
+        onClick = {}
       )
     }
   }

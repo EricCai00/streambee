@@ -39,7 +39,13 @@ interface TrackDao {
 
   @Query(
     """
-    select * from track where album = :album and album_artist = :artist
+    select * from track
+    where album = :album and (
+      album_artist = :artist or instr(
+        ';' || replace(replace(album_artist, '; ', ';'), ' ;', ';') || ';',
+        ';' || :artist || ';'
+      ) > 0
+    )
     order by album_artist collate nocase asc, album collate nocase asc, disc asc, trackno asc
     """
   )
@@ -47,7 +53,13 @@ interface TrackDao {
 
   @Query(
     """
-    select * from track where album = '' and (album_artist = :artist or :artist = '')
+    select * from track
+    where album = '' and (
+      album_artist = :artist or :artist = '' or instr(
+        ';' || replace(replace(album_artist, '; ', ';'), ' ;', ';') || ';',
+        ';' || :artist || ';'
+      ) > 0
+    )
     order by album_artist collate nocase asc, album collate nocase asc, disc asc, trackno asc
     """
   )
@@ -63,7 +75,14 @@ interface TrackDao {
 
   @Query(
     """
-    select src from track where artist = :artist or album_artist = :artist
+    select src from track
+    where artist = :artist or album_artist = :artist or instr(
+      ';' || replace(replace(artist, '; ', ';'), ' ;', ';') || ';',
+      ';' || :artist || ';'
+    ) > 0 or instr(
+      ';' || replace(replace(album_artist, '; ', ';'), ' ;', ';') || ';',
+      ';' || :artist || ';'
+    ) > 0
     order by album_artist collate nocase asc, album collate nocase asc, disc asc, trackno asc
     """
   )
@@ -72,7 +91,15 @@ interface TrackDao {
   @Query(
     """
     select src from track
-    where album = :album and ((album_artist = :artist or artist = :artist) or :artist = '')
+    where album = :album and (
+      :artist = '' or album_artist = :artist or artist = :artist or instr(
+        ';' || replace(replace(album_artist, '; ', ';'), ' ;', ';') || ';',
+        ';' || :artist || ';'
+      ) > 0 or instr(
+        ';' || replace(replace(artist, '; ', ';'), ' ;', ';') || ';',
+        ';' || :artist || ';'
+      ) > 0
+    )
     order by album_artist collate nocase asc, album collate nocase asc, disc asc, trackno asc
     """
   )

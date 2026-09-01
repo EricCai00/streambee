@@ -11,5 +11,9 @@ interface PlaybackApi {
 
   suspend fun getCover(): CoverPayload
 
-  suspend fun getTrackDetails(): NowPlayingDetailsPayload
+  /**
+   * Gets track details for MusicBee's current track, or for [path] when the
+   * Android app is playing a local library item.
+   */
+  suspend fun getTrackDetails(path: String? = null): NowPlayingDetailsPayload
 }

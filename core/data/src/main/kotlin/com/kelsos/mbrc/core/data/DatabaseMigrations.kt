@@ -307,3 +307,42 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
     db.execSQL("ALTER TABLE track ADD COLUMN loved INTEGER NOT NULL DEFAULT 0")
   }
 }
+
+val MIGRATION_7_8 = object : Migration(7, 8) {
+  override fun migrate(db: SupportSQLiteDatabase) {
+    db.execSQL("DROP INDEX artist_artist_idx")
+    db.execSQL(
+      """
+      CREATE TABLE artist_new (
+        artist TEXT NOT NULL,
+        date_added INTEGER NOT NULL,
+        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL
+      )
+      """
+    )
+    db.execSQL("CREATE UNIQUE INDEX artist_new_artist_idx ON artist_new (artist)")
+    db.execSQL(
+      """
+      WITH RECURSIVE split(date_added, remaining, name) AS (
+        SELECT date_added, artist || ';', ''
+        FROM artist
+        UNION ALL
+        SELECT
+          date_added,
+          substr(remaining, instr(remaining, ';') + 1),
+          trim(substr(remaining, 1, instr(remaining, ';') - 1))
+        FROM split
+        WHERE remaining <> ''
+      )
+      INSERT OR IGNORE INTO artist_new (artist, date_added)
+      SELECT name, date_added
+      FROM split
+      WHERE name <> ''
+      """
+    )
+    db.execSQL("DROP TABLE artist")
+    db.execSQL("ALTER TABLE artist_new RENAME TO artist")
+    db.execSQL("DROP INDEX artist_new_artist_idx")
+    db.execSQL("CREATE UNIQUE INDEX artist_artist_idx ON artist (artist)")
+  }
+}

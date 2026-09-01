@@ -426,6 +426,23 @@ class TrackRepositoryTest : KoinTest {
   }
 
   @Test
+  fun getTrackPathsShouldMatchSemicolonSeparatedArtist() {
+    runTest(testDispatcher) {
+      val collaboration = TrackGenerator(
+        baseArtist = "Artist A; Artist B",
+        baseTitle = "Collaboration",
+        baseAlbum = "Shared Album",
+        basePath = "/path/to"
+      ).generateTrack { src = "/path/to/shared.mp3" }
+      dao.insertAll(listOf(collaboration))
+
+      val result = repository.getTrackPaths(TrackQuery.Artist(artist = "Artist B"))
+
+      assertThat(result).containsExactly("/path/to/shared.mp3")
+    }
+  }
+
+  @Test
   fun getTrackPathsShouldReturnAlbumTrackPaths() {
     runTest(testDispatcher) {
       val album1Tracks = TrackGenerator(

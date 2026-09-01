@@ -18,6 +18,7 @@ import com.kelsos.mbrc.core.common.state.TrackDetails
 import com.kelsos.mbrc.core.common.state.TrackRating
 import com.kelsos.mbrc.core.common.test.testDispatcher
 import com.kelsos.mbrc.core.common.test.testDispatcherModule
+import com.kelsos.mbrc.core.networking.protocol.actions.TrackChangeNotifier
 import com.kelsos.mbrc.core.networking.protocol.base.Protocol
 import com.kelsos.mbrc.core.networking.protocol.usecases.UserActionUseCase
 import com.kelsos.mbrc.feature.settings.domain.SettingsManager
@@ -64,6 +65,7 @@ class PlayerViewModelTest : KoinTest {
       }
     }
     single<UserActionUseCase> { mockk(relaxed = true) }
+    single<TrackChangeNotifier> { mockk(relaxed = true) }
     single<LocalPlaybackController> {
       mockk(relaxed = true) {
         every { queue } returns queueFlow

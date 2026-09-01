@@ -15,6 +15,9 @@ class PlaybackApiImpl(private val apiBase: ApiBase) : PlaybackApi {
   override suspend fun getCover(): CoverPayload =
     apiBase.getItem(Protocol.NowPlayingCover, CoverPayload::class)
 
-  override suspend fun getTrackDetails(): NowPlayingDetailsPayload =
-    apiBase.getItem(Protocol.NowPlayingDetails, NowPlayingDetailsPayload::class)
+  override suspend fun getTrackDetails(path: String?): NowPlayingDetailsPayload = apiBase.getItem(
+    Protocol.NowPlayingDetails,
+    NowPlayingDetailsPayload::class,
+    path?.takeIf { it.isNotBlank() }?.let { mapOf("path" to it) } ?: ""
+  )
 }

@@ -366,6 +366,21 @@ class ArtistRepositoryTest : KoinTest {
   }
 
   @Test
+  fun getRemoteShouldSplitSemicolonSeparatedArtists() {
+    runTest(testDispatcher) {
+      every { libraryApi.getArtists(any()) } returns flowOf(
+        listOf(ArtistDto(artist = "Artist A; Artist B"))
+      )
+
+      repository.getRemote(null)
+
+      assertThat(dao.all().map { it.artist })
+        .containsExactly("Artist A", "Artist B")
+        .inOrder()
+    }
+  }
+
+  @Test
   fun getRemoteShouldHandleProgressCallback() {
     runTest(testDispatcher) {
       val progress: Progress = mockk(relaxed = true)
@@ -431,6 +446,49 @@ class ArtistRepositoryTest : KoinTest {
       // Then: Should include the compilation album artist
       val artistNames = albumArtists.map { it.artist }
       assertThat(artistNames).containsExactly(albumArtist)
+    }
+  }
+
+  @Test
+  fun getAlbumArtistsOnlyShouldMatchEachSemicolonSeparatedArtist() {
+    runTest {
+      val genre = GenreEntity(genre = "Rock", dateAdded = 1000L)
+      database.genreDao().insertAll(listOf(genre))
+      val genreId = database.genreDao().genres().first().id
+
+      database.trackDao().insertAll(
+        listOf(
+          TrackEntity(
+            artist = "Artist A; Artist B",
+            title = "Collaboration",
+            album = "Shared Album",
+            albumArtist = "Artist A; Artist B",
+            src = "shared.mp3",
+            trackno = 1,
+            disc = 1,
+            genre = "Rock",
+            year = "2024",
+            sortableYear = "2024",
+            dateAdded = 1000L
+          )
+        )
+      )
+      dao.insertAll(
+        listOf(
+          ArtistEntity(artist = "Artist A", dateAdded = 1000L),
+          ArtistEntity(artist = "Artist B", dateAdded = 1000L)
+        )
+      )
+
+      val albumArtists = repository.getAlbumArtistsOnly(SortOrder.ASC).asSnapshot()
+      val genreArtists = repository.getArtistByGenre(genreId, SortOrder.ASC).asSnapshot()
+
+      assertThat(albumArtists.map { it.artist })
+        .containsExactly("Artist A", "Artist B")
+        .inOrder()
+      assertThat(genreArtists.map { it.artist })
+        .containsExactly("Artist A", "Artist B")
+        .inOrder()
     }
   }
 

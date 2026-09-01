@@ -34,7 +34,7 @@ interface TrackChangeNotifier {
   fun notifyTrackChanged(track: TrackInfo)
   fun notifyPlayStateChanged(state: PlayerState)
   suspend fun persistTrackInfo(track: TrackInfo)
-  suspend fun requestTrackDetails()
+  suspend fun requestTrackDetails(path: String? = null)
 }
 
 /**

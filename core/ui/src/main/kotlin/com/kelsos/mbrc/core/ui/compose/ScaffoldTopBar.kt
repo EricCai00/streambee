@@ -27,11 +27,14 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -163,6 +166,12 @@ private fun SearchTopBar(
   onClose: () -> Unit
 ) {
   val keyboardController = LocalSoftwareKeyboardController.current
+  val focusRequester = remember { FocusRequester() }
+
+  LaunchedEffect(Unit) {
+    focusRequester.requestFocus()
+    keyboardController?.show()
+  }
 
   TopAppBar(
     title = {
@@ -184,11 +193,16 @@ private fun SearchTopBar(
           focusedIndicatorColor = Color.Transparent,
           unfocusedIndicatorColor = Color.Transparent
         ),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+          .fillMaxWidth()
+          .focusRequester(focusRequester)
       )
     },
     navigationIcon = {
-      IconButton(onClick = onClose) {
+      IconButton(onClick = {
+        keyboardController?.hide()
+        onClose()
+      }) {
         Icon(
           imageVector = Icons.AutoMirrored.Filled.ArrowBack,
           contentDescription = stringResource(R.string.action_search_clear)

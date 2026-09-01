@@ -78,12 +78,12 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.kelsos.mbrc.core.common.state.ConnectionStatus
 import com.kelsos.mbrc.core.data.nowplaying.NowPlaying
 import com.kelsos.mbrc.core.ui.compose.ActionItem
-import com.kelsos.mbrc.core.ui.compose.AudioBarsIndicator
 import com.kelsos.mbrc.core.ui.compose.DragDropState
 import com.kelsos.mbrc.core.ui.compose.DynamicScreenScaffold
 import com.kelsos.mbrc.core.ui.compose.EmptyScreen
 import com.kelsos.mbrc.core.ui.compose.LoadingScreen
 import com.kelsos.mbrc.core.ui.compose.TopBarState
+import com.kelsos.mbrc.core.ui.compose.TrackPositionIndicator
 import com.kelsos.mbrc.core.ui.compose.displayedSourceIndex
 import com.kelsos.mbrc.core.ui.compose.dragHandle
 import com.kelsos.mbrc.core.ui.compose.rememberDragDropState
@@ -444,6 +444,7 @@ private fun NowPlayingTrackList(
           SwipeableNowPlayingItem(
             track = track,
             index = srcIdx,
+            trackNumber = slot + 1,
             isPlaying = isPlaying,
             isDragging = isDragging,
             dragDropState = dragDropState,
@@ -455,6 +456,7 @@ private fun NowPlayingTrackList(
         } else {
           NowPlayingTrackItem(
             track = track,
+            trackNumber = slot + 1,
             isPlaying = isPlaying,
             isDragging = false,
             onClick = { onTrackClick(srcIdx) },
@@ -541,6 +543,7 @@ private fun NowPlayingPlaceholderItem() {
 private fun LazyItemScope.SwipeableNowPlayingItem(
   track: NowPlaying,
   index: Int,
+  trackNumber: Int,
   isPlaying: Boolean,
   isDragging: Boolean,
   dragDropState: DragDropState,
@@ -601,6 +604,7 @@ private fun LazyItemScope.SwipeableNowPlayingItem(
   ) {
     NowPlayingTrackItem(
       track = track,
+      trackNumber = trackNumber,
       isPlaying = isPlaying,
       isDragging = isDragging,
       onClick = onClick,
@@ -622,7 +626,8 @@ fun NowPlayingTrackItem(
   onGoToArtist: () -> Unit,
   modifier: Modifier = Modifier,
   dragHandleModifier: Modifier = Modifier,
-  onRemove: (() -> Unit)? = null
+  onRemove: (() -> Unit)? = null,
+  trackNumber: Int = track.position
 ) {
   var showMenu by remember { mutableStateOf(false) }
 
@@ -665,16 +670,10 @@ fun NowPlayingTrackItem(
           .padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically
       ) {
-        // Playing indicator - animated audio bars
-        if (isPlaying) {
-          AudioBarsIndicator(
-            color = MaterialTheme.colorScheme.primary,
-            barMaxHeight = 18.dp,
-            modifier = Modifier.size(24.dp)
-          )
-        } else {
-          Spacer(modifier = Modifier.size(24.dp))
-        }
+        TrackPositionIndicator(
+          position = trackNumber,
+          isPlaying = isPlaying
+        )
 
         Spacer(modifier = Modifier.width(12.dp))
 

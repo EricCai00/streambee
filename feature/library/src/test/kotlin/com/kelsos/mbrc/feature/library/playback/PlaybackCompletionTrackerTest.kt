@@ -109,5 +109,5 @@ class PlaybackCompletionTrackerTest {
     id = 1L
   )
 
-  private data class TestClock(var elapsed: Long = 0L, var wall: Long = 1_000L)
+  private class TestClock(var elapsed: Long = 0L, var wall: Long = 1_000L)
 }

@@ -473,4 +473,27 @@ class DatabaseMigrationTest {
     cursor.close()
     db.close()
   }
+
+  @Test
+  fun migrate7To8SplitsSemicolonSeparatedArtists() {
+    var db = helper.createDatabase(migrationTestDb, 7)
+    db.execSQL(
+      "INSERT INTO artist (artist, date_added, id) VALUES ('Artist A; Artist B', 123, 1)"
+    )
+    db.execSQL("INSERT INTO artist (artist, date_added, id) VALUES ('Solo Artist', 456, 2)")
+    db.close()
+
+    db = helper.runMigrationsAndValidate(migrationTestDb, 8, true, MIGRATION_7_8)
+
+    val cursor = db.query("SELECT artist, date_added FROM artist ORDER BY artist")
+    val artists = buildList {
+      while (cursor.moveToNext()) {
+        add(cursor.getString(cursor.getColumnIndex("artist")))
+      }
+    }
+    cursor.close()
+    db.close()
+
+    assertThat(artists).containsExactly("Artist A", "Artist B", "Solo Artist").inOrder()
+  }
 }

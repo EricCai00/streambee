@@ -103,7 +103,7 @@ internal class PlaybackCompletionTracker(
 
   private fun Long.validDuration(): Long = takeIf { it > 0L } ?: 0L
 
-  private data class Session(
+  private class Session(
     val track: Track,
     var durationMs: Long,
     val startedAt: Long,

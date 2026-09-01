@@ -7,7 +7,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -30,13 +31,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 enum class PagingScrollbarStyle {
@@ -44,9 +49,21 @@ enum class PagingScrollbarStyle {
   Indexed
 }
 
+@Stable
+class PagingScrollbarState internal constructor() {
+  internal var trackHeightPx by mutableFloatStateOf(0f)
+  internal var isDragging by mutableStateOf(false)
+  internal var draggedIndex by mutableIntStateOf(-1)
+}
+
+@Composable
+internal fun rememberPagingScrollbarState(): PagingScrollbarState = remember {
+  PagingScrollbarState()
+}
+
 /**
- * A draggable scrollbar that maps directly onto a paging list's placeholder-backed item count.
- * This lets a user jump through very large libraries without loading every preceding page.
+ * Draws a scrollbar for a paging list's placeholder-backed item count. Pair it with
+ * [pagingScrollbarDragGesture] on the containing list host so taps remain clickable underneath.
  */
 @Composable
 fun PagingScrollbar(
@@ -55,16 +72,16 @@ fun PagingScrollbar(
   visibleItemsCount: Int,
   style: PagingScrollbarStyle,
   labelForIndex: (Int) -> String?,
-  onIndexSelected: (Int) -> Unit,
+  state: PagingScrollbarState? = null,
   modifier: Modifier = Modifier
 ) {
+  val scrollbarState = state ?: rememberPagingScrollbarState()
   if (totalItems <= visibleItemsCount || totalItems <= 1) return
 
   val density = LocalDensity.current
-  val currentOnIndexSelected by rememberUpdatedState(onIndexSelected)
-  var trackHeightPx by remember { mutableFloatStateOf(0f) }
-  var isDragging by remember { mutableStateOf(false) }
-  var draggedIndex by remember { mutableIntStateOf(-1) }
+  val trackHeightPx = scrollbarState.trackHeightPx
+  val isDragging = scrollbarState.isDragging
+  val draggedIndex = scrollbarState.draggedIndex
 
   val minimumThumbHeightPx = with(density) { MinimumThumbHeight.toPx() }
   val proportionalHeight = if (totalItems > 0) {
@@ -76,12 +93,17 @@ fun PagingScrollbar(
     .coerceAtLeast(minimumThumbHeightPx)
     .coerceAtMost(trackHeightPx)
   val scrollableHeightPx = (trackHeightPx - thumbHeightPx).coerceAtLeast(0f)
+  val maxScrollIndex = (totalItems - visibleItemsCount.coerceAtLeast(1)).coerceAtLeast(0)
   val currentIndex = if (isDragging && draggedIndex >= 0) {
     draggedIndex
   } else {
-    firstVisibleItemIndex.coerceIn(0, totalItems - 1)
+    firstVisibleItemIndex.coerceIn(0, maxScrollIndex)
   }
-  val scrollFraction = currentIndex.toFloat() / (totalItems - 1).coerceAtLeast(1)
+  val scrollFraction = if (maxScrollIndex > 0) {
+    currentIndex.toFloat() / maxScrollIndex
+  } else {
+    0f
+  }
   val thumbTopPx = scrollableHeightPx * scrollFraction
   val thumbWidth by animateDpAsState(
     targetValue = if (isDragging) DraggedThumbWidth else ThumbWidth,
@@ -92,50 +114,12 @@ fun PagingScrollbar(
   val bubbleTopPx = (thumbTopPx + thumbHeightPx / 2f - bubbleHalfHeightPx)
     .coerceIn(0f, (trackHeightPx - bubbleHalfHeightPx * 2f).coerceAtLeast(0f))
 
-  fun selectIndex(position: Offset) {
-    if (trackHeightPx <= 0f) return
-    val target = (position.y / trackHeightPx * totalItems)
-      .toInt()
-      .coerceIn(0, totalItems - 1)
-    if (target != draggedIndex) {
-      draggedIndex = target
-      currentOnIndexSelected(target)
-    }
-  }
-
   Box(
     modifier = modifier
       .fillMaxHeight()
       .width(ScrollbarOverlayWidth)
-      .onSizeChanged { trackHeightPx = it.height.toFloat() }
+      .onSizeChanged { scrollbarState.trackHeightPx = it.height.toFloat() }
   ) {
-    Box(
-      modifier = Modifier
-        .fillMaxHeight()
-        .width(TouchTargetWidth)
-        .align(Alignment.CenterEnd)
-        .pointerInput(totalItems) {
-          detectVerticalDragGestures(
-            onDragStart = { position ->
-              isDragging = true
-              selectIndex(position)
-            },
-            onDragEnd = {
-              isDragging = false
-              draggedIndex = -1
-            },
-            onDragCancel = {
-              isDragging = false
-              draggedIndex = -1
-            },
-            onVerticalDrag = { change, _ ->
-              change.consume()
-              selectIndex(change.position)
-            }
-          )
-        }
-    )
-
     Box(
       modifier = Modifier
         .align(Alignment.TopEnd)
@@ -181,12 +165,113 @@ fun PagingScrollbar(
   }
 }
 
+/**
+ * Observes the list's initial pointer pass so taps continue to the list item below the scrollbar.
+ * The pointer is consumed only after a vertical drag crosses touch slop, at which point the
+ * scrollbar takes over and jumps through the paging list.
+ */
+@Composable
+internal fun Modifier.pagingScrollbarDragGesture(
+  enabled: Boolean,
+  totalItems: Int,
+  visibleItemsCount: Int,
+  state: PagingScrollbarState,
+  onIndexSelected: (Int) -> Unit
+): Modifier {
+  if (!enabled || totalItems <= visibleItemsCount || totalItems <= 1) return this
+
+  val currentOnIndexSelected = rememberUpdatedState(onIndexSelected)
+  val touchTargetWidthPx = with(LocalDensity.current) {
+    PagingScrollbarTouchTargetWidth.toPx()
+  }
+
+  return pointerInput(totalItems, state) {
+    awaitPointerEventScope {
+      val slop = viewConfiguration.touchSlop
+      while (true) {
+        val down = awaitFirstDown(
+          requireUnconsumed = false,
+          pass = PointerEventPass.Initial
+        )
+        if (down.position.x < size.width - touchTargetWidthPx) continue
+
+        fun selectIndex(positionY: Float) {
+          val trackHeightPx = state.trackHeightPx
+          if (trackHeightPx <= 0f) return
+          val maxScrollIndex = (totalItems - visibleItemsCount.coerceAtLeast(1)).coerceAtLeast(0)
+          val target = (positionY / trackHeightPx * maxScrollIndex)
+            .roundToInt()
+            .coerceIn(0, maxScrollIndex)
+          if (target != state.draggedIndex) {
+            state.draggedIndex = target
+            currentOnIndexSelected.value(target)
+          }
+        }
+
+        try {
+          awaitScrollbarDrag(
+            downId = down.id,
+            slop = slop,
+            onDragStart = {
+              state.isDragging = true
+              selectIndex(it)
+            },
+            onDrag = ::selectIndex
+          )
+        } finally {
+          state.isDragging = false
+          state.draggedIndex = -1
+        }
+      }
+    }
+  }
+}
+
+private suspend fun AwaitPointerEventScope.awaitScrollbarDrag(
+  downId: PointerId,
+  slop: Float,
+  onDragStart: (Float) -> Unit,
+  onDrag: (Float) -> Unit
+) {
+  var totalX = 0f
+  var totalY = 0f
+
+  while (true) {
+    val event = awaitPointerEvent(PointerEventPass.Initial)
+    val change = event.changes.firstOrNull { it.id == downId } ?: return
+    if (!change.pressed) return
+
+    val delta = change.positionChange()
+    totalX += delta.x
+    totalY += delta.y
+
+    if (abs(totalY) > slop && abs(totalY) > abs(totalX)) {
+      change.consume()
+      onDragStart(change.position.y)
+
+      while (true) {
+        val dragEvent = awaitPointerEvent(PointerEventPass.Initial)
+        val dragChange = dragEvent.changes.firstOrNull { it.id == downId } ?: return
+        if (!dragChange.pressed) return
+        dragChange.consume()
+        onDrag(dragChange.position.y)
+      }
+    }
+
+    if (abs(totalX) > slop && abs(totalX) > abs(totalY)) return
+  }
+}
+
 private fun Modifier.offsetPx(y: Float): Modifier = this.then(
   Modifier.offset { IntOffset(x = 0, y = y.roundToInt()) }
 )
 
 private val ScrollbarOverlayWidth = 124.dp
-private val TouchTargetWidth = 48.dp
+
+/**
+ * Right-edge region that arms scrollbar dragging. Taps in this region remain unconsumed.
+ */
+internal val PagingScrollbarTouchTargetWidth = 48.dp
 private val ThumbWidth = 4.dp
 private val DraggedThumbWidth = 14.dp
 private val MinimumThumbHeight = 36.dp

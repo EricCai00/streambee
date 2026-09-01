@@ -33,6 +33,7 @@ class MediaIntentHandler(private val devicePlaybackController: LocalPlaybackCont
     return true
   }
 
+  @Suppress("CyclomaticComplexMethod")
   fun handleMediaIntent(mediaIntent: Intent?): Boolean {
     val event = getKeyEventFromIntent(mediaIntent)
     if (event?.action != KeyEvent.ACTION_DOWN) {
@@ -55,12 +56,12 @@ class MediaIntentHandler(private val devicePlaybackController: LocalPlaybackCont
       KeyEvent.KEYCODE_MEDIA_PREVIOUS -> devicePlaybackController.previous().let { true }
 
       KeyEvent.KEYCODE_VOLUME_UP -> {
-        devicePlaybackController.adjustVolume(10)
+        devicePlaybackController.adjustVolume(VOLUME_STEP)
         true
       }
 
       KeyEvent.KEYCODE_VOLUME_DOWN -> {
-        devicePlaybackController.adjustVolume(-10)
+        devicePlaybackController.adjustVolume(-VOLUME_STEP)
         true
       }
 
@@ -72,5 +73,6 @@ class MediaIntentHandler(private val devicePlaybackController: LocalPlaybackCont
 
   companion object {
     private const val DOUBLE_CLICK_INTERVAL = 350
+    private const val VOLUME_STEP = 10
   }
 }

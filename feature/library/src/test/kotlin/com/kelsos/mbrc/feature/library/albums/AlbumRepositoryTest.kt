@@ -371,6 +371,64 @@ class AlbumRepositoryTest : KoinTest {
   }
 
   @Test
+  fun getAlbumsByArtistShouldMatchSemicolonSeparatedArtist() {
+    runTest(testDispatcher) {
+      dao.insert(
+        listOf(
+          AlbumEntity(
+            artist = "Artist A; Artist B",
+            album = "Shared Album",
+            dateAdded = 1000L
+          ),
+          AlbumEntity(
+            artist = "Album Artist",
+            album = "Guest Album",
+            dateAdded = 1000L
+          )
+        )
+      )
+      trackDao.insertAll(
+        listOf(
+          TrackEntity(
+            artist = "Lead Artist",
+            albumArtist = "Artist A; Artist B",
+            album = "Shared Album",
+            title = "Collaboration",
+            src = "shared.mp3",
+            trackno = 1,
+            disc = 1,
+            genre = "Rock",
+            year = "2024",
+            sortableYear = "2024",
+            dateAdded = 1000L
+          ),
+          TrackEntity(
+            artist = "Artist B",
+            albumArtist = "Album Artist",
+            album = "Guest Album",
+            title = "Guest Appearance",
+            src = "guest.mp3",
+            trackno = 1,
+            disc = 1,
+            genre = "Rock",
+            year = "2023",
+            sortableYear = "2023",
+            dateAdded = 1000L
+          )
+        )
+      )
+
+      val result = repository.getAlbumsByArtist(
+        "Artist B",
+        AlbumSortField.NAME,
+        SortOrder.ASC
+      ).asSnapshot()
+
+      assertThat(result.map { it.album }).containsExactly("Shared Album")
+    }
+  }
+
+  @Test
   fun getAlbumsByArtistShouldSortByNameDescending() {
     runTest(testDispatcher) {
       val albums =
@@ -729,6 +787,14 @@ class AlbumRepositoryTest : KoinTest {
       ).asSnapshot()
 
       assertThat(result.map { it.album }).containsExactly("Rock Album 1", "Rock Album 2").inOrder()
+
+      val genrePreview = repository.getPreviewAlbumsByGenre(1L, limit = 1)
+      assertThat(genrePreview.map { it.album }).containsExactly("Rock Album 1")
+
+      val categoryPreview = repository.getPreviewAlbumsByCategory("", limit = 2)
+      assertThat(categoryPreview.map { it.album })
+        .containsExactly("Jazz Album", "Rock Album 1")
+        .inOrder()
     }
   }
 

@@ -212,23 +212,16 @@ private fun DrawerHeader(
           verticalAlignment = Alignment.CenterVertically,
           horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-          // App icon with rounded container
-          Surface(
-            modifier = Modifier.size(48.dp),
-            shape = RoundedCornerShape(12.dp),
-            color = Color.White.copy(alpha = 0.2f)
-          ) {
-            Box(
-              modifier = Modifier.fillMaxSize(),
-              contentAlignment = Alignment.Center
-            ) {
-              Image(
-                painter = painterResource(id = R.mipmap.ic_launcher),
-                contentDescription = null,
-                modifier = Modifier.size(36.dp)
-              )
-            }
-          }
+          // The launcher icon already owns its yellow background. Present it as
+          // one clipped brand tile instead of nesting a square inside another
+          // translucent container.
+          Image(
+            painter = painterResource(id = R.mipmap.ic_launcher),
+            contentDescription = null,
+            modifier = Modifier
+              .size(48.dp)
+              .clip(RoundedCornerShape(12.dp))
+          )
 
           // App name and connection info
           Column {

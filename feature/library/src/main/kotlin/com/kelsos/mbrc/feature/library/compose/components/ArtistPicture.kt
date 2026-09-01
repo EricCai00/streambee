@@ -20,13 +20,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
-import com.kelsos.mbrc.core.common.utilities.coroutines.AppCoroutineDispatchers
 import com.kelsos.mbrc.core.common.data.ConnectionSettings
+import com.kelsos.mbrc.core.common.utilities.coroutines.AppCoroutineDispatchers
 import com.kelsos.mbrc.core.networking.DefaultConnectionProvider
 import java.nio.charset.StandardCharsets
 import kotlinx.coroutines.withContext
@@ -35,6 +36,11 @@ import org.koin.compose.koinInject
 /** Displays MusicBee's local artist picture, falling back to the person icon. */
 @Composable
 fun ArtistPicture(artist: String, modifier: Modifier = Modifier, size: Dp = 48.dp) {
+  if (LocalInspectionMode.current) {
+    ArtistPictureFallback(modifier = modifier.size(size))
+    return
+  }
+
   val connectionProvider: DefaultConnectionProvider = koinInject()
   val dispatchers: AppCoroutineDispatchers = koinInject()
   val connection by produceState<ConnectionSettings?>(
@@ -53,7 +59,9 @@ fun ArtistPicture(artist: String, modifier: Modifier = Modifier, size: Dp = 48.d
         artist.toByteArray(StandardCharsets.UTF_8),
         Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
       )
-      val host = if (currentConnection.address.contains(':') && !currentConnection.address.startsWith("[")) {
+      val host = if (currentConnection.address.contains(':') &&
+        !currentConnection.address.startsWith("[")
+      ) {
         "[${currentConnection.address}]"
       } else {
         currentConnection.address
@@ -102,10 +110,11 @@ private fun ArtistPictureFallback(modifier: Modifier = Modifier) {
     Icon(
       imageVector = Icons.Default.Person,
       contentDescription = null,
-      modifier = Modifier.fillMaxSize(0.58f),
+      modifier = Modifier.fillMaxSize(ARTIST_ICON_SIZE_FRACTION),
       tint = MaterialTheme.colorScheme.onSurfaceVariant
     )
   }
 }
 
 private const val MAX_PORT = 65535
+private const val ARTIST_ICON_SIZE_FRACTION = 0.58f

@@ -17,16 +17,19 @@ import com.kelsos.mbrc.core.common.settings.SortOrder
 import com.kelsos.mbrc.core.common.settings.SortPreference
 import com.kelsos.mbrc.core.common.utilities.AppError
 import com.kelsos.mbrc.core.common.utilities.Outcome
+import com.kelsos.mbrc.core.data.library.album.AlbumRepository
 import com.kelsos.mbrc.core.data.library.genre.GenreCategory
 import com.kelsos.mbrc.feature.library.R
 import com.kelsos.mbrc.feature.library.compose.SortBottomSheet
 import com.kelsos.mbrc.feature.library.compose.SortOption
 import com.kelsos.mbrc.feature.library.compose.components.GenreCategoryListItem
+import com.kelsos.mbrc.feature.library.compose.components.rememberGenreCategoryAlbumPreviews
 import com.kelsos.mbrc.feature.library.genres.BrowseGenreViewModel
 import com.kelsos.mbrc.feature.library.genres.GenreUiMessage
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 val genreSortOptions = listOf(
   SortOption(GenreSortField.NAME, R.string.sort_by_name)
@@ -44,6 +47,7 @@ fun GenresTab(
   modifier: Modifier = Modifier,
   viewModel: BrowseGenreViewModel = koinViewModel()
 ) {
+  val albumRepository: AlbumRepository = koinInject()
   val categories = viewModel.categories.collectAsLazyPagingItems()
   val showSync by viewModel.showSync.collectAsStateWithLifecycle(initialValue = true)
   val sortPreference by viewModel.sortPreference.collectAsStateWithLifecycle(
@@ -92,7 +96,11 @@ fun GenresTab(
   ) { category ->
     GenreCategoryListItem(
       category = category,
-      onClick = { viewModel.openCategory(category) }
+      onClick = { viewModel.openCategory(category) },
+      albumPreviews = rememberGenreCategoryAlbumPreviews(
+        repository = albumRepository,
+        category = category.category
+      )
     )
   }
 

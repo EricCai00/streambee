@@ -70,6 +70,16 @@ class AlbumRepositoryImpl(
     it.toAlbum()
   }
 
+  override suspend fun getPreviewAlbumsByGenre(genreId: Long, limit: Int): List<Album> =
+    withContext(dispatchers.database) {
+      dao.getPreviewAlbumsByGenre(genreId, limit).map { it.toAlbum() }
+    }
+
+  override suspend fun getPreviewAlbumsByCategory(category: String, limit: Int): List<Album> =
+    withContext(dispatchers.database) {
+      dao.getPreviewAlbumsByCategory(category, limit).map { it.toAlbum() }
+    }
+
   override fun getAll(): Flow<PagingData<Album>> =
     paged({ dao.getAll() }, enablePlaceholders = true) { it.toAlbum() }
 

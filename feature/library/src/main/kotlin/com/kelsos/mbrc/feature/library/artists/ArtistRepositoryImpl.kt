@@ -53,7 +53,9 @@ class ArtistRepositoryImpl(
             dao.removePreviousEntries(added)
           }
         }.collect { artists ->
-          val data = artists.map { it.toEntity().copy(dateAdded = added) }
+          val data = artists
+            .flatMap { it.toEntities() }
+            .map { it.copy(dateAdded = added) }
           withContext(dispatchers.database) {
             dao.insertAll(data)
           }

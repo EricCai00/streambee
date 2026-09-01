@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlayArrow
@@ -44,6 +43,7 @@ import com.kelsos.mbrc.core.queue.Queue
 import com.kelsos.mbrc.core.ui.compose.DoubleLineRow
 import com.kelsos.mbrc.core.ui.compose.MoreOptionsButton
 import com.kelsos.mbrc.core.ui.compose.SingleLineRow
+import com.kelsos.mbrc.core.ui.compose.TrackPositionIndicator
 import com.kelsos.mbrc.feature.library.R
 
 @Composable
@@ -51,7 +51,8 @@ fun GenreListItem(
   genre: Genre,
   onClick: () -> Unit,
   onQueue: (Queue) -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
+  albumPreviews: List<Album> = emptyList()
 ) {
   var menuExpanded by remember { mutableStateOf(false) }
 
@@ -61,11 +62,11 @@ fun GenreListItem(
     onLongClick = { menuExpanded = true },
     modifier = modifier,
     leadingContent = {
-      Icon(
-        imageVector = Icons.AutoMirrored.Filled.QueueMusic,
-        contentDescription = null,
-        modifier = Modifier.size(24.dp),
-        tint = MaterialTheme.colorScheme.primary
+      StackedAlbumCovers(
+        albums = albumPreviews,
+        size = 40.dp,
+        layerOffsetX = 6.dp,
+        layerOffsetY = 4.dp
       )
     },
     trailingContent = {
@@ -85,18 +86,19 @@ fun GenreListItem(
 fun GenreCategoryListItem(
   category: GenreCategory,
   onClick: () -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
+  albumPreviews: List<Album> = emptyList()
 ) {
   SingleLineRow(
     text = category.category.ifEmpty { stringResource(R.string.unknown_genre_category) },
     onClick = onClick,
     modifier = modifier,
     leadingContent = {
-      Icon(
-        imageVector = Icons.AutoMirrored.Filled.QueueMusic,
-        contentDescription = null,
-        modifier = Modifier.size(24.dp),
-        tint = MaterialTheme.colorScheme.primary
+      StackedAlbumCovers(
+        albums = albumPreviews,
+        size = 40.dp,
+        layerOffsetX = 6.dp,
+        layerOffsetY = 4.dp
       )
     }
   )
@@ -287,7 +289,9 @@ fun TrackListItem(
   modifier: Modifier = Modifier,
   showCover: Boolean = true,
   showAlbum: Boolean = true,
-  showExtendedActions: Boolean = true
+  showExtendedActions: Boolean = true,
+  trackNumber: Int? = null,
+  isPlaying: Boolean = false
 ) {
   var menuExpanded by remember { mutableStateOf(false) }
   val title = track.title.ifEmpty { stringResource(R.string.unknown_title) }
@@ -306,7 +310,12 @@ fun TrackListItem(
     onLongClick = { menuExpanded = true },
     modifier = modifier,
     leadingContent = {
-      if (showCover) {
+      if (trackNumber != null) {
+        TrackPositionIndicator(
+          position = trackNumber,
+          isPlaying = isPlaying
+        )
+      } else if (showCover) {
         AlbumCoverByKey(
           artist = track.albumArtist.ifEmpty { track.artist },
           album = track.album,
@@ -328,7 +337,7 @@ fun TrackListItem(
             imageVector = Icons.Default.Favorite,
             contentDescription = stringResource(R.string.track_loved_description),
             modifier = Modifier.size(20.dp),
-            tint = MaterialTheme.colorScheme.error
+            tint = MaterialTheme.colorScheme.primary
           )
         }
         Box(modifier = Modifier.wrapContentSize(Alignment.TopEnd)) {

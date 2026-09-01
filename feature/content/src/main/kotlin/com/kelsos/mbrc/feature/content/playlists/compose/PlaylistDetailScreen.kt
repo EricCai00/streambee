@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kelsos.mbrc.core.common.state.AppStateFlow
 import com.kelsos.mbrc.core.data.library.track.Track
 import com.kelsos.mbrc.core.ui.R as CoreUiR
 import com.kelsos.mbrc.core.ui.compose.DoubleLineRow
@@ -40,12 +41,14 @@ import com.kelsos.mbrc.core.ui.compose.EmptyScreen
 import com.kelsos.mbrc.core.ui.compose.LoadingScreen
 import com.kelsos.mbrc.core.ui.compose.NavigationIconType
 import com.kelsos.mbrc.core.ui.compose.ScreenScaffold
+import com.kelsos.mbrc.core.ui.compose.TrackPositionIndicator
 import com.kelsos.mbrc.feature.content.R
 import com.kelsos.mbrc.feature.content.playlists.PlaylistDetailViewModel
 import com.kelsos.mbrc.feature.content.playlists.PlaylistUiMessages
 import com.kelsos.mbrc.feature.minicontrol.MiniControl
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 @Composable
 fun PlaylistDetailScreen(
@@ -60,6 +63,8 @@ fun PlaylistDetailScreen(
   viewModel: PlaylistDetailViewModel = koinViewModel()
 ) {
   val tracks by viewModel.tracks.collectAsStateWithLifecycle()
+  val appState: AppStateFlow = koinInject()
+  val playingTrack by appState.playingTrack.collectAsStateWithLifecycle()
   val loaded by viewModel.loaded.collectAsStateWithLifecycle()
   val startingTrackIndex by viewModel.startingTrackIndex.collectAsStateWithLifecycle()
   val playFailedMessage = stringResource(R.string.playlist_play_failed)
@@ -101,6 +106,8 @@ fun PlaylistDetailScreen(
           itemsIndexed(tracks, key = { _, track -> track.src }) { index, track ->
             PlaylistTrackRow(
               track = track,
+              trackNumber = index + 1,
+              isPlaying = track.src == playingTrack.path,
               isStarting = startingTrackIndex == index,
               onClick = { viewModel.play(index) },
               onNavigateToAlbum = onNavigateToAlbum,
@@ -120,6 +127,8 @@ fun PlaylistDetailScreen(
 @Composable
 private fun PlaylistTrackRow(
   track: Track,
+  trackNumber: Int,
+  isPlaying: Boolean,
   isStarting: Boolean,
   onClick: () -> Unit,
   onNavigateToAlbum: (album: String, artist: String) -> Unit,
@@ -136,16 +145,19 @@ private fun PlaylistTrackRow(
     onClick = onClick,
     leadingContent = {
       if (isStarting) {
-        CircularProgressIndicator(
-          modifier = Modifier.size(24.dp),
-          strokeWidth = 2.dp
-        )
+        Box(
+          modifier = Modifier.size(48.dp),
+          contentAlignment = Alignment.Center
+        ) {
+          CircularProgressIndicator(
+            modifier = Modifier.size(24.dp),
+            strokeWidth = 2.dp
+          )
+        }
       } else {
-        Icon(
-          imageVector = Icons.Default.MusicNote,
-          contentDescription = null,
-          modifier = Modifier.size(24.dp),
-          tint = MaterialTheme.colorScheme.primary
+        TrackPositionIndicator(
+          position = trackNumber,
+          isPlaying = isPlaying
         )
       }
     },
@@ -156,7 +168,7 @@ private fun PlaylistTrackRow(
             imageVector = Icons.Default.Favorite,
             contentDescription = stringResource(R.string.track_loved_description),
             modifier = Modifier.size(20.dp),
-            tint = MaterialTheme.colorScheme.error
+            tint = MaterialTheme.colorScheme.primary
           )
         }
         Box {

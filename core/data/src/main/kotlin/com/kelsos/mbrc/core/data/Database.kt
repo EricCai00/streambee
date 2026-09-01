@@ -56,7 +56,7 @@ abstract class Database : RoomDatabase() {
   abstract fun playbackHistoryDao(): PlaybackHistoryDao
 
   companion object {
-    const val VERSION = 7
+    const val VERSION = 8
     const val NAME = "cache.db"
   }
 }

@@ -2,10 +2,25 @@ Changelog
 -----------
 
 ## [Unreleased]
+
+## [2.2.0] - 2026-09-02
 ### Added
+- Adds a two-tab track-details view with richer MusicBee tags, ratings, playback statistics, and file properties for both remote and phone playback.
 - Shows album year and genre in album details, with direct navigation to the album artist and genre.
 - Displays MusicBee loved-track hearts as read-only metadata in library, album, and playlist track lists.
 - Loads locally available MusicBee artist pictures in the artist list, with an icon fallback when no picture is available.
+- Supports semicolon-delimited multiple artists and lets users choose which artist to open from album and track views.
+- Shows stacked album-art previews for genres and genre categories.
+
+### Changed
+- Introduces the new StreamBee icon with three streaming arcs, using the app's orange theme color and a white bee mark.
+- Shows track numbers and an animated playing indicator in album, playlist, and now-playing lists.
+- Improves indexed fast-scrolling so dragging and tapping the scrollbar reaches the true first and last items reliably.
+- Automatically focuses the search field and opens the keyboard when search starts.
+
+### Fixed
+- Requests details for the exact file during phone playback instead of accidentally showing metadata for MusicBee's current track.
+- Migrates existing libraries to normalized multi-artist relationships without duplicating artist or album entries.
 
 ## [2.1.0] - 2026-08-30
 ### Added
