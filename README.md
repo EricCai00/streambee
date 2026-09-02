@@ -11,8 +11,7 @@
 <h1 align="center">StreamBee</h1>
 
 <p align="center">
-  A modern Android companion for MusicBee: control playback on your computer or stream your
-  MusicBee library directly to your phone.
+  A modern Android companion for MusicBee: stream your MusicBee library directly to your phone.
   <br />
   <a href="https://github.com/EricCai00/mbrc/releases"><strong>Download the Android app</strong></a>
   ·
@@ -22,13 +21,15 @@
 </p>
 
 StreamBee is a community fork of
-[MusicBee Remote](https://github.com/musicbeeremote/mbrc). It keeps the full remote-control
-experience and adds a phone-first playback path, richer library navigation, and a paired
+[MusicBee Remote](https://github.com/musicbeeremote/mbrc). It streams audio from your MusicBee
+library to your phone, with richer library navigation, detailed track information, on-device
+playback history and lyrics, and a paired
 [StreamBee plugin](https://github.com/EricCai00/mbrc-plugin) for MusicBee on Windows.
 
 ## Features
 
-- Control MusicBee playback, volume, output, ratings, shuffle, repeat, and the now-playing queue.
+- Stream MusicBee library and playlist files to your phone with seeking, local queues, and phone
+  playback controls.
 - Browse artists, albums, tracks, playlists, genres, and MusicBee Genre Categories.
 - See MusicBee artist pictures, album year/genre links, and read-only loved-track markers while browsing.
 - Drag an indexed scrollbar through large libraries by letter or year.
@@ -42,16 +43,18 @@ experience and adds a phone-first playback path, richer library navigation, and 
 - Load artwork progressively for the library, player, media session, and Android notification.
 - Use a privacy-focused GitHub build without Firebase, Crashlytics, or analytics.
 
-## StreamBee 2.1.0 highlights
+## StreamBee 2.2.0 highlights
 
-- Adds on-device playback history in place of the old Radio drawer entry.
-- Adds MusicBee Genre Category browsing and indexed fast scrolling for large libraries.
-- Adds synchronized lyric parsing, active-line following, and tap-to-seek.
-- Makes local playback queues scalable and safely restorable from an atomic on-disk format.
-- Records qualifying phone playback in MusicBee and optionally scrobbles it to Last.fm.
-- Streams files referenced only by MusicBee playlists, not just files already in the library.
-- Improves local-player queue actions, notification artwork, playlist playback, and stream format
-  compatibility.
+- Adds a richer two-tab track-details view with MusicBee tags, ratings, playback statistics, and
+  file properties.
+- Adds album year and genre links, loved-track markers, local artist pictures, and multi-artist
+  navigation throughout the library.
+- Improves genre browsing with stacked album-art previews, and improves indexed scrolling,
+  track-number display, and the animated playing indicator.
+- Fixes phone-playback metadata requests so the details shown match the exact streamed file, and
+  migrates existing multi-artist libraries without duplicate entries.
+- Refreshes the StreamBee branding with the orange rounded icon and matching notification
+  silhouette.
 
 ## Requirements
 
