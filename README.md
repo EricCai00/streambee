@@ -67,7 +67,7 @@ playback history and lyrics, and a paired
 
 ### Android app
 
-Download `StreamBee-vX.Y.Z.apk` from
+Download `StreamBee_X.Y.Z.apk` from
 [GitHub Releases](https://github.com/EricCai00/mbrc/releases) and open it on the Android device.
 
 Official StreamBee APKs use the package name `com.ericcai.streambee` and a dedicated release signing key.
