@@ -3,13 +3,12 @@ package com.kelsos.mbrc.feature.misc.help.compose
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -41,7 +41,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.FileProvider
 import com.kelsos.mbrc.core.ui.compose.ScreenScaffold
 import com.kelsos.mbrc.feature.misc.R
@@ -149,27 +148,152 @@ private fun HelpFeedbackContent(viewModel: FeedbackViewModel, modifier: Modifier
 @Suppress("COMPOSE_UICOMPOSABLE_INVOCATION")
 @Composable
 private fun HelpContent(modifier: Modifier = Modifier, versionName: String) {
-  LazyColumn(modifier = modifier.fillMaxSize()) {
+  LocalGuideContent(modifier = modifier, versionName = versionName)
+}
+
+/**
+ * The user guide is deliberately rendered from app code so it remains available without a
+ * connection to the documentation site. Keep this content aligned with the 2.2.0 feature set.
+ */
+@Composable
+private fun LocalGuideContent(modifier: Modifier = Modifier, versionName: String) {
+  LazyColumn(
+    modifier = modifier.fillMaxSize(),
+    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 20.dp),
+    verticalArrangement = Arrangement.spacedBy(20.dp)
+  ) {
     item {
-      AndroidView(
-        factory = { context ->
-          WebView(context).apply {
-            webViewClient = object : WebViewClient() {
-              override fun shouldOverrideUrlLoading(
-                view: WebView?,
-                request: WebResourceRequest?
-              ): Boolean {
-                val url = request?.url.toString()
-                view?.loadUrl(url)
-                return false
-              }
-            }
-            loadUrl("https://mbrc.kelsos.net/help?version=$versionName")
-          }
-        },
-        modifier = Modifier.fillMaxSize()
-      )
+      Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+          modifier = Modifier.padding(20.dp),
+          verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+          Text(
+            text = "StreamBee User Guide",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface
+          )
+          Text(
+            text = "Offline guide for StreamBee 2.2.0",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+          )
+          Text(
+            text = "Installed version: $versionName",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+          )
+          Text(
+            text = "Stream your MusicBee library and playlists to your Android phone. MusicBee and the StreamBee Plugin provide the library and audio stream; playback, queue, lyrics, and history live on the phone.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
+          )
+        }
+      }
     }
+
+    item {
+      GuideSection(title = "1. Get connected") {
+        GuideParagraph("Install the StreamBee Android app and the matching StreamBee Plugin in MusicBee on Windows.")
+        GuideBullet("Keep the phone and PC on the same trusted Wi-Fi or wired LAN. Avoid guest networks and client isolation.")
+        GuideBullet("Open Connections, tap Scan, and select the discovered MusicBee computer. If discovery fails, use Add and enter the address and command port shown by the plugin.")
+        GuideBullet("In MusicBee, check Edit → Preferences → Plugins to make sure StreamBee Plugin is enabled. Its settings are also available from Tools → StreamBee.")
+        GuideBullet("After connecting, open Library and use Sync library. The first sync can take a while for a large collection.")
+      }
+    }
+
+    item {
+      GuideSection(title = "2. Play music on your phone") {
+        GuideParagraph("Tap a track in Library, Playlists, or History to start phone playback. The Play on this device action makes the destination explicit.")
+        GuideBullet("Play Now, Queue Next, and Queue Last build the phone's local queue. Previous and Next continue through the selected album, artist, playlist, or collection.")
+        GuideBullet("Use Previous, Play/Pause, Next, the progress slider, volume, Shuffle, and Repeat from the player. Long-press Play/Pause to stop.")
+        GuideBullet("File streams are seekable. An unbounded stream shows a wave indicator instead of a seek bar.")
+        GuideBullet("The mini control, Android media notification, and home-screen widget keep the phone player available outside the main screen.")
+      }
+    }
+
+    item {
+      GuideSection(title = "3. Browse the library") {
+        GuideParagraph("Library contains Genres, Artists, Albums, and Tracks. The Genres tab starts with MusicBee Genre Categories; open a category to see its genres.")
+        GuideBullet("Drill down from genre to artist or album, artist to album, and album to tracks. Album year and genre are clickable links.")
+        GuideBullet("Multiple-artist tags can open each artist separately. Artist rows use MusicBee artist pictures when available and a standard icon otherwise.")
+        GuideBullet("Genre and Genre Category rows can show stacked album-art previews. Albums support list and cover-grid views.")
+        GuideBullet("Use search and sorting on each list. Enable Indexed library scrollbar in Settings to jump through large lists by first letter or year.")
+        GuideBullet("Track overflow actions include Play Now, Play on this device, Queue Next, Queue Last, and artist or collection playback.")
+      }
+    }
+
+    item {
+      GuideSection(title = "4. Queue, playlists, and history") {
+        GuideParagraph("Queue is an on-device queue, separate from whatever MusicBee is playing on the computer.")
+        GuideBullet("Search the queue, tap a row to play it, swipe to remove it, or drag its handle to reorder it. The current track has an accent and playing indicator.")
+        GuideBullet("Playlists preserve MusicBee folders. A playlist can include local files that are not in the main library; those files can still be streamed while authorized by the plugin.")
+        GuideBullet("History stores qualifying phone listens. A track counts after at least half its duration, up to four minutes, matching MusicBee's default play-count rule.")
+        GuideBullet("Tap a history entry to play it again. Completed phone playback can update MusicBee Play Count and Last Played; optional Last.fm scrobbling is controlled from the player menu.")
+      }
+    }
+
+    item {
+      GuideSection(title = "5. Details, ratings, and lyrics") {
+        GuideParagraph("Open the player menu and choose Track Details. Tags shows MusicBee metadata; Properties shows the exact streamed file's format, size, duration, dates, play counts, and location.")
+        GuideBullet("Rate tracks from zero to five stars, enable half-star ratings in Settings, use a bomb rating, or clear the rating. Show rating on player controls whether the rating appears below the track.")
+        GuideBullet("The player heart controls Last.fm Love/Ban. Hearts beside library and playlist rows are MusicBee loved markers and are read-only there.")
+        GuideBullet("Open lyrics from the player. Plain lyrics and synchronized LRC lines are supported; tapping a synchronized line seeks the phone player.")
+      }
+    }
+
+    item {
+      GuideSection(title = "6. Settings and troubleshooting") {
+        GuideBullet("Appearance offers Dark, Light, and System themes. Incoming call action can do nothing, pause, reduce volume, or stop playback.")
+        GuideBullet("Library settings control the default track action, indexed scrollbar, and play buttons in album lists and on album covers. Rating settings control half-stars and the player rating.")
+        GuideBullet("Plugin Update Check looks for a newer Windows plugin. Enable Debug Logging only while investigating a problem, then turn it off.")
+        GuideBullet("The plugin command service uses its configured port (commonly 3000); the audio service uses the next port (commonly 3001). Allow both on the private Windows Firewall network.")
+        GuideBullet("If a connection fails, confirm MusicBee is open, StreamBee Plugin is enabled and listening, both devices share the same LAN, and the plugin's allowed-client filter includes the phone.")
+        GuideBullet("Use the Feedback tab to send a report to caiyi1995@gmail.com. The system email app opens with device information and logs as optional attachments.")
+      }
+    }
+  }
+}
+
+@Composable
+private fun GuideSection(title: String, content: @Composable ColumnScope.() -> Unit) {
+  Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Text(
+      text = title,
+      style = MaterialTheme.typography.titleLarge,
+      color = MaterialTheme.colorScheme.primary
+    )
+    content()
+  }
+}
+
+@Composable
+private fun GuideParagraph(text: String) {
+  Text(
+    text = text,
+    style = MaterialTheme.typography.bodyLarge,
+    color = MaterialTheme.colorScheme.onSurface
+  )
+}
+
+@Composable
+private fun GuideBullet(text: String) {
+  Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.spacedBy(8.dp),
+    verticalAlignment = Alignment.Top
+  ) {
+    Text(
+      text = "•",
+      style = MaterialTheme.typography.bodyLarge,
+      color = MaterialTheme.colorScheme.primary
+    )
+    Text(
+      text = text,
+      style = MaterialTheme.typography.bodyMedium,
+      color = MaterialTheme.colorScheme.onSurface,
+      modifier = Modifier.weight(1f)
+    )
   }
 }
 
@@ -316,7 +440,7 @@ private fun FeedbackContent(modifier: Modifier = Modifier, viewModel: FeedbackVi
  * @param selectedTabIndex 0 for Help tab, 1 for Feedback tab
  * @param feedbackState State for the feedback form
  * @param actions Actions for the feedback form
- * @param showWebView Whether to show the actual WebView (false for previews)
+ * @param showWebView Whether to show the bundled guide (false for previews)
  */
 @Composable
 fun HelpFeedbackScreenContent(
@@ -364,7 +488,8 @@ fun HelpFeedbackScreenContent(
 }
 
 /**
- * Placeholder for help content in previews (WebView can't be rendered in previews).
+ * Placeholder for help content in previews. The actual bundled guide is rendered by the screen
+ * itself; keeping a lightweight placeholder avoids loading the full guide into screenshot fixtures.
  */
 @Composable
 private fun HelpContentPlaceholder(modifier: Modifier = Modifier) {
@@ -480,7 +605,7 @@ private fun openFeedbackChooser(
   }
 
   val emailIntent = Intent(Intent.ACTION_SEND).apply {
-    putExtra(Intent.EXTRA_EMAIL, arrayOf("kelsos@kelsos.net"))
+    putExtra(Intent.EXTRA_EMAIL, arrayOf("caiyi1995@gmail.com"))
     type = "message/rfc822"
     putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.feedback_subject))
     putExtra(Intent.EXTRA_TEXT, fullFeedbackText)
