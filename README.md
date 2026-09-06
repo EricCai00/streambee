@@ -31,7 +31,7 @@ playback history and lyrics, and a paired
 - Stream MusicBee library and playlist files to your phone with seeking, local queues, and phone
   playback controls.
 - Browse artists, albums, tracks, playlists, genres, and MusicBee Genre Categories.
-- See MusicBee artist pictures, album year/genre links, and read-only loved-track markers while browsing.
+- See MusicBee artist pictures, album year/genre links, and synchronized loved-track markers while browsing.
 - Drag an indexed scrollbar through large libraries by letter or year.
 - Stream files from the MusicBee library and playlists to Android with seeking and Media3 playback.
 - Start an album, artist, playlist, or the full library from any selected track.
@@ -43,7 +43,10 @@ playback history and lyrics, and a paired
 - Load artwork progressively for the library, player, media session, and Android notification.
 - Use a privacy-focused GitHub build without Firebase, Crashlytics, or analytics.
 
-## StreamBee 2.2.0 highlights
+## StreamBee 2.3.0 highlights
+
+- Adds an Add to playlist action to track menus and playback controls, synchronized with MusicBee.
+- Makes the player loved-track heart interactive and synchronizes changes with MusicBee.
 
 - Adds a richer two-tab track-details view with MusicBee tags, ratings, playback statistics, and
   file properties.
@@ -86,8 +89,8 @@ configured by the plugin. Network discovery can also find compatible plugin inst
 
 ## On-device playback
 
-Open a track's overflow menu and choose **Play on this device**. StreamBee queues the surrounding
-album, artist, playlist, or library context and asks the plugin to serve the original file over HTTP.
+Tap a track in the library or a playlist. StreamBee queues the surrounding album, playlist, or
+library context and asks the plugin to serve the original file over HTTP.
 The command service uses the configured MusicBee Remote port; the audio service uses the next port
 (for example, command port `3000` and audio port `3001`). Both ports must be reachable from the
 phone.

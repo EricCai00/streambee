@@ -38,6 +38,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.kelsos.mbrc.core.ui.R
@@ -47,6 +48,7 @@ import com.kelsos.mbrc.core.ui.R
  *
  * @param state The current top bar state
  * @param navigationIcon The type of navigation icon to display
+ * @param titleFontWeight Optional font weight for the top-bar title
  * @param actionItems Action icon buttons shown before the overflow menu
  * @param menuItems Menu items for the overflow menu
  * @param isTransparent Whether the top bar should be transparent
@@ -63,12 +65,14 @@ fun ScaffoldTopBar(
   isTransparent: Boolean,
   defaultTitle: String,
   onOpenDrawer: () -> Unit,
-  onOverflowClick: (() -> Unit)? = null
+  onOverflowClick: (() -> Unit)? = null,
+  titleFontWeight: FontWeight? = null
 ) {
   when (state) {
     TopBarState.Default -> DefaultTopBar(
       title = defaultTitle,
       navigationIcon = navigationIcon,
+      titleFontWeight = titleFontWeight,
       actionItems = actionItems,
       menuItems = menuItems,
       isTransparent = isTransparent,
@@ -83,6 +87,7 @@ fun ScaffoldTopBar(
     is TopBarState.WithTitle -> DefaultTopBar(
       title = state.title,
       navigationIcon = navigationIcon,
+      titleFontWeight = titleFontWeight,
       actionItems = actionItems,
       menuItems = menuItems,
       isTransparent = isTransparent,
@@ -116,6 +121,7 @@ fun ScaffoldTopBar(
 private fun DefaultTopBar(
   title: String,
   navigationIcon: NavigationIconType,
+  titleFontWeight: FontWeight?,
   actionItems: List<ActionItem>,
   menuItems: List<MenuItem>,
   isTransparent: Boolean,
@@ -126,7 +132,8 @@ private fun DefaultTopBar(
     title = {
       Text(
         text = title,
-        style = MaterialTheme.typography.titleLarge
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = titleFontWeight
       )
     },
     navigationIcon = {

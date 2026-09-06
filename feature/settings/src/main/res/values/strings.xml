@@ -6,6 +6,14 @@
     <string name="setting_album_list_play_button_summary">Show a play button instead of the three-dot menu. Long-press an album for more actions.</string>
     <string name="setting_album_grid_play_button">Play button on album covers</string>
     <string name="setting_album_grid_play_button_summary">Show a play button on albums in the cover grid.</string>
+    <string name="setting_library_views">Library views</string>
+    <string name="setting_library_views_description">Choose the tabs shown in Library. At least one view must remain enabled.</string>
+    <string name="library_view_genres">Genres</string>
+    <string name="library_view_artists">Artists</string>
+    <string name="library_view_albums">Albums</string>
+    <string name="library_view_tracks">Tracks</string>
+    <string name="library_view_years">Years</string>
+    <string name="library_view_languages">Languages</string>
   <!-- Navigation -->
   <string name="nav_connections">Connections</string>
 
@@ -17,6 +25,7 @@
 
   <!-- Common -->
   <string name="action_learn_more">Learn more</string>
+  <string name="action_done">Done</string>
   <string name="common_add">Add</string>
   <string name="common_edit">Edit</string>
   <string name="common_library">Library</string>
@@ -65,6 +74,8 @@
   <string name="settings_revision_title">Revision</string>
   <string name="settings_title_license">License</string>
   <string name="settings_version_number">v%1$s</string>
+  <string name="settings_whats_new">What\'s new</string>
+  <string name="settings_whats_new_summary">View the latest StreamBee updates</string>
 
   <!-- Rating settings -->
   <string name="settings_rating">Rating</string>

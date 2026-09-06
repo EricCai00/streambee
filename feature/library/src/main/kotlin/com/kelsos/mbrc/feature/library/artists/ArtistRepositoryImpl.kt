@@ -11,6 +11,7 @@ import com.kelsos.mbrc.core.data.library.artist.ArtistRepository
 import com.kelsos.mbrc.core.data.paged
 import com.kelsos.mbrc.core.networking.api.LibraryApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.withContext
 
@@ -32,6 +33,12 @@ class ArtistRepositoryImpl(
     }) {
       it.toArtist()
     }
+
+  override fun getArtistByGenreList(genreId: Long, sortOrder: SortOrder): Flow<List<Artist>> =
+    when (sortOrder) {
+      SortOrder.ASC -> dao.getArtistByGenreAscList(genreId)
+      SortOrder.DESC -> dao.getArtistByGenreDescList(genreId)
+    }.map { artists -> artists.map { it.toArtist() } }
 
   override fun getAll(): Flow<PagingData<Artist>> = getAll(SortOrder.ASC)
 
@@ -79,6 +86,12 @@ class ArtistRepositoryImpl(
     }
   }, enablePlaceholders = true) { it.toArtist() }
 
+  override fun getAlbumArtistsOnlyList(sortOrder: SortOrder): Flow<List<Artist>> =
+    when (sortOrder) {
+      SortOrder.ASC -> dao.getAlbumArtistsAscList()
+      SortOrder.DESC -> dao.getAlbumArtistsDescList()
+    }.map { artists -> artists.map { it.toArtist() } }
+
   override fun searchAlbumArtists(term: String, sortOrder: SortOrder): Flow<PagingData<Artist>> =
     paged({
       when (sortOrder) {
@@ -86,6 +99,12 @@ class ArtistRepositoryImpl(
         SortOrder.DESC -> dao.searchAlbumArtistsDesc(term)
       }
     }, enablePlaceholders = true) { it.toArtist() }
+
+  override fun searchAlbumArtistsList(term: String, sortOrder: SortOrder): Flow<List<Artist>> =
+    when (sortOrder) {
+      SortOrder.ASC -> dao.searchAlbumArtistsAscList(term)
+      SortOrder.DESC -> dao.searchAlbumArtistsDescList(term)
+    }.map { artists -> artists.map { it.toArtist() } }
 
   override suspend fun getById(id: Long): Artist? {
     return withContext(dispatchers.database) {

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="menu_play_on_device">Play on this device</string>
   <!-- Actions -->
   <string name="action_refresh">Refresh</string>
   <string name="action_search_clear">Clear search</string>
@@ -14,6 +13,10 @@
   <string name="common_empty_no_tracks">No tracks found</string>
   <string name="genres_list_empty">No genres found</string>
   <string name="genre_categories_list_empty">No genre categories found</string>
+  <string name="decades_list_empty">No decades found</string>
+  <string name="years_list_empty">No years found</string>
+  <string name="languages_list_empty">No languages found</string>
+  <string name="language_categories_list_empty">No genre categories found for this language</string>
 
   <!-- Library -->
   <string name="common_library">Library</string>
@@ -34,12 +37,12 @@
   <string name="media__genres">Genres</string>
   <string name="media__playlists">Playlists</string>
   <string name="media__tracks">Tracks</string>
+  <string name="media__years">Years</string>
+  <string name="media__languages">Languages</string>
 
   <!-- Menu -->
   <string name="menu_overflow_description">More options</string>
   <string name="menu_play">Play Now</string>
-  <string name="menu_play_artist">Play Now (Artist)</string>
-  <string name="menu_play_queue_all">Play Now (Queue All)</string>
   <string name="menu_queue_last">Queue Last</string>
   <string name="menu_queue_next">Queue Next</string>
   <string name="menu_play_all">Play All</string>
@@ -70,6 +73,8 @@
   <string name="unknown_title">Unknown title</string>
   <string name="select_artist_title">Select artist</string>
   <string name="unknown_genre_category">Uncategorized</string>
+  <string name="unknown_year">Unknown year</string>
+  <string name="unknown_language">Unknown language</string>
   <string name="track_loved_description">Loved track</string>
 
   <!-- App playback history -->

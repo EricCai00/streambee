@@ -10,7 +10,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.paging.compose.collectAsLazyPagingItems
 import com.kelsos.mbrc.core.common.settings.ArtistSortField
 import com.kelsos.mbrc.core.common.settings.ArtistSortPreference
 import com.kelsos.mbrc.core.common.settings.SortOrder
@@ -25,6 +24,7 @@ import com.kelsos.mbrc.feature.library.artists.BrowseArtistViewModel
 import com.kelsos.mbrc.feature.library.compose.SortBottomSheet
 import com.kelsos.mbrc.feature.library.compose.SortOption
 import com.kelsos.mbrc.feature.library.compose.components.ArtistListItem
+import com.kelsos.mbrc.feature.library.compose.components.rememberDefaultArtistPictureConnection
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import org.koin.androidx.compose.koinViewModel
@@ -45,11 +45,12 @@ fun ArtistsTab(
   modifier: Modifier = Modifier,
   viewModel: BrowseArtistViewModel = koinViewModel()
 ) {
-  val artists = viewModel.artists.collectAsLazyPagingItems()
+  val artists by viewModel.artists.collectAsStateWithLifecycle()
   val showSync by viewModel.showSync.collectAsStateWithLifecycle(initialValue = true)
   val sortPreference by viewModel.sortPreference.collectAsStateWithLifecycle(
     initialValue = SortPreference(ArtistSortField.NAME, SortOrder.ASC)
   )
+  val artistPictureConnection = rememberDefaultArtistPictureConnection()
 
   // Handle navigation events
   LaunchedEffect(Unit) {
@@ -70,8 +71,9 @@ fun ArtistsTab(
     }.filterIsInstance<Outcome<Int>>()
   }
 
-  LibraryBrowseTab(
-    items = artists,
+  LibraryBrowseListTab(
+    items = artists.orEmpty(),
+    isLoading = artists == null,
     queueResults = queueResults,
     snackbarHostState = snackbarHostState,
     syncState = SyncState(
@@ -93,7 +95,8 @@ fun ArtistsTab(
     ArtistListItem(
       artist = artist,
       onClick = { viewModel.queue(Queue.Default, artist) },
-      onQueue = { queue -> viewModel.queue(queue, artist) }
+      onQueue = { queue -> viewModel.queue(queue, artist) },
+      artistPictureConnection = artistPictureConnection
     )
   }
 

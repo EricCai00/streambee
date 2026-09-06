@@ -27,13 +27,15 @@ val dataModule = module {
         MIGRATION_4_5,
         MIGRATION_5_6,
         MIGRATION_6_7,
-        MIGRATION_7_8
+        MIGRATION_7_8,
+        MIGRATION_8_9
       )
       .build()
   }
 
   // DAOs
   single { get<Database>().genreDao() }
+  single { get<Database>().libraryGroupingDao() }
   single { get<Database>().artistDao() }
   single { get<Database>().albumDao() }
   single { get<Database>().trackDao() }

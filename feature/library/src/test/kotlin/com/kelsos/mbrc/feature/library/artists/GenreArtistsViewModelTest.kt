@@ -60,6 +60,7 @@ class GenreArtistsViewModelTest : KoinTest {
 
     // Setup default mocks
     every { repository.getArtistByGenre(any(), any()) } returns flowOf(PagingData.empty())
+    every { repository.getArtistByGenreList(any(), any()) } returns flowOf(emptyList())
     every { librarySettings.libraryTrackDefaultActionFlow } returns flowOf(TrackAction.PlayNow)
     every { librarySettings.artistSortPreferenceFlow } returns flowOf(
       ArtistSortPreference(ArtistSortField.NAME, SortOrder.ASC)

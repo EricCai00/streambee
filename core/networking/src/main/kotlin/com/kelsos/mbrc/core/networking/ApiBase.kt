@@ -25,9 +25,12 @@ class ApiBase(
   ): T where T : Any {
     val type = Types.newParameterizedType(GenericSocketMessage::class.java, kClazz.java)
     val connection = apiRequestManager.openConnection()
-    val response = apiRequestManager.request(connection, SocketMessage.create(request, payload))
-    connection.close()
-    return adapter.objectify<GenericSocketMessage<T>>(response, type).data
+    try {
+      val response = apiRequestManager.request(connection, SocketMessage.create(request, payload))
+      return adapter.objectify<GenericSocketMessage<T>>(response, type).data
+    } finally {
+      connection.close()
+    }
   }
 
   fun <T : Any> getAllPages(
@@ -42,31 +45,34 @@ class ApiBase(
       val start = now()
       val connection = apiRequestManager.openConnection()
 
-      for (currentPage in 0..Int.MAX_VALUE) {
-        val pageStart = now()
-        val limit = LIMIT
-        val offset = currentPage * limit
-        val range = getPageRange(offset, limit)
-        Timber.v("fetching $request offset $offset [$limit]")
-        val message = SocketMessage.create(request, range ?: "")
-        val response = apiRequestManager.request(connection, message)
-        val socketMessage =
-          adapter.objectify<GenericSocketMessage<Page<T>>>(
-            response,
-            type
-          )
+      try {
+        for (currentPage in 0..Int.MAX_VALUE) {
+          val pageStart = now()
+          val limit = LIMIT
+          val offset = currentPage * limit
+          val range = getPageRange(offset, limit)
+          Timber.v("fetching $request offset $offset [$limit]")
+          val message = SocketMessage.create(request, range ?: "")
+          val response = apiRequestManager.request(connection, message)
+          val socketMessage =
+            adapter.objectify<GenericSocketMessage<Page<T>>>(
+              response,
+              type
+            )
 
-        Timber.v("duration ${now() - pageStart} ms")
-        val page = socketMessage.data
+          Timber.v("duration ${now() - pageStart} ms")
+          val page = socketMessage.data
 
-        progress?.invoke(page.offset + page.data.size, page.total)
-        emit(page.data)
-        if (page.offset + page.limit > page.total) {
-          break
+          progress?.invoke(page.offset + page.data.size, page.total)
+          emit(page.data)
+          if (page.offset + page.limit > page.total) {
+            break
+          }
         }
+      } finally {
+        connection.close()
+        Timber.v("total duration ${System.currentTimeMillis() - start} ms")
       }
-      connection.close()
-      Timber.v("total duration ${System.currentTimeMillis() - start} ms")
     }
   }
 
@@ -81,23 +87,26 @@ class ApiBase(
     return flow {
       val start = now()
       val connection = apiRequestManager.openConnection()
-      var current = 0
-      for (item in payload) {
-        progress?.invoke(++current, payload.size)
-        val entryStart = now()
-        val message = SocketMessage.create(request, item)
-        val response = apiRequestManager.request(connection, message)
-        val socketMessage =
-          adapter.objectify<GenericSocketMessage<T>>(
-            response,
-            type
-          )
+      try {
+        var current = 0
+        for (item in payload) {
+          progress?.invoke(++current, payload.size)
+          val entryStart = now()
+          val message = SocketMessage.create(request, item)
+          val response = apiRequestManager.request(connection, message)
+          val socketMessage =
+            adapter.objectify<GenericSocketMessage<T>>(
+              response,
+              type
+            )
 
-        Timber.v("duration ${now() - entryStart} ms")
-        emit(ResponseWithPayload(item, socketMessage.data))
+          Timber.v("duration ${now() - entryStart} ms")
+          emit(ResponseWithPayload(item, socketMessage.data))
+        }
+      } finally {
+        connection.close()
+        Timber.v("duration ${System.currentTimeMillis() - start} ms")
       }
-      connection.close()
-      Timber.v("duration ${System.currentTimeMillis() - start} ms")
     }
   }
 

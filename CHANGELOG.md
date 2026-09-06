@@ -3,6 +3,21 @@ Changelog
 
 ## [Unreleased]
 
+### Added
+- Adds an optional Year library view with decade, year, and album drill-down navigation.
+- Adds an optional Language library view with language, genre-category, and album drill-down navigation, backed by MusicBee Language metadata.
+- Lets users choose which of the six Library views are visible, while preserving Genres, Artists, Albums, and Tracks as the default selection.
+
+### Changed
+- Simplifies track overflow menus by removing redundant play actions, adding album, artist, and genre navigation, and using text-only actions in the Queue.
+
+## [2.3.0] - 2026-09-03
+### Added
+- Adds an Add to playlist action to track menus and playback controls, with the selected playlist synchronized back to MusicBee.
+
+### Changed
+- Makes the player loved-track heart interactive and synchronizes changes with MusicBee.
+
 ## [2.2.0] - 2026-09-02
 ### Added
 - Adds a two-tab track-details view with richer MusicBee tags, ratings, playback statistics, and file properties for both remote and phone playback.

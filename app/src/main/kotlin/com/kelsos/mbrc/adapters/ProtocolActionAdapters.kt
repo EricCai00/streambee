@@ -41,7 +41,7 @@ import timber.log.Timber
  */
 class PlayerStateHandlerImpl(
   private val appState: AppStatePublisher,
-  private val localPlaybackController: LocalPlaybackController? = null
+  private val localPlaybackController: LocalPlaybackController
 ) : PlayerStateHandler {
   override val playerStatus: Flow<PlayerStatusModel> = appState.playerStatus
   override val playingTrack: Flow<TrackInfo> = appState.playingTrack
@@ -49,33 +49,33 @@ class PlayerStateHandlerImpl(
   override val playingTrackDetails: Flow<TrackDetails> = appState.playingTrackDetails
 
   override fun updatePlayerStatus(status: PlayerStatusModel) {
-    if (localPlaybackController?.hasLocalPlayback != true) appState.updatePlayerStatus(status)
+    if (!localPlaybackController.hasLocalPlayback) appState.updatePlayerStatus(status)
   }
 
   override fun updatePlayingTrack(track: TrackInfo) {
-    if (localPlaybackController?.hasLocalPlayback != true) {
+    if (!localPlaybackController.hasLocalPlayback) {
       appState.updatePlayingTrack(track.toPlayingTrack())
     }
   }
 
   override fun updateTrackRating(rating: TrackRating) {
-    if (localPlaybackController?.hasLocalPlayback != true) {
+    if (!localPlaybackController.hasLocalPlayback) {
       appState.updateTrackRating(rating)
     }
   }
 
   override fun updateTrackDetails(details: TrackDetails) {
-    if (localPlaybackController?.hasLocalPlayback != true) {
+    if (!localPlaybackController.hasLocalPlayback) {
       appState.updateTrackDetails(details)
     }
   }
 
   override fun updateLyrics(lyrics: List<String>) {
-    if (localPlaybackController?.hasLocalPlayback != true) appState.updateLyrics(lyrics)
+    if (!localPlaybackController.hasLocalPlayback) appState.updateLyrics(lyrics)
   }
 
   override fun updatePlayingPosition(position: PlayingPosition) {
-    if (localPlaybackController?.hasLocalPlayback != true) appState.updatePlayingPosition(position)
+    if (!localPlaybackController.hasLocalPlayback) appState.updatePlayingPosition(position)
   }
 }
 

@@ -9,7 +9,7 @@
   <string name="main_button_stop_description">When long-pressed it stops playback.</string>
   <string name="main_button_repeat_description">When pressed it changes the repeat (all/none).</string>
   <string name="main_button_shuffle_description">When pressed it changes the shuffle mode (on/off).</string>
-  <string name="player_playback_modes">Shuffle and repeat</string>
+  <string name="player_playback_modes">Change playback mode</string>
   <string name="player_show_queue">Show queue</string>
   <string name="menu_overflow_description">More options</string>
 
@@ -62,6 +62,10 @@
   <string name="player_go_to_genre">Go to Genre</string>
   <string name="player_mode_repeat">Repeat</string>
   <string name="player_mode_shuffle">Shuffle</string>
+  <string name="player_mode_sequential">Sequential playback (no repeat)</string>
+  <string name="player_mode_repeat_all">Repeat all</string>
+  <string name="player_mode_repeat_one">Repeat current track</string>
+  <string name="player_mode_shuffle_no_repeat">Shuffle (no repeat)</string>
   <string name="player_lfm_ban">Ban on Last.fm</string>
   <string name="player_lfm_love">Love on Last.fm</string>
   <string name="player_scrobbling">Scrobbling</string>

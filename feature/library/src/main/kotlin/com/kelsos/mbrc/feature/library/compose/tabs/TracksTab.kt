@@ -16,6 +16,8 @@ import com.kelsos.mbrc.core.common.settings.TrackSortField
 import com.kelsos.mbrc.core.common.settings.TrackSortPreference
 import com.kelsos.mbrc.core.common.utilities.AppError
 import com.kelsos.mbrc.core.common.utilities.Outcome
+import com.kelsos.mbrc.core.data.library.album.Album
+import com.kelsos.mbrc.core.data.library.artist.Artist
 import com.kelsos.mbrc.core.queue.Queue
 import com.kelsos.mbrc.feature.library.R
 import com.kelsos.mbrc.feature.library.compose.SortBottomSheet
@@ -40,6 +42,9 @@ fun TracksTab(
   isSyncing: Boolean,
   showSortSheet: Boolean,
   indexedScrollbar: Boolean,
+  onNavigateToAlbumTracks: (Album) -> Unit,
+  onNavigateToArtistAlbums: (Artist) -> Unit,
+  onNavigateToGenre: (String) -> Unit,
   onDismissSortSheet: () -> Unit,
   onSync: () -> Unit,
   modifier: Modifier = Modifier,
@@ -96,7 +101,16 @@ fun TracksTab(
     TrackListItem(
       track = track,
       onClick = { viewModel.queue(Queue.Default, track) },
-      onQueue = { queue -> viewModel.queue(queue, track) }
+      onQueue = { queue -> viewModel.queue(queue, track) },
+      onNavigateToAlbum = { album, artist ->
+        onNavigateToAlbumTracks(
+          Album(id = 0, artist = artist, album = album, cover = null)
+        )
+      },
+      onNavigateToArtist = { artist ->
+        onNavigateToArtistAlbums(Artist(artist = artist, id = 0))
+      },
+      onNavigateToGenre = onNavigateToGenre
     )
   }
 

@@ -397,6 +397,150 @@ fun <T : Any> SwipeRefreshScreen(
 }
 
 /**
+ * Displays a complete in-memory list. Use this for small collections where every item should be
+ * available to the scrollbar immediately; expensive artwork can still be loaded by each row.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun <T : Any> SwipeRefreshListScreen(
+  items: List<T>,
+  isLoading: Boolean,
+  isRefreshing: Boolean,
+  onRefresh: () -> Unit,
+  modifier: Modifier = Modifier,
+  emptyMessage: String = stringResource(R.string.no_data),
+  emptyIcon: ImageVector? = null,
+  key: ((T) -> Any)? = null,
+  scrollbarStyle: PagingScrollbarStyle? = null,
+  indexLabel: ((T) -> String)? = null,
+  itemContent: @Composable (T) -> Unit
+) {
+  PullToRefreshBox(
+    isRefreshing = isRefreshing,
+    onRefresh = onRefresh,
+    modifier = modifier
+  ) {
+    when {
+      isLoading -> LoadingScreen()
+
+      items.isEmpty() -> {
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+          EmptyScreen(
+            message = emptyMessage,
+            icon = emptyIcon,
+            modifier = Modifier
+              .fillMaxWidth()
+              .heightIn(min = maxHeight)
+              .verticalScroll(rememberScrollState())
+          )
+        }
+      }
+
+      else -> StaticListContent(
+        items = items,
+        modifier = Modifier.fillMaxSize(),
+        key = key,
+        scrollbarStyle = scrollbarStyle,
+        indexLabel = indexLabel,
+        itemContent = itemContent
+      )
+    }
+  }
+}
+
+/** Displays a complete in-memory list without pull-to-refresh. */
+@Composable
+fun <T : Any> StaticListScreen(
+  items: List<T>,
+  isLoading: Boolean,
+  modifier: Modifier = Modifier,
+  emptyMessage: String = stringResource(R.string.no_data),
+  emptyIcon: ImageVector? = null,
+  key: ((T) -> Any)? = null,
+  scrollbarStyle: PagingScrollbarStyle? = null,
+  indexLabel: ((T) -> String)? = null,
+  itemContent: @Composable (T) -> Unit
+) {
+  when {
+    isLoading -> LoadingScreen(modifier = modifier)
+
+    items.isEmpty() -> {
+      EmptyScreen(
+        message = emptyMessage,
+        icon = emptyIcon,
+        modifier = modifier
+      )
+    }
+
+    else -> StaticListContent(
+      items = items,
+      modifier = modifier,
+      key = key,
+      scrollbarStyle = scrollbarStyle,
+      indexLabel = indexLabel,
+      itemContent = itemContent
+    )
+  }
+}
+
+@Composable
+private fun <T : Any> StaticListContent(
+  items: List<T>,
+  modifier: Modifier,
+  key: ((T) -> Any)?,
+  scrollbarStyle: PagingScrollbarStyle?,
+  indexLabel: ((T) -> String)?,
+  itemContent: @Composable (T) -> Unit
+) {
+  val listState = rememberLazyListState()
+  val scope = rememberCoroutineScope()
+  val scrollbarState = rememberPagingScrollbarState()
+
+  Box(
+    modifier = modifier
+      .fillMaxSize()
+      .pagingScrollbarDragGesture(
+        enabled = scrollbarStyle != null,
+        totalItems = items.size,
+        visibleItemsCount = listState.layoutInfo.visibleItemsInfo.size,
+        state = scrollbarState,
+        onIndexSelected = { index ->
+          scope.launch { listState.scrollToItem(index) }
+        }
+      )
+  ) {
+    LazyColumn(
+      state = listState,
+      modifier = Modifier.fillMaxSize()
+    ) {
+      items(
+        count = items.size,
+        key = key?.let { keyFunc ->
+          { index -> keyFunc(items[index]) }
+        },
+        contentType = { "list_item" }
+      ) { index ->
+        itemContent(items[index])
+      }
+    }
+
+    if (scrollbarStyle != null) {
+      PagingScrollbar(
+        totalItems = items.size,
+        firstVisibleItemIndex = listState.firstVisibleItemIndex,
+        visibleItemsCount = listState.layoutInfo.visibleItemsInfo.size,
+        style = scrollbarStyle,
+        state = scrollbarState,
+        labelForIndex = { index ->
+          items.getOrNull(index)?.let { item -> indexLabel?.invoke(item) }
+        },
+        modifier = Modifier.align(Alignment.CenterEnd)
+      )
+    }
+  }
+}
+
+/**
  * A simple paging list screen without pull-to-refresh functionality.
  * Use this for drilldown screens where refresh is not needed.
  */

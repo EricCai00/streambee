@@ -28,11 +28,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
-import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -77,12 +75,15 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kelsos.mbrc.core.common.state.ConnectionStatus
 import com.kelsos.mbrc.core.data.nowplaying.NowPlaying
+import com.kelsos.mbrc.core.ui.R as CoreUiR
 import com.kelsos.mbrc.core.ui.compose.ActionItem
+import com.kelsos.mbrc.core.ui.compose.AddToPlaylistDialog
 import com.kelsos.mbrc.core.ui.compose.DragDropState
 import com.kelsos.mbrc.core.ui.compose.DynamicScreenScaffold
 import com.kelsos.mbrc.core.ui.compose.EmptyScreen
 import com.kelsos.mbrc.core.ui.compose.LoadingScreen
 import com.kelsos.mbrc.core.ui.compose.TopBarState
+import com.kelsos.mbrc.core.ui.compose.TrackNavigationMenuItems
 import com.kelsos.mbrc.core.ui.compose.TrackPositionIndicator
 import com.kelsos.mbrc.core.ui.compose.displayedSourceIndex
 import com.kelsos.mbrc.core.ui.compose.dragHandle
@@ -100,6 +101,7 @@ fun NowPlayingScreen(
   onNavigateToPlayer: () -> Unit,
   onNavigateToAlbum: ((path: String) -> Unit)?,
   onNavigateToArtist: (artist: String) -> Unit,
+  onNavigateToGenre: ((path: String) -> Unit)?,
   snackbarHostState: SnackbarHostState,
   viewModel: NowPlayingViewModel = koinViewModel()
 ) {
@@ -189,6 +191,7 @@ fun NowPlayingScreen(
         onDragEnd = { viewModel.actions.move() },
         onGoToAlbum = onNavigateToAlbum,
         onGoToArtist = onNavigateToArtist,
+        onGoToGenre = onNavigateToGenre,
         modifier = Modifier.weight(1f)
       )
 
@@ -288,6 +291,7 @@ internal fun NowPlayingContent(
   onDragEnd: () -> Unit,
   onGoToAlbum: ((path: String) -> Unit)?,
   onGoToArtist: (artist: String) -> Unit,
+  onGoToGenre: ((path: String) -> Unit)? = null,
   modifier: Modifier = Modifier,
   lazyListState: LazyListState = rememberLazyListState()
 ) {
@@ -340,6 +344,7 @@ internal fun NowPlayingContent(
             onTrackRemove = onTrackRemove,
             onGoToAlbum = onGoToAlbum,
             onGoToArtist = onGoToArtist,
+            onGoToGenre = onGoToGenre,
             modifier = Modifier.weight(1f)
           )
         }
@@ -387,6 +392,7 @@ private fun NowPlayingTrackList(
   onTrackRemove: (Int) -> Unit,
   onGoToAlbum: ((path: String) -> Unit)?,
   onGoToArtist: (artist: String) -> Unit,
+  onGoToGenre: ((path: String) -> Unit)?,
   modifier: Modifier = Modifier
 ) {
   // Captured once when the drag starts so we can detect — by id match at
@@ -451,7 +457,10 @@ private fun NowPlayingTrackList(
             onClick = { onTrackClick(srcIdx) },
             onRemove = { onTrackRemove(srcIdx) },
             onGoToAlbum = onGoToAlbum?.let { callback -> { callback(track.path) } },
-            onGoToArtist = { onGoToArtist(track.artist) }
+            onGoToArtist = track.artist.takeIf(String::isNotBlank)?.let { artist ->
+              { onGoToArtist(artist) }
+            },
+            onGoToGenre = onGoToGenre?.let { callback -> { callback(track.path) } }
           )
         } else {
           NowPlayingTrackItem(
@@ -461,7 +470,10 @@ private fun NowPlayingTrackList(
             isDragging = false,
             onClick = { onTrackClick(srcIdx) },
             onGoToAlbum = onGoToAlbum?.let { callback -> { callback(track.path) } },
-            onGoToArtist = { onGoToArtist(track.artist) },
+            onGoToArtist = track.artist.takeIf(String::isNotBlank)?.let { artist ->
+              { onGoToArtist(artist) }
+            },
+            onGoToGenre = onGoToGenre?.let { callback -> { callback(track.path) } },
             modifier = Modifier.animateItem()
           )
         }
@@ -550,7 +562,8 @@ private fun LazyItemScope.SwipeableNowPlayingItem(
   onClick: () -> Unit,
   onRemove: () -> Unit,
   onGoToAlbum: (() -> Unit)?,
-  onGoToArtist: () -> Unit
+  onGoToArtist: (() -> Unit)?,
+  onGoToGenre: (() -> Unit)?
 ) {
   val dismissState = rememberSwipeToDismissBoxState(
     initialValue = SwipeToDismissBoxValue.Settled,
@@ -611,6 +624,7 @@ private fun LazyItemScope.SwipeableNowPlayingItem(
       onRemove = onRemove,
       onGoToAlbum = onGoToAlbum,
       onGoToArtist = onGoToArtist,
+      onGoToGenre = onGoToGenre,
       dragHandleModifier = Modifier.dragHandle(dragDropState, index)
     )
   }
@@ -623,13 +637,15 @@ fun NowPlayingTrackItem(
   isDragging: Boolean,
   onClick: () -> Unit,
   onGoToAlbum: (() -> Unit)?,
-  onGoToArtist: () -> Unit,
+  onGoToArtist: (() -> Unit)?,
+  onGoToGenre: (() -> Unit)? = null,
   modifier: Modifier = Modifier,
   dragHandleModifier: Modifier = Modifier,
   onRemove: (() -> Unit)? = null,
   trackNumber: Int = track.position
 ) {
   var showMenu by remember { mutableStateOf(false) }
+  var showAddToPlaylist by remember { mutableStateOf(false) }
 
   val elevation by animateDpAsState(
     targetValue = if (isDragging) 8.dp else 0.dp,
@@ -710,43 +726,36 @@ fun NowPlayingTrackItem(
             expanded = showMenu,
             onDismissRequest = { showMenu = false }
           ) {
-            if (onGoToAlbum != null) {
-              DropdownMenuItem(
-                text = { Text(stringResource(R.string.player_go_to_album)) },
-                leadingIcon = {
-                  Icon(
-                    imageVector = Icons.Default.Album,
-                    contentDescription = null
-                  )
-                },
-                onClick = {
+            TrackNavigationMenuItems(
+              onGoToAlbum = onGoToAlbum?.let { navigate ->
+                {
                   showMenu = false
-                  onGoToAlbum()
+                  navigate()
                 }
-              )
-            }
-            DropdownMenuItem(
-              text = { Text(stringResource(R.string.player_go_to_artist)) },
-              leadingIcon = {
-                Icon(
-                  imageVector = Icons.Default.Person,
-                  contentDescription = null
-                )
               },
+              onGoToArtist = onGoToArtist?.let { navigate ->
+                {
+                  showMenu = false
+                  navigate()
+                }
+              },
+              onGoToGenre = onGoToGenre?.let { navigate ->
+                {
+                  showMenu = false
+                  navigate()
+                }
+              }
+            )
+            DropdownMenuItem(
+              text = { Text(stringResource(CoreUiR.string.add_to_playlist)) },
               onClick = {
                 showMenu = false
-                onGoToArtist()
+                showAddToPlaylist = true
               }
             )
             if (onRemove != null) {
               DropdownMenuItem(
                 text = { Text(stringResource(R.string.menu_remove_track)) },
-                leadingIcon = {
-                  Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = null
-                  )
-                },
                 onClick = {
                   showMenu = false
                   onRemove()
@@ -774,6 +783,13 @@ fun NowPlayingTrackItem(
         }
       }
     }
+  }
+
+  if (showAddToPlaylist) {
+    AddToPlaylistDialog(
+      trackPath = track.path,
+      onDismiss = { showAddToPlaylist = false }
+    )
   }
 }
 

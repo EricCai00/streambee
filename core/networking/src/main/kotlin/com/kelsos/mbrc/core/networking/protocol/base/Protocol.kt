@@ -65,6 +65,7 @@ sealed class Protocol(val context: String) {
   object NowPlayingQueue : Protocol(NOW_PLAYING_QUEUE)
   object PlaylistList : Protocol(PLAYLIST_LIST)
   object PlaylistPlay : Protocol(PLAYLIST_PLAY)
+  object PlaylistAddTrack : Protocol(PLAYLIST_ADD_TRACK)
   object RadioStations : Protocol(RADIO_STATIONS)
   object LibraryBrowseGenres : Protocol(LIBRARY_BROWSE_GENRES)
   object LibraryBrowseArtists : Protocol(LIBRARY_BROWSE_ARTISTS)
@@ -126,6 +127,7 @@ sealed class Protocol(val context: String) {
 
     const val PLAYLIST_LIST = "playlistlist"
     const val PLAYLIST_PLAY = "playlistplay"
+    const val PLAYLIST_ADD_TRACK = "playlistaddtrack"
 
     const val LIBRARY_BROWSE_GENRES = "browsegenres"
     const val LIBRARY_BROWSE_ARTISTS = "browseartists"
@@ -192,6 +194,7 @@ sealed class Protocol(val context: String) {
         PLAYER_PAUSE to PlayerPause,
         PLAYLIST_LIST to PlaylistList,
         PLAYLIST_PLAY to PlaylistPlay,
+        PLAYLIST_ADD_TRACK to PlaylistAddTrack,
         LIBRARY_BROWSE_GENRES to LibraryBrowseGenres,
         LIBRARY_BROWSE_ARTISTS to LibraryBrowseArtists,
         LIBRARY_BROWSE_ALBUMS to LibraryBrowseAlbums,

@@ -30,12 +30,13 @@ private object PreviewPlayerActions : IPlayerActions {
   override val previous: () -> Unit = {}
   override val next: () -> Unit = {}
   override val stop: () -> Unit = {}
+  override val cyclePlaybackMode: () -> Unit = {}
   override val shuffle: () -> Unit = {}
   override val repeat: () -> Unit = {}
   override val mute: () -> Unit = {}
   override val changeVolume: (Int) -> Unit = {}
   override val seek: (Int) -> Unit = {}
-  override val toggleFavorite: (Boolean, Boolean) -> Unit = { _, _ -> }
+  override val toggleFavorite: (String, Boolean, Boolean) -> Unit = { _, _, _ -> }
   override val toggleBan: (Boolean, Boolean) -> Unit = { _, _ -> }
   override val toggleScrobbling: () -> Unit = {}
 }

@@ -16,12 +16,13 @@ interface IPlayerActions {
   val previous: () -> Unit
   val next: () -> Unit
   val stop: () -> Unit
+  val cyclePlaybackMode: () -> Unit
   val shuffle: () -> Unit
   val repeat: () -> Unit
   val mute: () -> Unit
   val changeVolume: (Int) -> Unit
   val seek: (Int) -> Unit
-  val toggleFavorite: (isFavorite: Boolean, isBanned: Boolean) -> Unit
+  val toggleFavorite: (trackPath: String, isFavorite: Boolean, isBanned: Boolean) -> Unit
   val toggleBan: (isBanned: Boolean, isFavorite: Boolean) -> Unit
   val toggleScrobbling: () -> Unit
 }
@@ -49,6 +50,10 @@ class PlayerActions(
     devicePlaybackController.stop()
   }
 
+  override val cyclePlaybackMode: () -> Unit = {
+    devicePlaybackController.cyclePlaybackMode()
+  }
+
   override val shuffle: () -> Unit = {
     devicePlaybackController.toggleShuffle()
   }
@@ -69,13 +74,37 @@ class PlayerActions(
     devicePlaybackController.seekTo(position.toLong())
   }
 
-  override val toggleFavorite: (Boolean, Boolean) -> Unit = { isFavorite, isBanned ->
+  override val toggleFavorite: (String, Boolean, Boolean) -> Unit = {
+    trackPath,
+    isFavorite,
+    isBanned,
+  ->
     scope.launch {
-      Timber.d("toggleFavorite: isFavorite=$isFavorite, isBanned=$isBanned")
-      if (devicePlaybackController.hasLocalPlayback) {
-        devicePlaybackController.setFavorite(!isFavorite)
+      val localPath = devicePlaybackController.currentTrackPath
+      Timber.d(
+        "toggleFavorite: localPath=$localPath, hasLocalPlayback=" +
+          "${devicePlaybackController.hasLocalPlayback}, " +
+          "isFavorite=$isFavorite, isBanned=$isBanned"
+      )
+
+      // Always use a path-qualified request when the UI has a MusicBee file
+      // path. This is important during player transitions: even if the
+      // local-player flag has not propagated yet, falling back to the legacy
+      // now-playing command would modify the computer's current track.
+      val targetPath = (localPath ?: trackPath.takeIf { it.isNotBlank() })
+        ?.takeUnless { it.isStreamPath() }
+      if (targetPath != null) {
+        devicePlaybackController.toggleFavorite(targetPath)
         return@launch
       }
+
+      // A local player without a path is still local; do not fall through to
+      // the command that targets the computer's current track.
+      if (devicePlaybackController.hasLocalPlayback) {
+        devicePlaybackController.toggleFavorite()
+        return@launch
+      }
+
       when {
         isFavorite -> {
           // Currently Loved, toggle to Normal
@@ -105,6 +134,11 @@ class PlayerActions(
       }
     }
   }
+
+  private fun String.isStreamPath(): Boolean = startsWith("http://", ignoreCase = true) ||
+    startsWith("https://", ignoreCase = true) ||
+    startsWith("rtsp://", ignoreCase = true) ||
+    startsWith("mms://", ignoreCase = true)
 
   override val toggleBan: (Boolean, Boolean) -> Unit = { isBanned, isFavorite ->
     scope.launch {

@@ -20,8 +20,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -43,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kelsos.mbrc.core.common.settings.LibraryView
 import com.kelsos.mbrc.core.common.settings.TrackAction
 import com.kelsos.mbrc.core.common.utilities.AppInfo
 import com.kelsos.mbrc.core.platform.service.ServiceRestarter
@@ -78,6 +81,7 @@ data class SettingsContentState(
   val debugLoggingEnabled: Boolean = false,
   val incomingCallAction: CallAction = CallAction.None,
   val trackDefaultAction: TrackAction = TrackAction.PlayNow,
+  val enabledLibraryViews: Set<LibraryView> = LibraryView.DEFAULT,
   val indexedLibraryScrollbarEnabled: Boolean = true,
   val albumListPlayButtonEnabled: Boolean = true,
   val albumGridPlayButtonEnabled: Boolean = false,
@@ -101,11 +105,17 @@ interface ISettingsActions {
   val onShowRatingOnPlayerChanged: (Boolean) -> Unit
   val onTrackDefaultActionClick: () -> Unit
   val onTrackDefaultActionSelected: (TrackAction) -> Unit
+  val onLibraryViewsClick: () -> Unit
+    get() = {}
+  val onLibraryViewChanged: (LibraryView, Boolean) -> Unit
+    get() = { _, _ -> }
   val onIndexedLibraryScrollbarChanged: (Boolean) -> Unit
     get() = {}
   val onAlbumListPlayButtonChanged: (Boolean) -> Unit
     get() = {}
   val onAlbumGridPlayButtonChanged: (Boolean) -> Unit
+    get() = {}
+  val onShowChangelog: () -> Unit
     get() = {}
   val onNavigateToLicenses: () -> Unit
   val onNavigateToAppLicense: () -> Unit
@@ -129,6 +139,7 @@ object EmptySettingsActions : ISettingsActions {
   override val onIndexedLibraryScrollbarChanged: (Boolean) -> Unit = {}
   override val onAlbumListPlayButtonChanged: (Boolean) -> Unit = {}
   override val onAlbumGridPlayButtonChanged: (Boolean) -> Unit = {}
+  override val onShowChangelog: () -> Unit = {}
   override val onNavigateToLicenses: () -> Unit = {}
   override val onNavigateToAppLicense: () -> Unit = {}
   override val onDismissDialog: () -> Unit = {}
@@ -259,6 +270,7 @@ private fun RatingSettingsSection(viewModel: SettingsViewModel) {
 @Composable
 private fun LibrarySettingsSection(viewModel: SettingsViewModel) {
   val trackDefaultAction by viewModel.trackDefaultAction.collectAsStateWithLifecycle()
+  val enabledLibraryViews by viewModel.enabledLibraryViews.collectAsStateWithLifecycle()
   val indexedScrollbarEnabled by
     viewModel.indexedLibraryScrollbarEnabled.collectAsStateWithLifecycle()
   val albumListPlayButtonEnabled by
@@ -272,6 +284,12 @@ private fun LibrarySettingsSection(viewModel: SettingsViewModel) {
       title = stringResource(R.string.preferences_library_track_default_action_title),
       subtitle = getTrackActionDisplayName(trackDefaultAction),
       onClick = { viewModel.showDialog(SettingsDialogType.TrackDefaultAction) }
+    )
+
+    SettingsItem(
+      title = stringResource(R.string.setting_library_views),
+      subtitle = libraryViewsSummary(enabledLibraryViews),
+      onClick = { viewModel.showDialog(SettingsDialogType.LibraryViews) }
     )
 
     SettingsToggleItem(
@@ -296,6 +314,14 @@ private fun LibrarySettingsSection(viewModel: SettingsViewModel) {
     )
   }
 
+  if (visibleDialog == SettingsDialogType.LibraryViews) {
+    LibraryViewsDialog(
+      enabledViews = enabledLibraryViews,
+      onViewChanged = viewModel::updateLibraryView,
+      onDismiss = viewModel::hideDialog
+    )
+  }
+
   // Track Default Action Dialog
   if (visibleDialog == SettingsDialogType.TrackDefaultAction) {
     TrackDefaultActionDialog(
@@ -316,9 +342,16 @@ private fun LibrarySettingsSection(viewModel: SettingsViewModel) {
 private fun AboutSettingsSection(
   onNavigateToLicenses: () -> Unit,
   onNavigateToAppLicense: () -> Unit,
+  onShowChangelog: () -> Unit,
   appInfo: AppInfo = koinInject()
 ) {
   SettingsSection(title = stringResource(R.string.preferences_category_about)) {
+    SettingsItem(
+      title = stringResource(R.string.settings_whats_new),
+      subtitle = stringResource(R.string.settings_whats_new_summary),
+      onClick = onShowChangelog
+    )
+
     SettingsItem(
       title = stringResource(R.string.settings_oss_license),
       onClick = onNavigateToLicenses
@@ -360,6 +393,7 @@ fun SettingsScreen(
   modifier: Modifier = Modifier,
   onNavigateToLicenses: () -> Unit = {},
   onNavigateToAppLicense: () -> Unit = {},
+  onShowChangelog: () -> Unit = {},
   viewModel: SettingsViewModel = koinViewModel()
 ) {
   val context = LocalContext.current
@@ -391,6 +425,7 @@ fun SettingsScreen(
       serviceRestarter = serviceRestarter,
       onNavigateToLicenses = onNavigateToLicenses,
       onNavigateToAppLicense = onNavigateToAppLicense,
+      onShowChangelog = onShowChangelog,
       paddingValues = paddingValues
     )
   }
@@ -404,6 +439,7 @@ private fun SettingsContent(
   serviceRestarter: ServiceRestarter,
   onNavigateToLicenses: () -> Unit,
   onNavigateToAppLicense: () -> Unit,
+  onShowChangelog: () -> Unit,
   paddingValues: PaddingValues
 ) {
   Column(
@@ -441,7 +477,8 @@ private fun SettingsContent(
     // About Section
     AboutSettingsSection(
       onNavigateToLicenses = onNavigateToLicenses,
-      onNavigateToAppLicense = onNavigateToAppLicense
+      onNavigateToAppLicense = onNavigateToAppLicense,
+      onShowChangelog = onShowChangelog
     )
   }
 }
@@ -496,10 +533,12 @@ fun SettingsScreenContent(
     // Library Settings Section
     LibraryContentSection(
       trackDefaultAction = state.trackDefaultAction,
+      enabledLibraryViews = state.enabledLibraryViews,
       indexedScrollbarEnabled = state.indexedLibraryScrollbarEnabled,
       albumListPlayButtonEnabled = state.albumListPlayButtonEnabled,
       albumGridPlayButtonEnabled = state.albumGridPlayButtonEnabled,
       onTrackDefaultActionClick = actions.onTrackDefaultActionClick,
+      onLibraryViewsClick = actions.onLibraryViewsClick,
       onIndexedScrollbarChanged = actions.onIndexedLibraryScrollbarChanged,
       onAlbumListPlayButtonChanged = actions.onAlbumListPlayButtonChanged,
       onAlbumGridPlayButtonChanged = actions.onAlbumGridPlayButtonChanged
@@ -511,7 +550,8 @@ fun SettingsScreenContent(
     AboutContentSection(
       appInfo = appInfo,
       onNavigateToLicenses = actions.onNavigateToLicenses,
-      onNavigateToAppLicense = actions.onNavigateToAppLicense
+      onNavigateToAppLicense = actions.onNavigateToAppLicense,
+      onShowChangelog = actions.onShowChangelog
     )
   }
 
@@ -541,6 +581,12 @@ fun SettingsScreenContent(
         actions.onTrackDefaultActionSelected(action)
         actions.onDismissDialog()
       },
+      onDismiss = actions.onDismissDialog
+    )
+
+    SettingsDialogType.LibraryViews -> LibraryViewsDialog(
+      enabledViews = state.enabledLibraryViews,
+      onViewChanged = actions.onLibraryViewChanged,
       onDismiss = actions.onDismissDialog
     )
 
@@ -630,10 +676,12 @@ private fun RatingContentSection(
 @Composable
 private fun LibraryContentSection(
   trackDefaultAction: TrackAction,
+  enabledLibraryViews: Set<LibraryView>,
   indexedScrollbarEnabled: Boolean,
   albumListPlayButtonEnabled: Boolean,
   albumGridPlayButtonEnabled: Boolean,
   onTrackDefaultActionClick: () -> Unit,
+  onLibraryViewsClick: () -> Unit,
   onIndexedScrollbarChanged: (Boolean) -> Unit,
   onAlbumListPlayButtonChanged: (Boolean) -> Unit,
   onAlbumGridPlayButtonChanged: (Boolean) -> Unit
@@ -643,6 +691,12 @@ private fun LibraryContentSection(
       title = stringResource(R.string.preferences_library_track_default_action_title),
       subtitle = getTrackActionDisplayName(trackDefaultAction),
       onClick = onTrackDefaultActionClick
+    )
+
+    SettingsItem(
+      title = stringResource(R.string.setting_library_views),
+      subtitle = libraryViewsSummary(enabledLibraryViews),
+      onClick = onLibraryViewsClick
     )
 
     SettingsToggleItem(
@@ -675,9 +729,16 @@ private fun LibraryContentSection(
 private fun AboutContentSection(
   appInfo: AppInfo,
   onNavigateToLicenses: () -> Unit,
-  onNavigateToAppLicense: () -> Unit
+  onNavigateToAppLicense: () -> Unit,
+  onShowChangelog: () -> Unit
 ) {
   SettingsSection(title = stringResource(R.string.preferences_category_about)) {
+    SettingsItem(
+      title = stringResource(R.string.settings_whats_new),
+      subtitle = stringResource(R.string.settings_whats_new_summary),
+      onClick = onShowChangelog
+    )
+
     SettingsItem(
       title = stringResource(R.string.settings_oss_license),
       onClick = onNavigateToLicenses
@@ -713,6 +774,82 @@ internal fun SettingsDivider() {
   HorizontalDivider(
     modifier = Modifier.padding(vertical = 8.dp),
     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+  )
+}
+
+@Composable
+private fun libraryViewsSummary(enabledViews: Set<LibraryView>): String {
+  val displayNames = mapOf(
+    LibraryView.GENRES to stringResource(R.string.library_view_genres),
+    LibraryView.ARTISTS to stringResource(R.string.library_view_artists),
+    LibraryView.ALBUMS to stringResource(R.string.library_view_albums),
+    LibraryView.TRACKS to stringResource(R.string.library_view_tracks),
+    LibraryView.YEARS to stringResource(R.string.library_view_years),
+    LibraryView.LANGUAGES to stringResource(R.string.library_view_languages)
+  )
+  return LibraryView.entries
+    .filter { it in enabledViews }
+    .joinToString(separator = ", ") { displayNames.getValue(it) }
+}
+
+@Composable
+private fun libraryViewDisplayName(view: LibraryView): String = when (view) {
+  LibraryView.GENRES -> stringResource(R.string.library_view_genres)
+  LibraryView.ARTISTS -> stringResource(R.string.library_view_artists)
+  LibraryView.ALBUMS -> stringResource(R.string.library_view_albums)
+  LibraryView.TRACKS -> stringResource(R.string.library_view_tracks)
+  LibraryView.YEARS -> stringResource(R.string.library_view_years)
+  LibraryView.LANGUAGES -> stringResource(R.string.library_view_languages)
+}
+
+@Composable
+private fun LibraryViewsDialog(
+  enabledViews: Set<LibraryView>,
+  onViewChanged: (LibraryView, Boolean) -> Unit,
+  onDismiss: () -> Unit
+) {
+  AlertDialog(
+    onDismissRequest = onDismiss,
+    title = { Text(stringResource(R.string.setting_library_views)) },
+    text = {
+      Column {
+        Text(
+          text = stringResource(R.string.setting_library_views_description),
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          modifier = Modifier.padding(bottom = 8.dp)
+        )
+        LibraryView.entries.forEach { view ->
+          val checked = view in enabledViews
+          val canToggle = !checked || enabledViews.size > 1
+          Row(
+            modifier = Modifier
+              .fillMaxWidth()
+              .height(48.dp)
+              .toggleable(
+                value = checked,
+                enabled = canToggle,
+                role = Role.Checkbox,
+                onValueChange = { onViewChanged(view, it) }
+              ),
+            verticalAlignment = Alignment.CenterVertically
+          ) {
+            Checkbox(
+              checked = checked,
+              onCheckedChange = null,
+              enabled = canToggle
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(libraryViewDisplayName(view))
+          }
+        }
+      }
+    },
+    confirmButton = {
+      TextButton(onClick = onDismiss) {
+        Text(stringResource(R.string.action_done))
+      }
+    }
   )
 }
 

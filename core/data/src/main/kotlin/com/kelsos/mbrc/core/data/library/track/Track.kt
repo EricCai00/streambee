@@ -19,7 +19,8 @@ data class Track(
   val genre: String,
   val year: String,
   val id: Long,
-  val loved: Boolean = false
+  val loved: Boolean = false,
+  val language: String = ""
 )
 
 @Entity(tableName = "track", indices = [Index("src", name = "track_src_index", unique = true)])
@@ -49,7 +50,9 @@ data class TrackEntity(
   @PrimaryKey(autoGenerate = true)
   val id: Long = 0,
   @ColumnInfo
-  val loved: Boolean = false
+  val loved: Boolean = false,
+  @ColumnInfo
+  val language: String = ""
 )
 
 class TrackPath(val src: String, val id: Long)

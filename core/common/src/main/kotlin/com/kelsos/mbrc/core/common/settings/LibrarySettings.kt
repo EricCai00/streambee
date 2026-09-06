@@ -7,11 +7,13 @@ import kotlinx.coroutines.flow.Flow
  * Implemented by SettingsManager in the app module.
  */
 interface LibrarySettings {
+  val enabledLibraryViewsFlow: Flow<Set<LibraryView>>
   val shouldDisplayOnlyArtists: Flow<Boolean>
   val libraryTrackDefaultActionFlow: Flow<TrackAction>
   val indexedLibraryScrollbarFlow: Flow<Boolean>
   val albumListPlayButtonFlow: Flow<Boolean>
   val albumGridPlayButtonFlow: Flow<Boolean>
+  suspend fun setLibraryViewEnabled(view: LibraryView, enabled: Boolean)
   suspend fun setShouldDisplayOnlyAlbumArtist(onlyAlbumArtist: Boolean)
   suspend fun setIndexedLibraryScrollbar(enabled: Boolean)
   suspend fun setAlbumListPlayButton(enabled: Boolean)

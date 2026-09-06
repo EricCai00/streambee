@@ -1,8 +1,6 @@
 package com.kelsos.mbrc.feature.library.artists
 
 import androidx.lifecycle.viewModelScope
-import androidx.paging.PagingData
-import androidx.paging.cachedIn
 import com.kelsos.mbrc.core.common.settings.ArtistSortPreference
 import com.kelsos.mbrc.core.common.settings.LibrarySettings
 import com.kelsos.mbrc.core.common.settings.SortOrder
@@ -13,10 +11,13 @@ import com.kelsos.mbrc.feature.library.LibrarySearchModel
 import com.kelsos.mbrc.feature.library.domain.LibrarySyncUseCase
 import com.kelsos.mbrc.feature.library.queue.QueueHandler
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 private data class ArtistSearchParams(val keyword: String, val sortOrder: SortOrder)
@@ -32,7 +33,7 @@ class BrowseArtistViewModel(
 ) : BaseArtistViewModel(queueHandler, librarySettings, connectionStateFlow) {
   val sortPreference: Flow<ArtistSortPreference> = librarySettings.artistSortPreferenceFlow
 
-  override val artists: Flow<PagingData<Artist>> =
+  override val artists: StateFlow<List<Artist>?> =
     combine(
       searchModel.term,
       sortPreference
@@ -40,11 +41,11 @@ class BrowseArtistViewModel(
       ArtistSearchParams(keyword, sort.order)
     }.flatMapLatest { (keyword, sortOrder) ->
       if (keyword.isEmpty()) {
-        repository.getAlbumArtistsOnly(sortOrder)
+        repository.getAlbumArtistsOnlyList(sortOrder)
       } else {
-        repository.searchAlbumArtists(keyword, sortOrder)
+        repository.searchAlbumArtistsList(keyword, sortOrder)
       }
-    }.cachedIn(viewModelScope)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
   val showSync = searchModel.term.map { it.isEmpty() }
 

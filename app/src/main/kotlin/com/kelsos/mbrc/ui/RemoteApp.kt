@@ -132,7 +132,8 @@ fun RemoteApp() {
             startDestination = Screen.Home.route,
             onOpenDrawer = {
               scope.launch { drawerState.open() }
-            }
+            },
+            onShowChangelog = { whatsNewViewModel.showChangelog() }
           )
         }
       }

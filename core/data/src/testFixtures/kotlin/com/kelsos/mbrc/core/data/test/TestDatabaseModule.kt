@@ -23,6 +23,7 @@ val testDatabaseModule =
     single { get<Database>().albumDao() }
     single { get<Database>().artistDao() }
     single { get<Database>().genreDao() }
+    single { get<Database>().libraryGroupingDao() }
     single { get<Database>().trackDao() }
     single { get<Database>().nowPlayingDao() }
     single { get<Database>().playlistDao() }

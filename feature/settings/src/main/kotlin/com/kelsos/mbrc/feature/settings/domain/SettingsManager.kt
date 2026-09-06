@@ -2,6 +2,7 @@ package com.kelsos.mbrc.feature.settings.domain
 
 import com.kelsos.mbrc.core.common.settings.ChangeLogChecker
 import com.kelsos.mbrc.core.common.settings.LibrarySettings
+import com.kelsos.mbrc.core.common.settings.LibraryView
 import com.kelsos.mbrc.core.common.settings.PlaybackSettings
 import com.kelsos.mbrc.core.common.settings.TrackAction
 import com.kelsos.mbrc.feature.settings.data.CallAction
@@ -24,6 +25,7 @@ interface SettingsManager :
   val pluginUpdateCheckFlow: Flow<Boolean>
   val incomingCallActionFlow: Flow<CallAction>
   override val libraryTrackDefaultActionFlow: Flow<TrackAction>
+  override val enabledLibraryViewsFlow: Flow<Set<LibraryView>>
   override val shouldDisplayOnlyArtists: Flow<Boolean>
   override val indexedLibraryScrollbarFlow: Flow<Boolean>
   override val albumListPlayButtonFlow: Flow<Boolean>
@@ -38,6 +40,7 @@ interface SettingsManager :
   suspend fun setPluginUpdateCheck(enabled: Boolean)
   suspend fun setIncomingCallAction(action: CallAction)
   suspend fun setLibraryTrackDefaultAction(action: TrackAction)
+  override suspend fun setLibraryViewEnabled(view: LibraryView, enabled: Boolean)
   override suspend fun setShouldDisplayOnlyAlbumArtist(onlyAlbumArtist: Boolean)
   override suspend fun setIndexedLibraryScrollbar(enabled: Boolean)
   override suspend fun setAlbumListPlayButton(enabled: Boolean)

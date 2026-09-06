@@ -8,6 +8,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
+import com.kelsos.mbrc.core.common.settings.LibraryView
 import com.kelsos.mbrc.core.common.settings.TrackAction
 import com.kelsos.mbrc.core.common.utilities.AppInfo
 import com.kelsos.mbrc.feature.settings.SettingsDialogType
@@ -556,6 +557,77 @@ class SettingsScreenTest : KoinTest {
 
   // endregion
 
+  // region Library View Tests
+
+  @Test
+  fun `library views default to the original four tabs`() {
+    setupKoin()
+    try {
+      composeTestRule.setContent {
+        SettingsScreenContent(
+          state = SettingsContentState(),
+          actions = EmptySettingsActions,
+          appInfo = testAppInfo
+        )
+      }
+
+      composeTestRule.onNodeWithText("Genres, Artists, Albums, Tracks")
+        .performScrollTo()
+        .assertIsDisplayed()
+    } finally {
+      teardownKoin()
+    }
+  }
+
+  @Test
+  fun `library views dialog shows six choices and reports toggles`() {
+    setupKoin()
+    try {
+      var changed: Pair<LibraryView, Boolean>? = null
+      val actions = TestSettingsActions(
+        onLibraryViewChanged = { view, enabled -> changed = view to enabled }
+      )
+      composeTestRule.setContent {
+        SettingsScreenContent(
+          state = SettingsContentState(visibleDialog = SettingsDialogType.LibraryViews),
+          actions = actions,
+          appInfo = testAppInfo
+        )
+      }
+
+      listOf("Genres", "Artists", "Albums", "Tracks", "Years", "Languages").forEach { label ->
+        composeTestRule.onNodeWithText(label).assertIsDisplayed()
+      }
+      composeTestRule.onNodeWithText("Years").performClick()
+      assertThat(changed).isEqualTo(LibraryView.YEARS to true)
+    } finally {
+      teardownKoin()
+    }
+  }
+
+  @Test
+  fun `library views item click triggers action`() {
+    setupKoin()
+    try {
+      var clicked = false
+      val actions = TestSettingsActions(onLibraryViewsClick = { clicked = true })
+      composeTestRule.setContent {
+        SettingsScreenContent(
+          state = SettingsContentState(),
+          actions = actions,
+          appInfo = testAppInfo
+        )
+      }
+
+      composeTestRule.onNodeWithText("Library views").performScrollTo().performClick()
+      assertThat(clicked).isTrue()
+    } finally {
+      teardownKoin()
+    }
+  }
+
+  // endregion
+
   // region Track Default Action Tests
 
   @Test
@@ -886,6 +958,8 @@ class TestSettingsActions(
   override val onShowRatingOnPlayerChanged: (Boolean) -> Unit = {},
   override val onTrackDefaultActionClick: () -> Unit = {},
   override val onTrackDefaultActionSelected: (TrackAction) -> Unit = {},
+  override val onLibraryViewsClick: () -> Unit = {},
+  override val onLibraryViewChanged: (LibraryView, Boolean) -> Unit = { _, _ -> },
   override val onAlbumListPlayButtonChanged: (Boolean) -> Unit = {},
   override val onAlbumGridPlayButtonChanged: (Boolean) -> Unit = {},
   override val onNavigateToLicenses: () -> Unit = {},

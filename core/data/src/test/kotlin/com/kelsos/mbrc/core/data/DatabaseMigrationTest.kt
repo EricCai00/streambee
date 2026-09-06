@@ -496,4 +496,30 @@ class DatabaseMigrationTest {
 
     assertThat(artists).containsExactly("Artist A", "Artist B", "Solo Artist").inOrder()
   }
+
+  @Test
+  fun migrate8To9AddsTrackLanguage() {
+    var db = helper.createDatabase(migrationTestDb, 8)
+    db.execSQL(
+      """
+      INSERT INTO track (
+        artist, title, src, trackno, disc, album_artist, album, genre,
+        year, sortable_year, date_added, id, loved
+      ) VALUES (
+        'Artist', 'Title', 'D:/Music/song.flac', 1, 1, 'Artist', 'Album', 'Rock',
+        '2026', '2026', 123, 1, 1
+      )
+      """.trimIndent()
+    )
+    db.close()
+
+    db = helper.runMigrationsAndValidate(migrationTestDb, 9, true, MIGRATION_8_9)
+
+    val cursor = db.query("SELECT language, loved FROM track WHERE id = 1")
+    assertThat(cursor.moveToFirst()).isTrue()
+    assertThat(cursor.getString(cursor.getColumnIndex("language"))).isEmpty()
+    assertThat(cursor.getInt(cursor.getColumnIndex("loved"))).isEqualTo(1)
+    cursor.close()
+    db.close()
+  }
 }

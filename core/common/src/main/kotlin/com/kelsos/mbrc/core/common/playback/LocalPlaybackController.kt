@@ -11,6 +11,10 @@ data class LocalQueueTrack(
 
 interface LocalPlaybackController {
   val queue: StateFlow<List<LocalQueueTrack>>
+
+  /** Path of the track currently loaded by the phone's local player, if any. */
+  val currentTrackPath: String?
+
   val hasLocalPlayback: Boolean
   fun play()
   fun pause()
@@ -25,7 +29,15 @@ interface LocalPlaybackController {
   fun setVolume(percent: Int)
   fun adjustVolume(deltaPercent: Int)
   fun toggleMute()
+  /** Cycles through sequential, repeat-all, repeat-one, and shuffle. */
+  fun cyclePlaybackMode()
   fun toggleShuffle()
   fun toggleRepeat()
+  /** Toggles the loved state of the exact item currently loaded by the phone player. */
+  fun toggleFavorite()
+  /** Toggles the loved state for this exact MusicBee library path. */
+  fun toggleFavorite(trackPath: String)
   fun setFavorite(loved: Boolean)
+  /** Updates the loved state for this exact MusicBee library path. */
+  fun setFavorite(trackPath: String, loved: Boolean)
 }

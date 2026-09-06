@@ -33,6 +33,35 @@ $env:PATH = "$env:JAVA_HOME\bin;$env:ANDROID_HOME\platform-tools;$env:PATH"
   moves to the next stable base version.
 - Use the `.dev` application ID only when a side-by-side installation is
   explicitly wanted. Do not install both variants by default.
+- Whenever the app or paired plugin version is changed for a release, update the
+  repository `CHANGELOG.md` and the app's in-app What's New resource at
+  `app/src/main/res/raw/changelog.xml` in the same change. The in-app resource
+  must contain a matching version entry and the release notes, not just the
+  external Markdown changelog. When the plugin version changes, update its
+  `CHANGELOG.md` as well.
+
+## GitHub release publishing
+
+- When asked to publish the Android app or the paired MusicBee plugin as a
+  GitHub Release, build and package the release artifacts in the local
+  workspace, then upload those exact local files with `gh release create` or
+  `gh release upload`. Do not trigger or rely on GitHub Actions, GitHub-hosted
+  runners, or GitHub's online build/packaging workflow to produce the release
+  binaries.
+- For the Android app, build the signed `githubRelease` artifact locally (and
+  any explicitly requested companion artifacts), verify the outputs and
+  signing, and upload the local artifacts. If local release signing
+  credentials are unavailable, report the blocker; do not fall back to a
+  GitHub-hosted build.
+- Firebase Crashlytics mapping uploads time out in this environment. Skip the
+  upload task explicitly instead of waiting for or dismissing the timeout. For
+  the current variants, add
+  `-x :app:uploadCrashlyticsMappingFileGithubRelease` when building the GitHub
+  APK, and also add
+  `-x :app:uploadCrashlyticsMappingFilePlayRelease` if Play variants are built.
+  This skips only the mapping upload; do not claim that the mapping was
+  uploaded. If task names change, inspect `:app:tasks --all` and exclude the
+  applicable `uploadCrashlyticsMappingFile*` tasks.
 
 ## USB deployment after app changes
 
@@ -48,7 +77,8 @@ If a device is listed with status `device`, build the signed `githubRelease`
 variant and install it over the existing production-package app:
 
 ```powershell
-.\gradlew.bat :app:assembleGithubRelease
+.\gradlew.bat :app:assembleGithubRelease `
+  -x :app:uploadCrashlyticsMappingFileGithubRelease
 & 'C:\Users\Eric\AppData\Local\Android\Sdk\platform-tools\adb.exe' install -r `
   '.\app\build\outputs\apk\github\release\app-github-release.apk'
 ```

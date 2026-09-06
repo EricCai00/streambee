@@ -346,3 +346,9 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
     db.execSQL("CREATE UNIQUE INDEX artist_artist_idx ON artist (artist)")
   }
 }
+
+val MIGRATION_8_9 = object : Migration(8, 9) {
+  override fun migrate(db: SupportSQLiteDatabase) {
+    db.execSQL("ALTER TABLE track ADD COLUMN language TEXT NOT NULL DEFAULT ''")
+  }
+}

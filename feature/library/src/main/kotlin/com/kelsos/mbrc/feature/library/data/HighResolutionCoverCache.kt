@@ -13,6 +13,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
@@ -58,7 +59,7 @@ class HighResolutionCoverCache(
           return@withPermit null
         }
 
-        runCatching {
+        try {
           val uri = streamUri(connection, trackPath)
           val http = URL(uri.toString()).openConnection() as HttpURLConnection
           try {
@@ -66,7 +67,7 @@ class HighResolutionCoverCache(
             http.connectTimeout = CONNECT_TIMEOUT_MS
             http.readTimeout = READ_TIMEOUT_MS
             http.useCaches = false
-            if (http.responseCode !in 200..299) return@runCatching null
+            if (http.responseCode !in 200..299) return@withPermit null
 
             val temporary = File(directory, "$albumKey.tmp")
             http.inputStream.use { input ->
@@ -81,8 +82,12 @@ class HighResolutionCoverCache(
           } finally {
             http.disconnect()
           }
-        }.onFailure { Timber.v(it, "Failed to cache high-resolution album artwork") }
-          .getOrNull()
+        } catch (error: CancellationException) {
+          throw error
+        } catch (error: Exception) {
+          Timber.v(error, "Failed to cache high-resolution album artwork")
+          null
+        }
       }
     }
   }

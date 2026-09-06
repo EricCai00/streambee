@@ -153,7 +153,7 @@ private fun HelpContent(modifier: Modifier = Modifier, versionName: String) {
 
 /**
  * The user guide is deliberately rendered from app code so it remains available without a
- * connection to the documentation site. Keep this content aligned with the 2.2.0 feature set.
+ * connection to the documentation site. Keep this content aligned with the 2.3.0 feature set.
  */
 @Composable
 private fun LocalGuideContent(modifier: Modifier = Modifier, versionName: String) {
@@ -174,7 +174,7 @@ private fun LocalGuideContent(modifier: Modifier = Modifier, versionName: String
             color = MaterialTheme.colorScheme.onSurface
           )
           Text(
-            text = "Offline guide for StreamBee 2.2.0",
+            text = "Offline guide for StreamBee 2.3.0",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary
           )
@@ -204,8 +204,8 @@ private fun LocalGuideContent(modifier: Modifier = Modifier, versionName: String
 
     item {
       GuideSection(title = "2. Play music on your phone") {
-        GuideParagraph("Tap a track in Library, Playlists, or History to start phone playback. The Play on this device action makes the destination explicit.")
-        GuideBullet("Play Now, Queue Next, and Queue Last build the phone's local queue. Previous and Next continue through the selected album, artist, playlist, or collection.")
+        GuideParagraph("Tap a track in Library, Playlists, or History to start phone playback.")
+        GuideBullet("Queue Next and Queue Last add tracks to the phone's local queue. Previous and Next continue through the selected album, artist, playlist, or collection.")
         GuideBullet("Use Previous, Play/Pause, Next, the progress slider, volume, Shuffle, and Repeat from the player. Long-press Play/Pause to stop.")
         GuideBullet("File streams are seekable. An unbounded stream shows a wave indicator instead of a seek bar.")
         GuideBullet("The mini control, Android media notification, and home-screen widget keep the phone player available outside the main screen.")
@@ -219,7 +219,7 @@ private fun LocalGuideContent(modifier: Modifier = Modifier, versionName: String
         GuideBullet("Multiple-artist tags can open each artist separately. Artist rows use MusicBee artist pictures when available and a standard icon otherwise.")
         GuideBullet("Genre and Genre Category rows can show stacked album-art previews. Albums support list and cover-grid views.")
         GuideBullet("Use search and sorting on each list. Enable Indexed library scrollbar in Settings to jump through large lists by first letter or year.")
-        GuideBullet("Track overflow actions include Play Now, Play on this device, Queue Next, Queue Last, and artist or collection playback.")
+        GuideBullet("Track overflow actions include Queue Next, Queue Last, Add to playlist, and shortcuts to the track's album, artist, and genre.")
       }
     }
 
@@ -237,7 +237,7 @@ private fun LocalGuideContent(modifier: Modifier = Modifier, versionName: String
       GuideSection(title = "5. Details, ratings, and lyrics") {
         GuideParagraph("Open the player menu and choose Track Details. Tags shows MusicBee metadata; Properties shows the exact streamed file's format, size, duration, dates, play counts, and location.")
         GuideBullet("Rate tracks from zero to five stars, enable half-star ratings in Settings, use a bomb rating, or clear the rating. Show rating on player controls whether the rating appears below the track.")
-        GuideBullet("The player heart controls Last.fm Love/Ban. Hearts beside library and playlist rows are MusicBee loved markers and are read-only there.")
+        GuideBullet("The player heart controls the MusicBee loved state and synchronizes the change to the computer. Hearts beside library and playlist rows show the current MusicBee loved marker.")
         GuideBullet("Open lyrics from the player. Plain lyrics and synchronized LRC lines are supported; tapping a synchronized line seeks the phone player.")
       }
     }

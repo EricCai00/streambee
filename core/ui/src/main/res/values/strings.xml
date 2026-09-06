@@ -8,6 +8,14 @@
   <string name="action_play">Play</string>
   <string name="action_retry">Retry</string>
   <string name="action_search_clear">Clear search</string>
+  <string name="add_to_playlist">Add to playlist</string>
+  <string name="add_to_playlist_title">Add track to playlist</string>
+  <string name="add_to_playlist_empty">No playlists available</string>
+  <string name="add_to_playlist_loading">Loading playlists…</string>
+  <string name="add_to_playlist_cancel">Cancel</string>
+  <string name="go_to_album">Go to album</string>
+  <string name="go_to_artist">Go to artist</string>
+  <string name="go_to_genre">Go to genre</string>
 
   <!-- Common UI -->
   <string name="menu_overflow_description">More options</string>

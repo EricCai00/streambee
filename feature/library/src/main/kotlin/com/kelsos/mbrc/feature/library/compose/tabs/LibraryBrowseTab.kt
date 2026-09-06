@@ -10,6 +10,7 @@ import androidx.paging.compose.LazyPagingItems
 import com.kelsos.mbrc.core.common.utilities.Outcome
 import com.kelsos.mbrc.core.ui.compose.PagingScrollbarStyle
 import com.kelsos.mbrc.core.ui.compose.QueueResultEffect
+import com.kelsos.mbrc.core.ui.compose.SwipeRefreshListScreen
 import com.kelsos.mbrc.core.ui.compose.SwipeRefreshGridScreen
 import com.kelsos.mbrc.core.ui.compose.SwipeRefreshScreen
 import kotlinx.coroutines.flow.Flow
@@ -83,4 +84,46 @@ fun <T : Any> LibraryBrowseTab(
       itemContent = itemContent
     )
   }
+}
+
+@Composable
+fun <T : Any> LibraryBrowseListTab(
+  items: List<T>,
+  isLoading: Boolean,
+  queueResults: Flow<Outcome<Int>>,
+  snackbarHostState: SnackbarHostState,
+  syncState: SyncState,
+  emptyState: EmptyState,
+  itemKey: (T) -> Any,
+  indexedScrollbar: Boolean,
+  indexLabel: (T) -> String,
+  modifier: Modifier = Modifier,
+  itemContent: @Composable (T) -> Unit
+) {
+  QueueResultEffect(
+    queueResults = queueResults,
+    snackbarHostState = snackbarHostState
+  )
+
+  SwipeRefreshListScreen(
+    items = items,
+    isLoading = isLoading,
+    isRefreshing = syncState.isSyncing,
+    onRefresh = {
+      if (syncState.showSync) {
+        syncState.onSync()
+      }
+    },
+    modifier = modifier.fillMaxSize(),
+    emptyMessage = emptyState.message,
+    emptyIcon = emptyState.icon,
+    key = itemKey,
+    scrollbarStyle = if (indexedScrollbar) {
+      PagingScrollbarStyle.Indexed
+    } else {
+      PagingScrollbarStyle.Standard
+    },
+    indexLabel = indexLabel,
+    itemContent = itemContent
+  )
 }

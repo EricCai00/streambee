@@ -12,7 +12,6 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -20,12 +19,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
+import coil3.size.Size
 import com.kelsos.mbrc.core.common.data.ConnectionSettings
 import com.kelsos.mbrc.core.common.utilities.coroutines.AppCoroutineDispatchers
 import com.kelsos.mbrc.core.networking.DefaultConnectionProvider
@@ -33,42 +34,51 @@ import java.nio.charset.StandardCharsets
 import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
 
-/** Displays MusicBee's local artist picture, falling back to the person icon. */
+/** Resolves the MusicBee connection once for the containing artist list. */
 @Composable
-fun ArtistPicture(artist: String, modifier: Modifier = Modifier, size: Dp = 48.dp) {
-  if (LocalInspectionMode.current) {
-    ArtistPictureFallback(modifier = modifier.size(size))
-    return
-  }
-
+fun rememberDefaultArtistPictureConnection(): ConnectionSettings? {
   val connectionProvider: DefaultConnectionProvider = koinInject()
   val dispatchers: AppCoroutineDispatchers = koinInject()
-  val connection by produceState<ConnectionSettings?>(
+  return produceState<ConnectionSettings?>(
     initialValue = null,
     key1 = connectionProvider,
     key2 = dispatchers
   ) {
     value = withContext(dispatchers.database) { connectionProvider.getDefault() }
+  }.value
+}
+
+/** Displays MusicBee's local artist picture, falling back to the person icon. */
+@Composable
+fun ArtistPicture(
+  artist: String,
+  modifier: Modifier = Modifier,
+  size: Dp = 48.dp,
+  connection: ConnectionSettings? = null
+) {
+  if (LocalInspectionMode.current) {
+    ArtistPictureFallback(modifier = modifier.size(size))
+    return
   }
-  val currentConnection = connection
-  val uri = remember(artist, currentConnection) {
-    if (artist.isBlank() || currentConnection == null || currentConnection.port >= MAX_PORT) {
+
+  val uri = remember(artist, connection) {
+    if (artist.isBlank() || connection == null || connection.port >= MAX_PORT) {
       null
     } else {
       val encodedArtist = Base64.encodeToString(
         artist.toByteArray(StandardCharsets.UTF_8),
         Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
       )
-      val host = if (currentConnection.address.contains(':') &&
-        !currentConnection.address.startsWith("[")
+      val host = if (connection.address.contains(':') &&
+        !connection.address.startsWith("[")
       ) {
-        "[${currentConnection.address}]"
+        "[${connection.address}]"
       } else {
-        currentConnection.address
+        connection.address
       }
       Uri.Builder()
         .scheme("http")
-        .encodedAuthority("$host:${currentConnection.port + 1}")
+        .encodedAuthority("$host:${connection.port + 1}")
         .appendPath("artist")
         .appendPath(encodedArtist)
         .build()
@@ -81,9 +91,12 @@ fun ArtistPicture(artist: String, modifier: Modifier = Modifier, size: Dp = 48.d
   }
 
   val context = LocalContext.current
-  val request = remember(context, uri) {
+  val density = LocalDensity.current
+  val sizePx = with(density) { size.roundToPx() }
+  val request = remember(context, uri, sizePx) {
     ImageRequest.Builder(context)
       .data(uri)
+      .size(Size(sizePx, sizePx))
       .memoryCachePolicy(CachePolicy.ENABLED)
       .diskCachePolicy(CachePolicy.ENABLED)
       .build()

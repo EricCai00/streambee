@@ -36,11 +36,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kelsos.mbrc.core.common.state.AppStateFlow
 import com.kelsos.mbrc.core.data.library.track.Track
 import com.kelsos.mbrc.core.ui.R as CoreUiR
+import com.kelsos.mbrc.core.ui.compose.AddToPlaylistDialog
 import com.kelsos.mbrc.core.ui.compose.DoubleLineRow
 import com.kelsos.mbrc.core.ui.compose.EmptyScreen
 import com.kelsos.mbrc.core.ui.compose.LoadingScreen
 import com.kelsos.mbrc.core.ui.compose.NavigationIconType
 import com.kelsos.mbrc.core.ui.compose.ScreenScaffold
+import com.kelsos.mbrc.core.ui.compose.TrackNavigationMenuItems
 import com.kelsos.mbrc.core.ui.compose.TrackPositionIndicator
 import com.kelsos.mbrc.feature.content.R
 import com.kelsos.mbrc.feature.content.playlists.PlaylistDetailViewModel
@@ -58,6 +60,7 @@ fun PlaylistDetailScreen(
   onNavigateToPlayer: () -> Unit,
   onNavigateToAlbum: (album: String, artist: String) -> Unit,
   onNavigateToArtist: (artist: String) -> Unit,
+  onNavigateToGenre: (genre: String) -> Unit,
   snackbarHostState: SnackbarHostState,
   modifier: Modifier = Modifier,
   viewModel: PlaylistDetailViewModel = koinViewModel()
@@ -111,7 +114,8 @@ fun PlaylistDetailScreen(
               isStarting = startingTrackIndex == index,
               onClick = { viewModel.play(index) },
               onNavigateToAlbum = onNavigateToAlbum,
-              onNavigateToArtist = onNavigateToArtist
+              onNavigateToArtist = onNavigateToArtist,
+              onNavigateToGenre = onNavigateToGenre
             )
           }
         }
@@ -132,9 +136,11 @@ private fun PlaylistTrackRow(
   isStarting: Boolean,
   onClick: () -> Unit,
   onNavigateToAlbum: (album: String, artist: String) -> Unit,
-  onNavigateToArtist: (artist: String) -> Unit
+  onNavigateToArtist: (artist: String) -> Unit,
+  onNavigateToGenre: (genre: String) -> Unit
 ) {
   var menuExpanded by remember { mutableStateOf(false) }
+  var showAddToPlaylist by remember { mutableStateOf(false) }
   val title = track.title.ifEmpty { stringResource(R.string.unknown_title) }
   val artist = track.artist.ifEmpty { stringResource(R.string.unknown_artist) }
   val album = track.album.ifEmpty { stringResource(R.string.unknown_album) }
@@ -182,20 +188,31 @@ private fun PlaylistTrackRow(
             expanded = menuExpanded,
             onDismissRequest = { menuExpanded = false }
           ) {
-            DropdownMenuItem(
-              text = { Text(stringResource(R.string.playlist_go_to_album)) },
-              onClick = {
-                menuExpanded = false
-                if (track.album.isNotBlank()) {
-                  onNavigateToAlbum(track.album, track.albumArtist.ifBlank { track.artist })
+            TrackNavigationMenuItems(
+              onGoToAlbum = track.album.takeIf(String::isNotBlank)?.let { albumName ->
+                {
+                  menuExpanded = false
+                  onNavigateToAlbum(albumName, track.albumArtist.ifBlank { track.artist })
+                }
+              },
+              onGoToArtist = track.artist.takeIf(String::isNotBlank)?.let { artistName ->
+                {
+                  menuExpanded = false
+                  onNavigateToArtist(artistName)
+                }
+              },
+              onGoToGenre = track.genre.takeIf(String::isNotBlank)?.let { genreName ->
+                {
+                  menuExpanded = false
+                  onNavigateToGenre(genreName)
                 }
               }
             )
             DropdownMenuItem(
-              text = { Text(stringResource(R.string.playlist_go_to_artist)) },
+              text = { Text(stringResource(CoreUiR.string.add_to_playlist)) },
               onClick = {
                 menuExpanded = false
-                onNavigateToArtist(track.albumArtist.ifBlank { track.artist })
+                showAddToPlaylist = true
               }
             )
           }
@@ -203,4 +220,11 @@ private fun PlaylistTrackRow(
       }
     }
   )
+
+  if (showAddToPlaylist) {
+    AddToPlaylistDialog(
+      trackPath = track.src,
+      onDismiss = { showAddToPlaylist = false }
+    )
+  }
 }

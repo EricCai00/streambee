@@ -34,15 +34,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.kelsos.mbrc.core.common.data.ConnectionSettings
 import com.kelsos.mbrc.core.data.library.album.Album
 import com.kelsos.mbrc.core.data.library.artist.Artist
 import com.kelsos.mbrc.core.data.library.genre.Genre
 import com.kelsos.mbrc.core.data.library.genre.GenreCategory
 import com.kelsos.mbrc.core.data.library.track.Track
 import com.kelsos.mbrc.core.queue.Queue
+import com.kelsos.mbrc.core.ui.R as CoreUiR
+import com.kelsos.mbrc.core.ui.compose.AddToPlaylistDialog
 import com.kelsos.mbrc.core.ui.compose.DoubleLineRow
 import com.kelsos.mbrc.core.ui.compose.MoreOptionsButton
 import com.kelsos.mbrc.core.ui.compose.SingleLineRow
+import com.kelsos.mbrc.core.ui.compose.TrackNavigationMenuItems
 import com.kelsos.mbrc.core.ui.compose.TrackPositionIndicator
 import com.kelsos.mbrc.feature.library.R
 
@@ -109,7 +113,8 @@ fun ArtistListItem(
   artist: Artist,
   onClick: () -> Unit,
   onQueue: (Queue) -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
+  artistPictureConnection: ConnectionSettings? = null
 ) {
   var menuExpanded by remember { mutableStateOf(false) }
 
@@ -119,7 +124,10 @@ fun ArtistListItem(
     onLongClick = { menuExpanded = true },
     modifier = modifier,
     leadingContent = {
-      ArtistPicture(artist = artist.artist)
+      ArtistPicture(
+        artist = artist.artist,
+        connection = artistPictureConnection
+      )
     },
     trailingContent = {
       Box(modifier = Modifier.wrapContentSize(Alignment.TopEnd)) {
@@ -286,16 +294,36 @@ fun TrackListItem(
   track: Track,
   onClick: () -> Unit,
   onQueue: (Queue) -> Unit,
+  onNavigateToAlbum: ((album: String, artist: String) -> Unit)? = null,
+  onNavigateToArtist: ((artist: String) -> Unit)? = null,
+  onNavigateToGenre: ((genre: String) -> Unit)? = null,
   modifier: Modifier = Modifier,
   showCover: Boolean = true,
   showAlbum: Boolean = true,
-  showExtendedActions: Boolean = true,
+  showNavigationActions: Boolean = true,
   trackNumber: Int? = null,
   isPlaying: Boolean = false
 ) {
   var menuExpanded by remember { mutableStateOf(false) }
+  var addToPlaylist by remember { mutableStateOf(false) }
   val title = track.title.ifEmpty { stringResource(R.string.unknown_title) }
   val artist = track.artist.ifEmpty { stringResource(R.string.unknown_artist) }
+  val albumArtist = track.albumArtist.ifBlank { track.artist }
+  val goToAlbum: (() -> Unit)? = if (track.album.isNotBlank() && onNavigateToAlbum != null) {
+    { onNavigateToAlbum(track.album, albumArtist) }
+  } else {
+    null
+  }
+  val goToArtist: (() -> Unit)? = if (track.artist.isNotBlank() && onNavigateToArtist != null) {
+    { onNavigateToArtist(track.artist) }
+  } else {
+    null
+  }
+  val goToGenre: (() -> Unit)? = if (track.genre.isNotBlank() && onNavigateToGenre != null) {
+    { onNavigateToGenre(track.genre) }
+  } else {
+    null
+  }
   val subtitle = if (showAlbum) {
     val album = track.album.ifEmpty { stringResource(R.string.unknown_album) }
     "$artist - $album"
@@ -346,12 +374,23 @@ fun TrackListItem(
             expanded = menuExpanded,
             onDismiss = { menuExpanded = false },
             onQueue = onQueue,
-            showExtendedActions = showExtendedActions
+            onAddToPlaylist = { addToPlaylist = true },
+            showNavigationActions = showNavigationActions,
+            onGoToAlbum = goToAlbum,
+            onGoToArtist = goToArtist,
+            onGoToGenre = goToGenre
           )
         }
       }
     }
   )
+
+  if (addToPlaylist) {
+    AddToPlaylistDialog(
+      trackPath = track.src,
+      onDismiss = { addToPlaylist = false }
+    )
+  }
 }
 
 @Composable
@@ -359,25 +398,35 @@ private fun TrackItemMenu(
   expanded: Boolean,
   onDismiss: () -> Unit,
   onQueue: (Queue) -> Unit,
-  showExtendedActions: Boolean
+  onAddToPlaylist: () -> Unit,
+  showNavigationActions: Boolean,
+  onGoToAlbum: (() -> Unit)?,
+  onGoToArtist: (() -> Unit)?,
+  onGoToGenre: (() -> Unit)?
 ) {
   DropdownMenu(
     expanded = expanded,
     onDismissRequest = onDismiss
   ) {
-    DropdownMenuItem(
-      text = { Text(stringResource(R.string.menu_play)) },
-      onClick = {
-        onDismiss()
-        onQueue(Queue.Now)
-      }
-    )
-    if (showExtendedActions) {
-      DropdownMenuItem(
-        text = { Text(stringResource(R.string.menu_play_on_device)) },
-        onClick = {
-          onDismiss()
-          onQueue(Queue.Local)
+    if (showNavigationActions) {
+      TrackNavigationMenuItems(
+        onGoToAlbum = onGoToAlbum?.let { navigate ->
+          {
+            onDismiss()
+            navigate()
+          }
+        },
+        onGoToArtist = onGoToArtist?.let { navigate ->
+          {
+            onDismiss()
+            navigate()
+          }
+        },
+        onGoToGenre = onGoToGenre?.let { navigate ->
+          {
+            onDismiss()
+            navigate()
+          }
         }
       )
     }
@@ -395,22 +444,13 @@ private fun TrackItemMenu(
         onQueue(Queue.Last)
       }
     )
-    if (showExtendedActions) {
-      DropdownMenuItem(
-        text = { Text(stringResource(R.string.menu_play_artist)) },
-        onClick = {
-          onDismiss()
-          onQueue(Queue.PlayArtist)
-        }
-      )
-      DropdownMenuItem(
-        text = { Text(stringResource(R.string.menu_play_queue_all)) },
-        onClick = {
-          onDismiss()
-          onQueue(Queue.AddAll)
-        }
-      )
-    }
+    DropdownMenuItem(
+      text = { Text(stringResource(CoreUiR.string.add_to_playlist)) },
+      onClick = {
+        onDismiss()
+        onAddToPlaylist()
+      }
+    )
   }
 }
 

@@ -62,7 +62,9 @@ data class TrackDto(
   @Json(name = "year")
   val year: String = "",
   @Json(name = "loved")
-  val loved: Boolean = false
+  val loved: Boolean = false,
+  @Json(name = "language")
+  val language: String = ""
 )
 
 @JsonClass(generateAdapter = true)

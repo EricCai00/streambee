@@ -18,7 +18,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
@@ -39,11 +39,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kelsos.mbrc.core.common.settings.AlbumViewMode
+import com.kelsos.mbrc.core.common.settings.LibraryView
 import com.kelsos.mbrc.core.common.utilities.AppError
 import com.kelsos.mbrc.core.common.utilities.Outcome
 import com.kelsos.mbrc.core.data.library.album.Album
 import com.kelsos.mbrc.core.data.library.artist.Artist
 import com.kelsos.mbrc.core.data.library.genre.GenreCategory
+import com.kelsos.mbrc.core.data.library.grouping.DecadeGroup
+import com.kelsos.mbrc.core.data.library.grouping.LanguageGroup
 import com.kelsos.mbrc.core.ui.compose.ActionItem
 import com.kelsos.mbrc.core.ui.compose.DynamicScreenScaffold
 import com.kelsos.mbrc.core.ui.compose.MenuItem
@@ -54,7 +57,9 @@ import com.kelsos.mbrc.feature.library.albums.BrowseAlbumViewModel
 import com.kelsos.mbrc.feature.library.compose.tabs.AlbumsTab
 import com.kelsos.mbrc.feature.library.compose.tabs.ArtistsTab
 import com.kelsos.mbrc.feature.library.compose.tabs.GenresTab
+import com.kelsos.mbrc.feature.library.compose.tabs.LanguagesTab
 import com.kelsos.mbrc.feature.library.compose.tabs.TracksTab
+import com.kelsos.mbrc.feature.library.compose.tabs.YearsTab
 import com.kelsos.mbrc.feature.library.data.LibraryStats
 import com.kelsos.mbrc.feature.library.domain.LibrarySyncProgress
 import com.kelsos.mbrc.feature.library.ui.LibraryUiEvent
@@ -68,6 +73,9 @@ fun LibraryScreen(
   onNavigateToCategoryGenres: (GenreCategory) -> Unit,
   onNavigateToArtistAlbums: (Artist) -> Unit,
   onNavigateToAlbumTracks: (Album) -> Unit,
+  onNavigateToGenre: (String) -> Unit,
+  onNavigateToDecadeYears: (DecadeGroup) -> Unit,
+  onNavigateToLanguageCategories: (LanguageGroup) -> Unit,
   onNavigateToPlayer: () -> Unit,
   snackbarHostState: SnackbarHostState,
   modifier: Modifier = Modifier,
@@ -113,8 +121,17 @@ fun LibraryScreen(
   val indexedScrollbar by viewModel.indexedScrollbar.collectAsStateWithLifecycle(
     initialValue = true
   )
+  val enabledViews by viewModel.enabledLibraryViews.collectAsStateWithLifecycle(
+    initialValue = LibraryView.DEFAULT
+  )
+  val tabs = remember(enabledViews) { LibraryTab.enabled(enabledViews) }
 
-  val pagerState = rememberPagerState(pageCount = { LibraryTab.entries.size })
+  val pagerState = rememberPagerState(pageCount = { tabs.size })
+  LaunchedEffect(tabs) {
+    if (pagerState.currentPage > tabs.lastIndex) {
+      pagerState.scrollToPage(tabs.lastIndex)
+    }
+  }
 
   // String resources for menu items and scaffold configuration
   val searchPlaceholder = stringResource(R.string.library_search_hint)
@@ -191,7 +208,7 @@ fun LibraryScreen(
   val sortDescription = stringResource(R.string.sort_button_description)
   val viewModeDescription = stringResource(R.string.album_view_mode_description)
   val syncDescription = stringResource(R.string.library_action__sync)
-  val isAlbumsTab = pagerState.currentPage == LibraryTab.ALBUMS.ordinal
+  val isAlbumsTab = tabs.getOrNull(pagerState.currentPage) == LibraryTab.ALBUMS
   val actionItems = remember(isSearchActive, syncProgress.running, isAlbumsTab, isGridMode) {
     if (!isSearchActive && !syncProgress.running) {
       buildList {
@@ -252,6 +269,7 @@ fun LibraryScreen(
   ) { paddingValues ->
     LibraryContent(
       pagerState = pagerState,
+      tabs = tabs,
       snackbarHostState = snackbarHostState,
       isSyncing = syncProgress.running,
       showSortSheet = showSortSheet,
@@ -263,6 +281,9 @@ fun LibraryScreen(
       onNavigateToCategoryGenres = onNavigateToCategoryGenres,
       onNavigateToArtistAlbums = onNavigateToArtistAlbums,
       onNavigateToAlbumTracks = onNavigateToAlbumTracks,
+      onNavigateToGenre = onNavigateToGenre,
+      onNavigateToDecadeYears = onNavigateToDecadeYears,
+      onNavigateToLanguageCategories = onNavigateToLanguageCategories,
       onNavigateToPlayer = onNavigateToPlayer,
       onSync = { viewModel.sync() },
       onTabClick = { index -> scope.launch { pagerState.animateScrollToPage(index) } },
@@ -353,6 +374,7 @@ private fun buildSyncCompleteMessage(
 @Composable
 private fun LibraryContent(
   pagerState: PagerState,
+  tabs: List<LibraryTab>,
   snackbarHostState: SnackbarHostState,
   isSyncing: Boolean,
   showSortSheet: Boolean,
@@ -364,14 +386,19 @@ private fun LibraryContent(
   onNavigateToCategoryGenres: (GenreCategory) -> Unit,
   onNavigateToArtistAlbums: (Artist) -> Unit,
   onNavigateToAlbumTracks: (Album) -> Unit,
+  onNavigateToGenre: (String) -> Unit,
+  onNavigateToDecadeYears: (DecadeGroup) -> Unit,
+  onNavigateToLanguageCategories: (LanguageGroup) -> Unit,
   onNavigateToPlayer: () -> Unit,
   onSync: () -> Unit,
   onTabClick: (Int) -> Unit,
   modifier: Modifier = Modifier
 ) {
   Column(modifier = modifier.fillMaxSize()) {
-    PrimaryTabRow(selectedTabIndex = pagerState.currentPage) {
-      LibraryTab.entries.forEachIndexed { index, tab ->
+    PrimaryScrollableTabRow(
+      selectedTabIndex = pagerState.currentPage.coerceAtMost(tabs.lastIndex)
+    ) {
+      tabs.forEachIndexed { index, tab ->
         Tab(
           selected = pagerState.currentPage == index,
           onClick = { onTabClick(index) },
@@ -386,7 +413,7 @@ private fun LibraryContent(
       modifier = Modifier.weight(1f)
     ) { page ->
       LibraryTabPage(
-        tab = LibraryTab.entries[page],
+        tab = tabs[page],
         snackbarHostState = snackbarHostState,
         isSyncing = isSyncing,
         showSortSheet = showSortSheet && pagerState.currentPage == page,
@@ -398,6 +425,9 @@ private fun LibraryContent(
         onNavigateToCategoryGenres = onNavigateToCategoryGenres,
         onNavigateToArtistAlbums = onNavigateToArtistAlbums,
         onNavigateToAlbumTracks = onNavigateToAlbumTracks,
+        onNavigateToGenre = onNavigateToGenre,
+        onNavigateToDecadeYears = onNavigateToDecadeYears,
+        onNavigateToLanguageCategories = onNavigateToLanguageCategories,
         onSync = onSync
       )
     }
@@ -423,6 +453,9 @@ private fun LibraryTabPage(
   onNavigateToCategoryGenres: (GenreCategory) -> Unit,
   onNavigateToArtistAlbums: (Artist) -> Unit,
   onNavigateToAlbumTracks: (Album) -> Unit,
+  onNavigateToGenre: (String) -> Unit,
+  onNavigateToDecadeYears: (DecadeGroup) -> Unit,
+  onNavigateToLanguageCategories: (LanguageGroup) -> Unit,
   onSync: () -> Unit
 ) {
   when (tab) {
@@ -464,6 +497,29 @@ private fun LibraryTabPage(
       isSyncing = isSyncing,
       showSortSheet = showSortSheet,
       indexedScrollbar = indexedScrollbar,
+      onNavigateToAlbumTracks = onNavigateToAlbumTracks,
+      onNavigateToArtistAlbums = onNavigateToArtistAlbums,
+      onNavigateToGenre = onNavigateToGenre,
+      onDismissSortSheet = onDismissSortSheet,
+      onSync = onSync
+    )
+
+    LibraryTab.YEARS -> YearsTab(
+      snackbarHostState = snackbarHostState,
+      isSyncing = isSyncing,
+      showSortSheet = showSortSheet,
+      indexedScrollbar = indexedScrollbar,
+      onNavigateToDecadeYears = onNavigateToDecadeYears,
+      onDismissSortSheet = onDismissSortSheet,
+      onSync = onSync
+    )
+
+    LibraryTab.LANGUAGES -> LanguagesTab(
+      snackbarHostState = snackbarHostState,
+      isSyncing = isSyncing,
+      showSortSheet = showSortSheet,
+      indexedScrollbar = indexedScrollbar,
+      onNavigateToLanguageCategories = onNavigateToLanguageCategories,
       onDismissSortSheet = onDismissSortSheet,
       onSync = onSync
     )

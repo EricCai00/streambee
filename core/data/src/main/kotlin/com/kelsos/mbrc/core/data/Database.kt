@@ -11,6 +11,7 @@ import com.kelsos.mbrc.core.data.library.artist.ArtistDao
 import com.kelsos.mbrc.core.data.library.artist.ArtistEntity
 import com.kelsos.mbrc.core.data.library.genre.GenreDao
 import com.kelsos.mbrc.core.data.library.genre.GenreEntity
+import com.kelsos.mbrc.core.data.library.grouping.LibraryGroupingDao
 import com.kelsos.mbrc.core.data.library.track.TrackDao
 import com.kelsos.mbrc.core.data.library.track.TrackEntity
 import com.kelsos.mbrc.core.data.nowplaying.NowPlayingDao
@@ -39,6 +40,8 @@ import com.kelsos.mbrc.core.data.settings.ConnectionSettingsEntity
 abstract class Database : RoomDatabase() {
   abstract fun genreDao(): GenreDao
 
+  abstract fun libraryGroupingDao(): LibraryGroupingDao
+
   abstract fun artistDao(): ArtistDao
 
   abstract fun albumDao(): AlbumDao
@@ -56,7 +59,7 @@ abstract class Database : RoomDatabase() {
   abstract fun playbackHistoryDao(): PlaybackHistoryDao
 
   companion object {
-    const val VERSION = 8
+    const val VERSION = 9
     const val NAME = "cache.db"
   }
 }

@@ -4,6 +4,7 @@ import com.kelsos.mbrc.core.common.playback.LocalPlaybackController
 import com.kelsos.mbrc.core.data.library.album.AlbumRepository
 import com.kelsos.mbrc.core.data.library.artist.ArtistRepository
 import com.kelsos.mbrc.core.data.library.genre.GenreRepository
+import com.kelsos.mbrc.core.data.library.grouping.LibraryGroupingRepository
 import com.kelsos.mbrc.core.data.library.track.TrackRepository
 import com.kelsos.mbrc.core.queue.PathQueueUseCase
 import com.kelsos.mbrc.feature.library.albums.AlbumRepositoryImpl
@@ -23,6 +24,12 @@ import com.kelsos.mbrc.feature.library.domain.LibrarySyncWorker
 import com.kelsos.mbrc.feature.library.genres.BrowseGenreViewModel
 import com.kelsos.mbrc.feature.library.genres.CategoryGenresViewModel
 import com.kelsos.mbrc.feature.library.genres.GenreRepositoryImpl
+import com.kelsos.mbrc.feature.library.grouping.BrowseLanguageViewModel
+import com.kelsos.mbrc.feature.library.grouping.BrowseYearViewModel
+import com.kelsos.mbrc.feature.library.grouping.DecadeYearsViewModel
+import com.kelsos.mbrc.feature.library.grouping.GroupedAlbumsViewModel
+import com.kelsos.mbrc.feature.library.grouping.LanguageCategoriesViewModel
+import com.kelsos.mbrc.feature.library.grouping.LibraryGroupingRepositoryImpl
 import com.kelsos.mbrc.feature.library.history.PlaybackHistoryViewModel
 import com.kelsos.mbrc.feature.library.playback.DevicePlaybackController
 import com.kelsos.mbrc.feature.library.queue.QueueHandler
@@ -53,6 +60,7 @@ import org.koin.dsl.module
 val libraryModule = module {
   // Repositories
   singleOf(::GenreRepositoryImpl) { bind<GenreRepository>() }
+  singleOf(::LibraryGroupingRepositoryImpl) { bind<LibraryGroupingRepository>() }
   singleOf(::ArtistRepositoryImpl) { bind<ArtistRepository>() }
   singleOf(::AlbumRepositoryImpl) { bind<AlbumRepository>() }
   singleOf(::TrackRepositoryImpl) { bind<TrackRepository>() }
@@ -72,6 +80,11 @@ val libraryModule = module {
   singleOf(::LibrarySearchModel)
   viewModelOf(::LibraryViewModel)
   viewModelOf(::BrowseGenreViewModel)
+  viewModelOf(::BrowseYearViewModel)
+  viewModelOf(::BrowseLanguageViewModel)
+  viewModelOf(::DecadeYearsViewModel)
+  viewModelOf(::LanguageCategoriesViewModel)
+  viewModelOf(::GroupedAlbumsViewModel)
   viewModelOf(::CategoryGenresViewModel)
   viewModelOf(::BrowseArtistViewModel)
   viewModelOf(::BrowseAlbumViewModel)

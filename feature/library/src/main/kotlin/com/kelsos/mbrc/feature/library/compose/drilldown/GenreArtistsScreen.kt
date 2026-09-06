@@ -17,7 +17,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.paging.compose.collectAsLazyPagingItems
 import com.kelsos.mbrc.core.common.settings.ArtistSortField
 import com.kelsos.mbrc.core.common.settings.ArtistSortPreference
 import com.kelsos.mbrc.core.common.settings.SortOrder
@@ -27,16 +26,19 @@ import com.kelsos.mbrc.core.data.library.artist.Artist
 import com.kelsos.mbrc.core.queue.Queue
 import com.kelsos.mbrc.core.ui.compose.ActionItem
 import com.kelsos.mbrc.core.ui.compose.NavigationIconType
-import com.kelsos.mbrc.core.ui.compose.PagingListScreen
+import com.kelsos.mbrc.core.ui.compose.PagingScrollbarStyle
 import com.kelsos.mbrc.core.ui.compose.QueueResultEffect
 import com.kelsos.mbrc.core.ui.compose.ScreenScaffold
+import com.kelsos.mbrc.core.ui.compose.StaticListScreen
 import com.kelsos.mbrc.feature.library.R
 import com.kelsos.mbrc.feature.library.artists.ArtistUiMessage
 import com.kelsos.mbrc.feature.library.artists.GenreArtistsViewModel
 import com.kelsos.mbrc.feature.library.compose.SortBottomSheet
 import com.kelsos.mbrc.feature.library.compose.SortOption
 import com.kelsos.mbrc.feature.library.compose.components.ArtistListItem
+import com.kelsos.mbrc.feature.library.compose.components.rememberDefaultArtistPictureConnection
 import com.kelsos.mbrc.feature.minicontrol.MiniControl
+import com.kelsos.mbrc.feature.library.compose.tabs.alphabeticIndexLabel
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import org.koin.androidx.compose.koinViewModel
@@ -56,10 +58,11 @@ fun GenreArtistsScreen(
   modifier: Modifier = Modifier,
   viewModel: GenreArtistsViewModel = koinViewModel()
 ) {
-  val artists = viewModel.artists.collectAsLazyPagingItems()
+  val artists by viewModel.artists.collectAsStateWithLifecycle()
   val sortPreference by viewModel.sortPreference.collectAsStateWithLifecycle(
     initialValue = SortOrder.ASC
   )
+  val artistPictureConnection = rememberDefaultArtistPictureConnection()
   var showSortSheet by rememberSaveable { mutableStateOf(false) }
 
   // Load genre artists
@@ -105,17 +108,21 @@ fun GenreArtistsScreen(
     modifier = modifier
   ) { paddingValues ->
     Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-      PagingListScreen(
-        items = artists,
+      StaticListScreen(
+        items = artists.orEmpty(),
+        isLoading = artists == null,
         modifier = Modifier.weight(1f),
         emptyMessage = stringResource(R.string.artists_list_empty),
         emptyIcon = Icons.Default.Person,
-        key = { it.id }
+        key = { it.id },
+        scrollbarStyle = PagingScrollbarStyle.Indexed,
+        indexLabel = { artist -> alphabeticIndexLabel(artist.artist, ignoreLeadingThe = true) }
       ) { artist ->
         ArtistListItem(
           artist = artist,
           onClick = { viewModel.queue(Queue.Default, artist) },
-          onQueue = { queue -> viewModel.queue(queue, artist) }
+          onQueue = { queue -> viewModel.queue(queue, artist) },
+          artistPictureConnection = artistPictureConnection
         )
       }
 

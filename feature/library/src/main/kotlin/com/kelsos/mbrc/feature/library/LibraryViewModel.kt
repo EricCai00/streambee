@@ -35,6 +35,8 @@ class LibraryViewModel(
 
   val indexedScrollbar: Flow<Boolean> = librarySettings.indexedLibraryScrollbarFlow
 
+  val enabledLibraryViews = librarySettings.enabledLibraryViewsFlow
+
   fun search(string: String = "") {
     viewModelScope.launch {
       searchModel.setTerm(string)

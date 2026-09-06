@@ -1,0 +1,221 @@
+package com.kelsos.mbrc.feature.library.compose.drilldown
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.automirrored.filled.ViewList
+import androidx.compose.material.icons.filled.Album
+import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.compose.collectAsLazyPagingItems
+import com.kelsos.mbrc.core.common.settings.AlbumSortField
+import com.kelsos.mbrc.core.common.settings.AlbumSortPreference
+import com.kelsos.mbrc.core.common.settings.AlbumViewMode
+import com.kelsos.mbrc.core.common.settings.SortOrder
+import com.kelsos.mbrc.core.common.settings.SortPreference
+import com.kelsos.mbrc.core.common.utilities.AppError
+import com.kelsos.mbrc.core.common.utilities.Outcome
+import com.kelsos.mbrc.core.data.library.album.Album
+import com.kelsos.mbrc.core.queue.Queue
+import com.kelsos.mbrc.core.ui.compose.ActionItem
+import com.kelsos.mbrc.core.ui.compose.NavigationIconType
+import com.kelsos.mbrc.core.ui.compose.PagingGridScreen
+import com.kelsos.mbrc.core.ui.compose.PagingListScreen
+import com.kelsos.mbrc.core.ui.compose.QueueResultEffect
+import com.kelsos.mbrc.core.ui.compose.ScreenScaffold
+import com.kelsos.mbrc.feature.library.R
+import com.kelsos.mbrc.feature.library.albums.AlbumUiMessage
+import com.kelsos.mbrc.feature.library.compose.SortBottomSheet
+import com.kelsos.mbrc.feature.library.compose.SortOption
+import com.kelsos.mbrc.feature.library.compose.components.AlbumGridItem
+import com.kelsos.mbrc.feature.library.compose.components.AlbumListItem
+import com.kelsos.mbrc.feature.library.grouping.GroupedAlbumFilter
+import com.kelsos.mbrc.feature.library.grouping.GroupedAlbumsViewModel
+import com.kelsos.mbrc.feature.minicontrol.MiniControl
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.map
+import org.koin.androidx.compose.koinViewModel
+
+private val albumSortOptions = listOf(
+  SortOption(AlbumSortField.NAME, R.string.sort_by_name),
+  SortOption(AlbumSortField.ARTIST, R.string.sort_by_artist),
+  SortOption(AlbumSortField.YEAR, R.string.sort_by_year)
+)
+
+@Composable
+fun YearAlbumsScreen(
+  year: String,
+  onNavigateBack: () -> Unit,
+  onNavigateToAlbumTracks: (Album) -> Unit,
+  onNavigateToPlayer: () -> Unit,
+  snackbarHostState: SnackbarHostState,
+  modifier: Modifier = Modifier,
+  viewModel: GroupedAlbumsViewModel = koinViewModel()
+) {
+  GroupedAlbumsScreen(
+    title = year.ifBlank { stringResource(R.string.unknown_year) },
+    filter = GroupedAlbumFilter.Year(year),
+    onNavigateBack = onNavigateBack,
+    onNavigateToAlbumTracks = onNavigateToAlbumTracks,
+    onNavigateToPlayer = onNavigateToPlayer,
+    snackbarHostState = snackbarHostState,
+    modifier = modifier,
+    viewModel = viewModel
+  )
+}
+
+@Composable
+fun LanguageCategoryAlbumsScreen(
+  language: String,
+  category: String,
+  onNavigateBack: () -> Unit,
+  onNavigateToAlbumTracks: (Album) -> Unit,
+  onNavigateToPlayer: () -> Unit,
+  snackbarHostState: SnackbarHostState,
+  modifier: Modifier = Modifier,
+  viewModel: GroupedAlbumsViewModel = koinViewModel()
+) {
+  GroupedAlbumsScreen(
+    title = category.ifBlank { stringResource(R.string.unknown_genre_category) },
+    filter = GroupedAlbumFilter.LanguageCategory(language, category),
+    onNavigateBack = onNavigateBack,
+    onNavigateToAlbumTracks = onNavigateToAlbumTracks,
+    onNavigateToPlayer = onNavigateToPlayer,
+    snackbarHostState = snackbarHostState,
+    modifier = modifier,
+    viewModel = viewModel
+  )
+}
+
+@Composable
+private fun GroupedAlbumsScreen(
+  title: String,
+  filter: GroupedAlbumFilter,
+  onNavigateBack: () -> Unit,
+  onNavigateToAlbumTracks: (Album) -> Unit,
+  onNavigateToPlayer: () -> Unit,
+  snackbarHostState: SnackbarHostState,
+  modifier: Modifier,
+  viewModel: GroupedAlbumsViewModel
+) {
+  val albums = viewModel.albums.collectAsLazyPagingItems()
+  val sortPreference by viewModel.sortPreference.collectAsStateWithLifecycle(
+    initialValue = SortPreference(AlbumSortField.YEAR, SortOrder.DESC)
+  )
+  val albumViewMode by viewModel.albumViewMode.collectAsStateWithLifecycle(
+    initialValue = AlbumViewMode.AUTO
+  )
+  val albumListPlayButtonEnabled by
+    viewModel.albumListPlayButtonEnabled.collectAsStateWithLifecycle(initialValue = true)
+  val albumGridPlayButtonEnabled by
+    viewModel.albumGridPlayButtonEnabled.collectAsStateWithLifecycle(initialValue = false)
+  val screenWidthDp = with(LocalDensity.current) {
+    LocalWindowInfo.current.containerSize.width.toDp()
+  }
+  val isGridMode = albumViewMode.isGrid(screenWidthDp.value.toInt())
+  var showSortSheet by rememberSaveable { mutableStateOf(false) }
+
+  LaunchedEffect(filter) { viewModel.load(filter) }
+  LaunchedEffect(Unit) {
+    viewModel.events.filterIsInstance<AlbumUiMessage.OpenAlbumTracks>().collect { event ->
+      onNavigateToAlbumTracks(event.album)
+    }
+  }
+
+  val queueResults = remember {
+    viewModel.events.map { event ->
+      when (event) {
+        is AlbumUiMessage.QueueSuccess -> Outcome.Success(event.tracksCount)
+        is AlbumUiMessage.QueueFailed -> Outcome.Failure(AppError.OperationFailed)
+        is AlbumUiMessage.NetworkUnavailable -> Outcome.Failure(AppError.NetworkUnavailable)
+        else -> null
+      }
+    }.filterIsInstance<Outcome<Int>>()
+  }
+  QueueResultEffect(queueResults = queueResults, snackbarHostState = snackbarHostState)
+
+  ScreenScaffold(
+    title = title,
+    snackbarHostState = snackbarHostState,
+    navigationIcon = NavigationIconType.Back(onNavigateBack),
+    actionItems = listOf(
+      ActionItem(
+        icon = if (isGridMode) Icons.AutoMirrored.Filled.ViewList else Icons.Default.GridView,
+        contentDescription = stringResource(R.string.album_view_mode_description),
+        onClick = viewModel::toggleViewMode
+      ),
+      ActionItem(
+        icon = Icons.AutoMirrored.Filled.Sort,
+        contentDescription = stringResource(R.string.sort_button_description),
+        onClick = { showSortSheet = true }
+      )
+    ),
+    modifier = modifier
+  ) { paddingValues ->
+    Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+      if (isGridMode) {
+        PagingGridScreen(
+          items = albums,
+          modifier = Modifier.weight(1f),
+          emptyMessage = stringResource(R.string.albums_list_empty),
+          emptyIcon = Icons.Default.Album,
+          key = { it.id }
+        ) { album ->
+          AlbumGridItem(
+            album = album,
+            onClick = { viewModel.queue(Queue.Default, album) },
+            onQueue = { queue -> viewModel.queue(queue, album) },
+            showPlayButton = albumGridPlayButtonEnabled
+          )
+        }
+      } else {
+        PagingListScreen(
+          items = albums,
+          modifier = Modifier.weight(1f),
+          emptyMessage = stringResource(R.string.albums_list_empty),
+          emptyIcon = Icons.Default.Album,
+          key = { it.id }
+        ) { album ->
+          AlbumListItem(
+            album = album,
+            onClick = { viewModel.queue(Queue.Default, album) },
+            onQueue = { queue -> viewModel.queue(queue, album) },
+            showPlayButton = albumListPlayButtonEnabled
+          )
+        }
+      }
+
+      MiniControl(
+        onNavigateToPlayer = onNavigateToPlayer,
+        snackbarHostState = snackbarHostState
+      )
+    }
+  }
+
+  if (showSortSheet) {
+    SortBottomSheet(
+      title = stringResource(R.string.sort_title),
+      options = albumSortOptions,
+      selectedField = sortPreference.field,
+      selectedOrder = sortPreference.order,
+      onSortSelected = { field, order ->
+        viewModel.updateSortPreference(AlbumSortPreference(field, order))
+      },
+      onDismiss = { showSortSheet = false }
+    )
+  }
+}

@@ -5,8 +5,10 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.paging.LoadState
@@ -48,6 +50,35 @@ class NowPlayingScreenTest {
     // PullToRefreshBox requires its child to be vertically scrollable to detect
     // the pull gesture; without it the empty state never triggers refresh.
     composeTestRule.onNode(hasScrollAction()).assertExists()
+  }
+
+  @Test
+  fun `queue track menu shows navigation actions without a redundant play action`() {
+    var genreSelected = false
+    composeTestRule.setContent {
+      NowPlayingTrackItem(
+        track = NowPlaying(
+          id = 1,
+          title = "Track",
+          artist = "Artist",
+          path = "/path/track",
+          position = 1
+        ),
+        isPlaying = false,
+        isDragging = false,
+        onClick = {},
+        onGoToAlbum = {},
+        onGoToArtist = {},
+        onGoToGenre = { genreSelected = true }
+      )
+    }
+
+    composeTestRule.onNodeWithContentDescription("More options").performClick()
+    composeTestRule.onNodeWithText("Go to album").assertIsDisplayed()
+    composeTestRule.onNodeWithText("Go to artist").assertIsDisplayed()
+    composeTestRule.onNodeWithText("Play Now").assertDoesNotExist()
+    composeTestRule.onNodeWithText("Go to genre").assertIsDisplayed().performClick()
+    assertThat(genreSelected).isTrue()
   }
 
   @Test

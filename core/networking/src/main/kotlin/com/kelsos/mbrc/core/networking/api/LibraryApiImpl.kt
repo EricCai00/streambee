@@ -30,4 +30,7 @@ class LibraryApiImpl(private val apiBase: ApiBase) : LibraryApi {
     progress: Progress?
   ): Flow<ResponseWithPayload<AlbumCoverDto, CoverDto>> =
     apiBase.getAll(Protocol.LibraryCover, covers, CoverDto::class, progress)
+
+  override suspend fun getCover(cover: AlbumCoverDto): CoverDto =
+    apiBase.getItem(Protocol.LibraryCover, CoverDto::class, cover)
 }

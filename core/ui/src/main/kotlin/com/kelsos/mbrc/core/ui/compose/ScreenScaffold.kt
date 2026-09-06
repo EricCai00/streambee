@@ -10,12 +10,14 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 
 /**
  * A reusable scaffold composable for screens.
  * Each screen wraps its content with this scaffold to have consistent top bar, FAB, and snackbar.
  *
  * @param title The title to display in the top bar
+ * @param titleFontWeight Optional font weight for the top-bar title
  * @param snackbarHostState The snackbar host state for showing snackbars
  * @param modifier Modifier for the scaffold
  * @param navigationIcon The type of navigation icon (drawer, back, or none)
@@ -37,6 +39,7 @@ fun ScreenScaffold(
   menuItems: List<MenuItem> = emptyList(),
   floatingActionButton: @Composable () -> Unit = {},
   isTransparent: Boolean = false,
+  titleFontWeight: FontWeight? = null,
   content: @Composable (PaddingValues) -> Unit
 ) {
   Scaffold(
@@ -45,6 +48,7 @@ fun ScreenScaffold(
       ScaffoldTopBar(
         state = TopBarState.WithTitle(title),
         navigationIcon = navigationIcon,
+        titleFontWeight = titleFontWeight,
         actionItems = actionItems,
         menuItems = menuItems,
         isTransparent = isTransparent,

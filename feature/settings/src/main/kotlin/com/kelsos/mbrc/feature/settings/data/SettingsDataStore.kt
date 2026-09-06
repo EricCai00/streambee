@@ -8,7 +8,9 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.kelsos.mbrc.core.common.settings.LibraryView
 
 object SettingsDataStore {
   private const val SETTINGS_NAME = "settings"
@@ -60,6 +62,7 @@ object SettingsDataStore {
     val PLUGIN_UPDATE_CHECK = booleanPreferencesKey("plugin_update_check")
     val INCOMING_CALL_ACTION = stringPreferencesKey("incoming_call_action")
     val LIBRARY_TRACK_DEFAULT_ACTION = stringPreferencesKey("mbrc.library_track_default")
+    val ENABLED_LIBRARY_VIEWS = stringSetPreferencesKey("mbrc.library.enabled_views")
     val ALBUM_ARTISTS_ONLY = booleanPreferencesKey("mbrc.settings.album_artist_only")
     val INDEXED_LIBRARY_SCROLLBAR = booleanPreferencesKey("mbrc.library.indexed_scrollbar")
     val ALBUM_LIST_PLAY_BUTTON = booleanPreferencesKey("mbrc.library.album_list_play_button")
@@ -88,6 +91,7 @@ object SettingsDataStore {
     const val PLUGIN_UPDATE_CHECK = false
     const val INCOMING_CALL_ACTION = "none"
     const val LIBRARY_TRACK_DEFAULT_ACTION = "now"
+    val ENABLED_LIBRARY_VIEWS: Set<String> = LibraryView.DEFAULT.mapTo(linkedSetOf()) { it.value }
     const val ALBUM_ARTISTS_ONLY = false
     const val INDEXED_LIBRARY_SCROLLBAR = true
     const val ALBUM_LIST_PLAY_BUTTON = true

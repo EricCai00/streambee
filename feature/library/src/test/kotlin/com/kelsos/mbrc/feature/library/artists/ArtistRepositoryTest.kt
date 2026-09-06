@@ -10,6 +10,7 @@ import com.kelsos.mbrc.core.common.settings.SortOrder
 import com.kelsos.mbrc.core.common.test.testDispatcher
 import com.kelsos.mbrc.core.common.test.testDispatcherModule
 import com.kelsos.mbrc.core.data.Database
+import com.kelsos.mbrc.core.data.library.album.AlbumEntity
 import com.kelsos.mbrc.core.data.library.artist.ArtistDao
 import com.kelsos.mbrc.core.data.library.artist.ArtistEntity
 import com.kelsos.mbrc.core.data.library.artist.ArtistRepository
@@ -438,6 +439,9 @@ class ArtistRepositoryTest : KoinTest {
 
       // Insert test data
       database.trackDao().insertAll(tracks)
+      database.albumDao().insert(
+        listOf(AlbumEntity(artist = albumArtist, album = "Compilation Album"))
+      )
       dao.insertAll(artists)
 
       // When: Get album artists only
@@ -472,6 +476,9 @@ class ArtistRepositoryTest : KoinTest {
             dateAdded = 1000L
           )
         )
+      )
+      database.albumDao().insert(
+        listOf(AlbumEntity(artist = "Artist A; Artist B", album = "Shared Album"))
       )
       dao.insertAll(
         listOf(
@@ -537,6 +544,12 @@ class ArtistRepositoryTest : KoinTest {
 
       // Insert test data
       database.trackDao().insertAll(tracks)
+      database.albumDao().insert(
+        listOf(
+          AlbumEntity(artist = regularAlbumArtist, album = "Regular Album"),
+          AlbumEntity(artist = "Different Album Artist", album = "Different Album")
+        )
+      )
       dao.insertAll(artists)
 
       // When: Get album artists only
@@ -637,6 +650,13 @@ class ArtistRepositoryTest : KoinTest {
 
       // Insert test data
       database.trackDao().insertAll(tracks)
+      database.albumDao().insert(
+        listOf(
+          AlbumEntity(artist = "The Beatles", album = "Album 1"),
+          AlbumEntity(artist = "Bob Dylan", album = "Album 2"),
+          AlbumEntity(artist = "The Who", album = "Album 3")
+        )
+      )
       dao.insertAll(artists)
 
       // When: Get album artists only
@@ -790,6 +810,13 @@ class ArtistRepositoryTest : KoinTest {
         )
 
       database.trackDao().insertAll(tracks)
+      database.albumDao().insert(
+        listOf(
+          AlbumEntity(artist = "The Beatles", album = "Album 1"),
+          AlbumEntity(artist = "Adele", album = "Album 2"),
+          AlbumEntity(artist = "The Who", album = "Album 3")
+        )
+      )
       dao.insertAll(artists)
 
       val result = repository.getAlbumArtistsOnly(SortOrder.ASC).asSnapshot()
@@ -854,6 +881,13 @@ class ArtistRepositoryTest : KoinTest {
         )
 
       database.trackDao().insertAll(tracks)
+      database.albumDao().insert(
+        listOf(
+          AlbumEntity(artist = "The Beatles", album = "Album 1"),
+          AlbumEntity(artist = "Adele", album = "Album 2"),
+          AlbumEntity(artist = "The Who", album = "Album 3")
+        )
+      )
       dao.insertAll(artists)
 
       val result = repository.getAlbumArtistsOnly(SortOrder.DESC).asSnapshot()

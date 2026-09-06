@@ -11,6 +11,7 @@ import com.kelsos.mbrc.core.common.settings.ArtistSortField
 import com.kelsos.mbrc.core.common.settings.ArtistSortPreference
 import com.kelsos.mbrc.core.common.settings.GenreSortField
 import com.kelsos.mbrc.core.common.settings.GenreSortPreference
+import com.kelsos.mbrc.core.common.settings.LibraryView
 import com.kelsos.mbrc.core.common.settings.SortPreference
 import com.kelsos.mbrc.core.common.settings.TrackAction
 import com.kelsos.mbrc.core.common.settings.TrackSortField
@@ -94,6 +95,12 @@ class SettingsManagerDataStore(
   override val indexedLibraryScrollbarFlow: Flow<Boolean> = dataStore.data.map { preferences ->
     preferences[PreferenceKeys.INDEXED_LIBRARY_SCROLLBAR]
       ?: DefaultValues.INDEXED_LIBRARY_SCROLLBAR
+  }
+
+  override val enabledLibraryViewsFlow: Flow<Set<LibraryView>> = dataStore.data.map { prefs ->
+    LibraryView.decode(
+      prefs[PreferenceKeys.ENABLED_LIBRARY_VIEWS] ?: DefaultValues.ENABLED_LIBRARY_VIEWS
+    )
   }
 
   override val albumListPlayButtonFlow: Flow<Boolean> = dataStore.data.map { preferences ->
@@ -195,6 +202,21 @@ class SettingsManagerDataStore(
   override suspend fun setIndexedLibraryScrollbar(enabled: Boolean) {
     dataStore.edit { preferences ->
       preferences[PreferenceKeys.INDEXED_LIBRARY_SCROLLBAR] = enabled
+    }
+  }
+
+  override suspend fun setLibraryViewEnabled(view: LibraryView, enabled: Boolean) {
+    dataStore.edit { preferences ->
+      val current = LibraryView.decode(
+        preferences[PreferenceKeys.ENABLED_LIBRARY_VIEWS] ?: DefaultValues.ENABLED_LIBRARY_VIEWS
+      ).toMutableSet()
+      if (enabled) {
+        current += view
+      } else if (current.size > 1) {
+        current -= view
+      }
+      preferences[PreferenceKeys.ENABLED_LIBRARY_VIEWS] =
+        current.mapTo(linkedSetOf()) { it.value }
     }
   }
 

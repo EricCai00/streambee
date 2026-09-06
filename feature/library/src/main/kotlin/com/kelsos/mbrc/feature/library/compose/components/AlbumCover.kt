@@ -24,19 +24,17 @@ import com.kelsos.mbrc.core.ui.R
 import com.kelsos.mbrc.feature.library.data.CoverCache
 import com.kelsos.mbrc.feature.library.data.HighResolutionCoverCache
 import java.io.File
+import kotlin.coroutines.cancellation.CancellationException
 import okio.ByteString.Companion.encodeUtf8
 import org.koin.compose.koinInject
+import timber.log.Timber
 
 /**
  * Displays an album cover by computing the cover key from artist and album names.
  *
  * Use this version when the cover hash is not available (e.g., for tracks).
- * The key is computed once and Coil handles missing files gracefully by
- * showing the error placeholder.
- *
- * Note: This version does NOT check if the file exists - it lets Coil
- * handle missing files, which is more performant than blocking I/O
- * during composition.
+ * The key is computed once. A missing file is fetched asynchronously and Coil shows the
+ * placeholder until the thumbnail is available.
  *
  * @param artist The artist name
  * @param album The album name
@@ -80,7 +78,14 @@ fun AlbumCoverByKey(
     key
   ) {
     if (value == null) {
-      value = runCatching { coverCache.load(artist, album, key) }.getOrNull()
+      value = try {
+        coverCache.load(artist, album, key)
+      } catch (error: CancellationException) {
+        throw error
+      } catch (error: Exception) {
+        Timber.w(error, "Failed to load album thumbnail for $artist - $album")
+        null
+      }
     }
   }.value
   val sourceFile = loadedFile ?: coverFile

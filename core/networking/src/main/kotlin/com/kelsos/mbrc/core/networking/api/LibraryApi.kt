@@ -23,4 +23,6 @@ interface LibraryApi {
     covers: List<AlbumCoverDto>,
     progress: Progress?
   ): Flow<ResponseWithPayload<AlbumCoverDto, CoverDto>>
+
+  suspend fun getCover(cover: AlbumCoverDto): CoverDto
 }

@@ -1,6 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog>
   <version
+    version="2.4.0-dev1"
+    release="Sep 4, 2026">
+    <feature>Adds an optional Year library view with decade, year, and album drill-down navigation.</feature>
+    <feature>Adds an optional Language library view with language, genre-category, and album drill-down navigation using MusicBee Language metadata.</feature>
+    <feature>Lets you choose which of the six Library views are visible, with the original four views enabled by default.</feature>
+    <feature>Simplifies track menus with album, artist, and genre shortcuts, removes redundant play actions, and uses text-only Queue actions.</feature>
+  </version>
+  <version
+    version="2.3.0"
+    release="Sep 3, 2026">
+    <feature>Adds an Add to playlist action to track menus and playback controls, with playlist changes synchronized to MusicBee.</feature>
+    <feature>Makes the player loved-track heart interactive and synchronizes favorite changes with MusicBee.</feature>
+    <feature>Keeps the playlist chooser backed by the locally cached playlist list so it opens without waiting for a full library reload.</feature>
+  </version>
+  <version
+    version="2.2.0"
+    release="Sep 2, 2026">
+    <feature>Adds a two-tab track-details view with richer MusicBee tags, ratings, playback statistics, and file properties for both remote and phone playback.</feature>
+    <feature>Shows album year and genre in album details, with direct navigation to the album artist and genre.</feature>
+    <feature>Displays MusicBee loved-track hearts as read-only metadata in library, album, and playlist track lists.</feature>
+    <feature>Loads locally available MusicBee artist pictures in the artist list, with an icon fallback when no picture is available.</feature>
+    <feature>Supports semicolon-delimited multiple artists and lets users choose which artist to open from album and track views.</feature>
+    <feature>Shows stacked album-art previews for genres and genre categories.</feature>
+    <feature>Introduces the new StreamBee icon with three streaming arcs, using the app's orange theme color and a white bee mark.</feature>
+    <feature>Shows track numbers and an animated playing indicator in album, playlist, and now-playing lists.</feature>
+    <feature>Improves indexed fast-scrolling so dragging and tapping the scrollbar reaches the true first and last items reliably.</feature>
+    <feature>Automatically focuses the search field and opens the keyboard when search starts.</feature>
+    <bug>Requests details for the exact file during phone playback instead of accidentally showing metadata for MusicBee's current track.</bug>
+    <bug>Migrates existing libraries to normalized multi-artist relationships without duplicating artist or album entries.</bug>
+  </version>
+  <version
     version="2.1.0"
     release="Aug 30, 2026">
     <feature>Adds on-device playback history for tracks completed in StreamBee.</feature>

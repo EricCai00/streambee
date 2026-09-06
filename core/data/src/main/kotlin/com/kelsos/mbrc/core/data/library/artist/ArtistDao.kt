@@ -5,6 +5,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ArtistDao {
@@ -51,6 +52,44 @@ interface ArtistDao {
       """
   )
   fun getArtistByGenreDesc(genreId: Long): PagingSource<Int, ArtistEntity>
+
+  @Query(
+    """
+      select distinct artist.id, artist.artist, artist.date_added
+      from artist
+        inner join track on instr(
+          ';' || replace(replace(track.album_artist, '; ', ';'), ' ;', ';') || ';',
+          ';' || artist.artist || ';'
+        ) > 0
+        inner join genre on genre.genre = track.genre
+      where genre.id = :genreId group by artist.artist
+      order by
+        CASE
+          WHEN LOWER(artist.artist) LIKE 'the %' THEN SUBSTR(artist.artist, 5)
+          ELSE artist.artist
+        END COLLATE NOCASE ASC
+      """
+  )
+  fun getArtistByGenreAscList(genreId: Long): Flow<List<ArtistEntity>>
+
+  @Query(
+    """
+      select distinct artist.id, artist.artist, artist.date_added
+      from artist
+        inner join track on instr(
+          ';' || replace(replace(track.album_artist, '; ', ';'), ' ;', ';') || ';',
+          ';' || artist.artist || ';'
+        ) > 0
+        inner join genre on genre.genre = track.genre
+      where genre.id = :genreId group by artist.artist
+      order by
+        CASE
+          WHEN LOWER(artist.artist) LIKE 'the %' THEN SUBSTR(artist.artist, 5)
+          ELSE artist.artist
+        END COLLATE NOCASE DESC
+      """
+  )
+  fun getArtistByGenreDescList(genreId: Long): Flow<List<ArtistEntity>>
 
   @Query(
     """
@@ -123,8 +162,8 @@ interface ArtistDao {
   @Query(
     """
       select distinct artist.id, artist.artist, artist.date_added
-      from artist inner join track on instr(
-        ';' || replace(replace(track.album_artist, '; ', ';'), ' ;', ';') || ';',
+      from artist inner join album on instr(
+        ';' || replace(replace(album.artist, '; ', ';'), ' ;', ';') || ';',
         ';' || artist.artist || ';'
       ) > 0
       group by artist.artist
@@ -140,8 +179,8 @@ interface ArtistDao {
   @Query(
     """
       select distinct artist.id, artist.artist, artist.date_added
-      from artist inner join track on instr(
-        ';' || replace(replace(track.album_artist, '; ', ';'), ' ;', ';') || ';',
+      from artist inner join album on instr(
+        ';' || replace(replace(album.artist, '; ', ';'), ' ;', ';') || ';',
         ';' || artist.artist || ';'
       ) > 0
       group by artist.artist
@@ -157,8 +196,42 @@ interface ArtistDao {
   @Query(
     """
       select distinct artist.id, artist.artist, artist.date_added
-      from artist inner join track on instr(
-        ';' || replace(replace(track.album_artist, '; ', ';'), ' ;', ';') || ';',
+      from artist inner join album on instr(
+        ';' || replace(replace(album.artist, '; ', ';'), ' ;', ';') || ';',
+        ';' || artist.artist || ';'
+      ) > 0
+      group by artist.artist
+      order by
+        CASE
+          WHEN LOWER(artist.artist) LIKE 'the %' THEN SUBSTR(artist.artist, 5)
+          ELSE artist.artist
+        END COLLATE NOCASE ASC
+    """
+  )
+  fun getAlbumArtistsAscList(): Flow<List<ArtistEntity>>
+
+  @Query(
+    """
+      select distinct artist.id, artist.artist, artist.date_added
+      from artist inner join album on instr(
+        ';' || replace(replace(album.artist, '; ', ';'), ' ;', ';') || ';',
+        ';' || artist.artist || ';'
+      ) > 0
+      group by artist.artist
+      order by
+        CASE
+          WHEN LOWER(artist.artist) LIKE 'the %' THEN SUBSTR(artist.artist, 5)
+          ELSE artist.artist
+        END COLLATE NOCASE DESC
+    """
+  )
+  fun getAlbumArtistsDescList(): Flow<List<ArtistEntity>>
+
+  @Query(
+    """
+      select distinct artist.id, artist.artist, artist.date_added
+      from artist inner join album on instr(
+        ';' || replace(replace(album.artist, '; ', ';'), ' ;', ';') || ';',
         ';' || artist.artist || ';'
       ) > 0
       where artist.artist like '%' || :term || '%'
@@ -175,8 +248,8 @@ interface ArtistDao {
   @Query(
     """
       select distinct artist.id, artist.artist, artist.date_added
-      from artist inner join track on instr(
-        ';' || replace(replace(track.album_artist, '; ', ';'), ' ;', ';') || ';',
+      from artist inner join album on instr(
+        ';' || replace(replace(album.artist, '; ', ';'), ' ;', ';') || ';',
         ';' || artist.artist || ';'
       ) > 0
       where artist.artist like '%' || :term || '%'
@@ -189,6 +262,42 @@ interface ArtistDao {
     """
   )
   fun searchAlbumArtistsDesc(term: String): PagingSource<Int, ArtistEntity>
+
+  @Query(
+    """
+      select distinct artist.id, artist.artist, artist.date_added
+      from artist inner join album on instr(
+        ';' || replace(replace(album.artist, '; ', ';'), ' ;', ';') || ';',
+        ';' || artist.artist || ';'
+      ) > 0
+      where artist.artist like '%' || :term || '%'
+      group by artist.artist
+      order by
+        CASE
+          WHEN LOWER(artist.artist) LIKE 'the %' THEN SUBSTR(artist.artist, 5)
+          ELSE artist.artist
+        END COLLATE NOCASE ASC
+    """
+  )
+  fun searchAlbumArtistsAscList(term: String): Flow<List<ArtistEntity>>
+
+  @Query(
+    """
+      select distinct artist.id, artist.artist, artist.date_added
+      from artist inner join album on instr(
+        ';' || replace(replace(album.artist, '; ', ';'), ' ;', ';') || ';',
+        ';' || artist.artist || ';'
+      ) > 0
+      where artist.artist like '%' || :term || '%'
+      group by artist.artist
+      order by
+        CASE
+          WHEN LOWER(artist.artist) LIKE 'the %' THEN SUBSTR(artist.artist, 5)
+          ELSE artist.artist
+        END COLLATE NOCASE DESC
+    """
+  )
+  fun searchAlbumArtistsDescList(term: String): Flow<List<ArtistEntity>>
 
   @Query("select * from artist where id = :id")
   fun getById(id: Long): ArtistEntity?

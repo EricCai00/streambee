@@ -79,6 +79,13 @@ class TrackMappersTest {
     assertThat(entity.loved).isTrue()
   }
 
+  @Test
+  fun `toEntity should map language from dto`() {
+    val entity = createTrackDto(language = "English; French").toEntity()
+
+    assertThat(entity.language).isEqualTo("English; French")
+  }
+
   // endregion
 
   // region Year parsing tests
@@ -218,7 +225,8 @@ class TrackMappersTest {
       year = "1975",
       sortableYear = "1975",
       id = 42,
-      loved = true
+      loved = true,
+      language = "English"
     )
     val track = entity.toTrack()
 
@@ -233,6 +241,7 @@ class TrackMappersTest {
     assertThat(track.year).isEqualTo("1975")
     assertThat(track.id).isEqualTo(42)
     assertThat(track.loved).isTrue()
+    assertThat(track.language).isEqualTo("English")
   }
 
   @Test
@@ -316,7 +325,8 @@ class TrackMappersTest {
     album: String = "Album",
     genre: String = "Genre",
     year: String = "2020",
-    loved: Boolean = false
+    loved: Boolean = false,
+    language: String = ""
   ) = TrackDto(
     artist = artist,
     title = title,
@@ -327,7 +337,8 @@ class TrackMappersTest {
     album = album,
     genre = genre,
     year = year,
-    loved = loved
+    loved = loved,
+    language = language
   )
 
   private fun createTrackEntity(

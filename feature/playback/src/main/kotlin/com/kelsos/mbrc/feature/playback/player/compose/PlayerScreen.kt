@@ -33,12 +33,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Headset
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Repeat
@@ -48,8 +48,6 @@ import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.SpeakerGroup
 import androidx.compose.material.icons.outlined.Lyrics
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -89,12 +87,12 @@ import coil3.request.crossfade
 import coil3.toBitmap
 import com.kelsos.mbrc.core.common.state.LfmRating
 import com.kelsos.mbrc.core.common.state.PlayerState
+import com.kelsos.mbrc.core.common.state.PlaybackMode
 import com.kelsos.mbrc.core.common.state.PlayingPosition
-import com.kelsos.mbrc.core.common.state.Repeat
-import com.kelsos.mbrc.core.common.state.ShuffleMode
 import com.kelsos.mbrc.core.common.state.TrackInfo
 import com.kelsos.mbrc.core.common.state.TrackRating
 import com.kelsos.mbrc.core.ui.R as CoreUiR
+import com.kelsos.mbrc.core.ui.compose.AddToPlaylistDialog
 import com.kelsos.mbrc.core.ui.compose.DynamicScreenScaffold
 import com.kelsos.mbrc.core.ui.compose.ThinSlider
 import com.kelsos.mbrc.core.ui.compose.TopBarState
@@ -148,6 +146,7 @@ fun PlayerScreen(
   var showLyrics by remember { mutableStateOf(false) }
   var showTrackDetails by remember { mutableStateOf(false) }
   var showQueue by remember { mutableStateOf(false) }
+  var showAddToPlaylist by remember { mutableStateOf(false) }
 
   val title = stringResource(R.string.nav_now_playing)
 
@@ -182,6 +181,12 @@ fun PlayerScreen(
       onGoToGenre = trackDetails.genre.takeIf { it.isNotBlank() }?.let {
         { onNavigateToGenre(trackDetails.genre) }
       },
+      onAddToPlaylist = playingTrack.path.takeIf { it.isNotBlank() }?.let {
+        {
+          showBottomSheet = false
+          showAddToPlaylist = true
+        }
+      },
       onDismiss = { showBottomSheet = false }
     )
   }
@@ -207,6 +212,13 @@ fun PlayerScreen(
       trackDetails = trackDetails,
       trackRating = trackRating,
       onDismiss = { showTrackDetails = false }
+    )
+  }
+
+  if (showAddToPlaylist) {
+    AddToPlaylistDialog(
+      trackPath = playingTrack.path,
+      onDismiss = { showAddToPlaylist = false }
     )
   }
 
@@ -578,10 +590,9 @@ private fun PortraitPlayerLayout(
     TrackInfoWithFavorite(
       track = playingTrack,
       isFavorite = isFavorite,
-      isStream = playingPosition.isStream,
       hasLyrics = hasLyrics,
       onTrackClick = onTrackInfoClick,
-      onFavoriteClick = { actions.toggleFavorite(isFavorite, isBanned) },
+      onFavoriteClick = { actions.toggleFavorite(playingTrack.path, isFavorite, isBanned) },
       onLyricsClick = onLyricsClick,
       modifier = Modifier
         .fillMaxWidth()
@@ -685,10 +696,9 @@ private fun TabletPlayerLayout(
       TrackInfoWithFavorite(
         track = playingTrack,
         isFavorite = isFavorite,
-        isStream = playingPosition.isStream,
         hasLyrics = hasLyrics,
         onTrackClick = onTrackInfoClick,
-        onFavoriteClick = { actions.toggleFavorite(isFavorite, isBanned) },
+        onFavoriteClick = { actions.toggleFavorite(playingTrack.path, isFavorite, isBanned) },
         onLyricsClick = onLyricsClick,
         modifier = Modifier.fillMaxWidth()
       )
@@ -797,10 +807,9 @@ private fun LandscapePlayerLayout(
       TrackInfoWithFavorite(
         track = playingTrack,
         isFavorite = isFavorite,
-        isStream = playingPosition.isStream,
         hasLyrics = hasLyrics,
         onTrackClick = onTrackInfoClick,
-        onFavoriteClick = { actions.toggleFavorite(isFavorite, isBanned) },
+        onFavoriteClick = { actions.toggleFavorite(playingTrack.path, isFavorite, isBanned) },
         onLyricsClick = onLyricsClick,
         modifier = Modifier.fillMaxWidth()
       )
@@ -880,7 +889,6 @@ private fun AlbumCover(painter: AsyncImagePainter, modifier: Modifier = Modifier
 private fun TrackInfoWithFavorite(
   track: TrackInfo,
   isFavorite: Boolean,
-  isStream: Boolean,
   hasLyrics: Boolean,
   onTrackClick: () -> Unit,
   onFavoriteClick: () -> Unit,
@@ -960,11 +968,9 @@ private fun TrackInfoWithFavorite(
       )
     }
 
-    // Favorite button - disabled for streams (LFM rating not applicable)
-    IconButton(
-      onClick = onFavoriteClick,
-      enabled = !isStream
-    ) {
+    // Local playback uses the plugin's path-qualified favorite endpoint;
+    // remote playback uses the LFM rating command.
+    IconButton(onClick = onFavoriteClick) {
       Icon(
         imageVector = if (isFavorite) {
           Icons.Default.Favorite
@@ -972,10 +978,10 @@ private fun TrackInfoWithFavorite(
           Icons.Default.FavoriteBorder
         },
         contentDescription = stringResource(R.string.player_lfm_love),
-        tint = when {
-          isStream -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-          isFavorite -> MaterialTheme.colorScheme.primary
-          else -> MaterialTheme.colorScheme.onSurfaceVariant
+        tint = if (isFavorite) {
+          MaterialTheme.colorScheme.primary
+        } else {
+          MaterialTheme.colorScheme.onSurfaceVariant
         },
         modifier = Modifier.size(28.dp)
       )
@@ -1149,7 +1155,7 @@ private fun PlaybackControls(
     horizontalArrangement = Arrangement.SpaceEvenly,
     verticalAlignment = Alignment.CenterVertically
   ) {
-    // Shuffle and repeat share one menu, leaving the matching right-side slot for queue.
+    // One button cycles through the four playback modes.
     PlaybackModeButton(playbackState = playbackState, actions = actions)
 
     // Previous button - larger
@@ -1225,96 +1231,29 @@ private fun PlaybackControls(
 
 @Composable
 private fun PlaybackModeButton(playbackState: PlaybackState, actions: IPlayerActions) {
-  var expanded by remember { mutableStateOf(false) }
-  val shuffleActive = playbackState.shuffle != ShuffleMode.Off
-  val repeatActive = playbackState.repeat != Repeat.None
-
-  Box {
-    IconButton(onClick = { expanded = true }) {
-      Box(modifier = Modifier.size(28.dp)) {
-        Icon(
-          imageVector = if (playbackState.shuffle == ShuffleMode.AutoDJ) {
-            Icons.Default.Headset
-          } else {
-            Icons.Default.Shuffle
-          },
-          contentDescription = stringResource(R.string.player_playback_modes),
-          tint = if (shuffleActive) {
-            MaterialTheme.colorScheme.primary
-          } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
-          },
-          modifier = Modifier
-            .size(18.dp)
-            .align(Alignment.TopStart)
-        )
-        Icon(
-          imageVector = if (playbackState.repeat == Repeat.One) {
-            Icons.Default.RepeatOne
-          } else {
-            Icons.Default.Repeat
-          },
-          contentDescription = null,
-          tint = if (repeatActive) {
-            MaterialTheme.colorScheme.primary
-          } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
-          },
-          modifier = Modifier
-            .size(18.dp)
-            .align(Alignment.BottomEnd)
-        )
-      }
-    }
-
-    DropdownMenu(
-      expanded = expanded,
-      onDismissRequest = { expanded = false }
-    ) {
-      DropdownMenuItem(
-        text = { Text(stringResource(R.string.player_mode_shuffle)) },
-        leadingIcon = {
-          Icon(
-            imageVector = if (playbackState.shuffle == ShuffleMode.AutoDJ) {
-              Icons.Default.Headset
-            } else {
-              Icons.Default.Shuffle
-            },
-            contentDescription = null,
-            tint = if (shuffleActive) {
-              MaterialTheme.colorScheme.primary
-            } else {
-              MaterialTheme.colorScheme.onSurfaceVariant
-            }
-          )
-        },
-        onClick = {
-          expanded = false
-          actions.shuffle()
+  val mode = playbackState.mode
+  IconButton(onClick = actions.cyclePlaybackMode) {
+    Icon(
+      imageVector = when (mode) {
+        PlaybackMode.Sequential -> Icons.AutoMirrored.Filled.PlaylistPlay
+        PlaybackMode.RepeatAll -> Icons.Default.Repeat
+        PlaybackMode.RepeatOne -> Icons.Default.RepeatOne
+        PlaybackMode.Shuffle -> Icons.Default.Shuffle
+      },
+      contentDescription = stringResource(
+        when (mode) {
+          PlaybackMode.Sequential -> R.string.player_mode_sequential
+          PlaybackMode.RepeatAll -> R.string.player_mode_repeat_all
+          PlaybackMode.RepeatOne -> R.string.player_mode_repeat_one
+          PlaybackMode.Shuffle -> R.string.player_mode_shuffle_no_repeat
         }
-      )
-      DropdownMenuItem(
-        text = { Text(stringResource(R.string.player_mode_repeat)) },
-        leadingIcon = {
-          Icon(
-            imageVector = if (playbackState.repeat == Repeat.One) {
-              Icons.Default.RepeatOne
-            } else {
-              Icons.Default.Repeat
-            },
-            contentDescription = null,
-            tint = if (repeatActive) {
-              MaterialTheme.colorScheme.primary
-            } else {
-              MaterialTheme.colorScheme.onSurfaceVariant
-            }
-          )
-        },
-        onClick = {
-          expanded = false
-          actions.repeat()
-        }
-      )
-    }
+      ),
+      tint = if (mode == PlaybackMode.Sequential) {
+        MaterialTheme.colorScheme.onSurfaceVariant
+      } else {
+        MaterialTheme.colorScheme.primary
+      },
+      modifier = Modifier.size(28.dp)
+    )
   }
 }

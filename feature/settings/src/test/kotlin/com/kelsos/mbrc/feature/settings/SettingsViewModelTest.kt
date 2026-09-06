@@ -2,6 +2,7 @@ package com.kelsos.mbrc.feature.settings
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import com.kelsos.mbrc.core.common.settings.LibraryView
 import com.kelsos.mbrc.core.common.settings.TrackAction
 import com.kelsos.mbrc.core.common.test.testDispatcher
 import com.kelsos.mbrc.core.common.test.testDispatcherModule
@@ -42,6 +43,7 @@ class SettingsViewModelTest : KoinTest {
   private val debugLoggingFlow = MutableStateFlow(false)
   private val incomingCallActionFlow = MutableStateFlow<CallAction>(CallAction.None)
   private val trackDefaultActionFlow = MutableStateFlow<TrackAction>(TrackAction.PlayNow)
+  private val enabledLibraryViewsFlow = MutableStateFlow(LibraryView.DEFAULT)
   private val indexedLibraryScrollbarFlow = MutableStateFlow(true)
   private val albumListPlayButtonFlow = MutableStateFlow(true)
   private val albumGridPlayButtonFlow = MutableStateFlow(false)
@@ -63,6 +65,7 @@ class SettingsViewModelTest : KoinTest {
       every { incomingCallActionFlow } returns this@SettingsViewModelTest.incomingCallActionFlow
       every { libraryTrackDefaultActionFlow } returns
         this@SettingsViewModelTest.trackDefaultActionFlow
+      every { enabledLibraryViewsFlow } returns this@SettingsViewModelTest.enabledLibraryViewsFlow
       every { indexedLibraryScrollbarFlow } returns
         this@SettingsViewModelTest.indexedLibraryScrollbarFlow
       every { albumListPlayButtonFlow } returns this@SettingsViewModelTest.albumListPlayButtonFlow
@@ -103,6 +106,10 @@ class SettingsViewModelTest : KoinTest {
 
     viewModel.trackDefaultAction.test {
       assertThat(awaitItem()).isEqualTo(TrackAction.PlayNow)
+    }
+
+    viewModel.enabledLibraryViews.test {
+      assertThat(awaitItem()).isEqualTo(LibraryView.DEFAULT)
     }
 
     viewModel.indexedLibraryScrollbarEnabled.test {
@@ -177,6 +184,14 @@ class SettingsViewModelTest : KoinTest {
 
       coVerify { settingsManager.setLibraryTrackDefaultAction(TrackAction.QueueNext) }
     }
+
+  @Test
+  fun `updateLibraryView should persist the selected view state`() = runTest(testDispatcher) {
+    viewModel.updateLibraryView(LibraryView.YEARS, true)
+    advanceUntilIdle()
+
+    coVerify { settingsManager.setLibraryViewEnabled(LibraryView.YEARS, true) }
+  }
 
   @Test
   fun `updateIndexedLibraryScrollbar should persist the selected mode`() = runTest(testDispatcher) {

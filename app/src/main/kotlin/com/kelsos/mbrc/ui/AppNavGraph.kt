@@ -20,8 +20,12 @@ import com.kelsos.mbrc.feature.library.compose.LibraryScreen
 import com.kelsos.mbrc.feature.library.compose.drilldown.AlbumTracksScreen
 import com.kelsos.mbrc.feature.library.compose.drilldown.ArtistAlbumsScreen
 import com.kelsos.mbrc.feature.library.compose.drilldown.CategoryGenresScreen
+import com.kelsos.mbrc.feature.library.compose.drilldown.DecadeYearsScreen
 import com.kelsos.mbrc.feature.library.compose.drilldown.GenreAlbumsScreen
 import com.kelsos.mbrc.feature.library.compose.drilldown.GenreArtistsScreen
+import com.kelsos.mbrc.feature.library.compose.drilldown.LanguageCategoriesScreen
+import com.kelsos.mbrc.feature.library.compose.drilldown.LanguageCategoryAlbumsScreen
+import com.kelsos.mbrc.feature.library.compose.drilldown.YearAlbumsScreen
 import com.kelsos.mbrc.feature.library.history.compose.PlaybackHistoryScreen
 import com.kelsos.mbrc.feature.misc.help.compose.HelpFeedbackScreen
 import com.kelsos.mbrc.feature.playback.nowplaying.compose.NowPlayingScreen
@@ -42,7 +46,8 @@ fun AppNavGraph(
   navController: NavHostController,
   snackbarHostState: SnackbarHostState,
   startDestination: String = Screen.Home.route,
-  onOpenDrawer: () -> Unit = {}
+  onOpenDrawer: () -> Unit = {},
+  onShowChangelog: () -> Unit = {}
 ) {
   NavHost(
     navController = navController,
@@ -81,6 +86,10 @@ fun AppNavGraph(
     }
 
     composable(Screen.Library.route) {
+      val genreRepository: GenreRepository = koinInject()
+      val scope = rememberCoroutineScope()
+      val genreNotFoundMessage = stringResource(R.string.navigation_genre_not_in_library)
+
       LibraryScreen(
         onOpenDrawer = onOpenDrawer,
         onNavigateToCategoryGenres = { category ->
@@ -96,6 +105,24 @@ fun AppNavGraph(
           val encodedAlbum = Uri.encode(album.album)
           val encodedArtist = Uri.encode(album.artist)
           navController.navigate("album_tracks/${album.id}/$encodedAlbum/$encodedArtist")
+        },
+        onNavigateToGenre = { genreName ->
+          scope.launch {
+            val genre = genreRepository.getByName(genreName)
+            if (genre != null) {
+              navController.navigate("genre_albums/${genre.id}/${Uri.encode(genre.genre)}")
+            } else {
+              snackbarHostState.showSnackbar(genreNotFoundMessage)
+            }
+          }
+        },
+        onNavigateToDecadeYears = { decade ->
+          navController.navigate("decade_years/${decade.decade}")
+        },
+        onNavigateToLanguageCategories = { language ->
+          navController.navigate(
+            "language_categories?language=${Uri.encode(language.language)}"
+          )
         },
         onNavigateToPlayer = { navController.navigate(Screen.Home.route) },
         snackbarHostState = snackbarHostState
@@ -128,7 +155,8 @@ fun AppNavGraph(
         snackbarHostState = snackbarHostState,
         onOpenDrawer = onOpenDrawer,
         onNavigateToLicenses = { navController.navigate(Screen.Licenses.route) },
-        onNavigateToAppLicense = { navController.navigate(Screen.AppLicense.route) }
+        onNavigateToAppLicense = { navController.navigate(Screen.AppLicense.route) },
+        onShowChangelog = onShowChangelog
       )
     }
 
@@ -157,6 +185,9 @@ fun AppNavGraph(
     ) { backStackEntry ->
       val playlistUrl = backStackEntry.arguments?.getString("playlistUrl").orEmpty()
       val playlistName = backStackEntry.arguments?.getString("playlistName").orEmpty()
+      val genreRepository: GenreRepository = koinInject()
+      val scope = rememberCoroutineScope()
+      val genreNotFoundMessage = stringResource(R.string.navigation_genre_not_in_library)
       PlaylistDetailScreen(
         playlistName = playlistName,
         playlistUrl = playlistUrl,
@@ -167,6 +198,16 @@ fun AppNavGraph(
         },
         onNavigateToArtist = { artist ->
           navController.navigate("artist_albums/0/${Uri.encode(artist)}")
+        },
+        onNavigateToGenre = { genreName ->
+          scope.launch {
+            val genre = genreRepository.getByName(genreName)
+            if (genre != null) {
+              navController.navigate("genre_albums/${genre.id}/${Uri.encode(genre.genre)}")
+            } else {
+              snackbarHostState.showSnackbar(genreNotFoundMessage)
+            }
+          }
         },
         snackbarHostState = snackbarHostState
       )
@@ -251,6 +292,98 @@ fun AppNavGraph(
     }
 
     composable(
+      route = Screen.DecadeYears.ROUTE,
+      arguments = listOf(navArgument("decade") { type = NavType.IntType })
+    ) { backStackEntry ->
+      val decade = backStackEntry.arguments?.getInt("decade") ?: -1
+      DecadeYearsScreen(
+        decade = decade,
+        onNavigateBack = { navController.popBackStack() },
+        onNavigateToYearAlbums = { year ->
+          navController.navigate("year_albums?year=${Uri.encode(year.year)}")
+        },
+        onNavigateToPlayer = { navController.navigate(Screen.Home.route) },
+        snackbarHostState = snackbarHostState
+      )
+    }
+
+    composable(
+      route = Screen.YearAlbums.ROUTE,
+      arguments = listOf(
+        navArgument("year") {
+          type = NavType.StringType
+          defaultValue = ""
+        }
+      )
+    ) { backStackEntry ->
+      val year = backStackEntry.arguments?.getString("year").orEmpty()
+      YearAlbumsScreen(
+        year = year,
+        onNavigateBack = { navController.popBackStack() },
+        onNavigateToAlbumTracks = { album ->
+          navController.navigate(
+            "album_tracks/${album.id}/${Uri.encode(album.album)}/${Uri.encode(album.artist)}"
+          )
+        },
+        onNavigateToPlayer = { navController.navigate(Screen.Home.route) },
+        snackbarHostState = snackbarHostState
+      )
+    }
+
+    composable(
+      route = Screen.LanguageCategories.ROUTE,
+      arguments = listOf(
+        navArgument("language") {
+          type = NavType.StringType
+          defaultValue = ""
+        }
+      )
+    ) { backStackEntry ->
+      val language = backStackEntry.arguments?.getString("language").orEmpty()
+      LanguageCategoriesScreen(
+        language = language,
+        onNavigateBack = { navController.popBackStack() },
+        onNavigateToCategoryAlbums = { category ->
+          navController.navigate(
+            "language_category_albums?language=${Uri.encode(language)}" +
+              "&category=${Uri.encode(category.category)}"
+          )
+        },
+        onNavigateToPlayer = { navController.navigate(Screen.Home.route) },
+        snackbarHostState = snackbarHostState
+      )
+    }
+
+    composable(
+      route = Screen.LanguageCategoryAlbums.ROUTE,
+      arguments = listOf(
+        navArgument("language") {
+          type = NavType.StringType
+          defaultValue = ""
+        },
+        navArgument("category") {
+          type = NavType.StringType
+          defaultValue = ""
+        }
+      )
+    ) { backStackEntry ->
+      val language = backStackEntry.arguments?.getString("language").orEmpty()
+      val category = backStackEntry.arguments?.getString("category").orEmpty()
+      LanguageCategoryAlbumsScreen(
+        language = language,
+        category = category,
+        onNavigateBack = { navController.popBackStack() },
+        onNavigateToAlbumTracks = { album ->
+          navController.navigate(
+            "album_tracks/${album.id}/${Uri.encode(album.album)}/${Uri.encode(album.artist)}"
+          )
+        },
+        onNavigateToPlayer = { navController.navigate(Screen.Home.route) },
+        snackbarHostState = snackbarHostState
+      )
+    }
+
+    composable(
       route = Screen.GenreArtists.ROUTE,
       arguments = listOf(
         navArgument("genreId") { type = NavType.LongType },
@@ -297,8 +430,10 @@ fun AppNavGraph(
 
     composable(Screen.NowPlayingList.route) {
       val trackRepository: TrackRepository = koinInject()
+      val genreRepository: GenreRepository = koinInject()
       val scope = rememberCoroutineScope()
       val trackNotFoundMessage = stringResource(R.string.navigation_track_not_in_library)
+      val genreNotFoundMessage = stringResource(R.string.navigation_genre_not_in_library)
 
       NowPlayingScreen(
         onOpenDrawer = onOpenDrawer,
@@ -318,6 +453,23 @@ fun AppNavGraph(
         onNavigateToArtist = { artist ->
           val encodedName = Uri.encode(artist)
           navController.navigate("artist_albums/0/$encodedName")
+        },
+        onNavigateToGenre = { path ->
+          scope.launch {
+            val track = trackRepository.getByPath(path)
+            if (track == null) {
+              snackbarHostState.showSnackbar(trackNotFoundMessage)
+              return@launch
+            }
+            val genre = track.genre.takeIf(String::isNotBlank)?.let {
+              genreRepository.getByName(it)
+            }
+            if (genre != null) {
+              navController.navigate("genre_albums/${genre.id}/${Uri.encode(genre.genre)}")
+            } else {
+              snackbarHostState.showSnackbar(genreNotFoundMessage)
+            }
+          }
         },
         snackbarHostState = snackbarHostState
       )
@@ -391,6 +543,32 @@ sealed class Screen(val route: String) {
     Screen("genre_albums/$genreId/$genreName") {
     companion object {
       const val ROUTE = "genre_albums/{genreId}/{genreName}"
+    }
+  }
+
+  data class DecadeYears(val decade: Int) : Screen("decade_years/$decade") {
+    companion object {
+      const val ROUTE = "decade_years/{decade}"
+    }
+  }
+
+  data class YearAlbums(val year: String) : Screen("year_albums?year=$year") {
+    companion object {
+      const val ROUTE = "year_albums?year={year}"
+    }
+  }
+
+  data class LanguageCategories(val language: String) :
+    Screen("language_categories?language=$language") {
+    companion object {
+      const val ROUTE = "language_categories?language={language}"
+    }
+  }
+
+  data class LanguageCategoryAlbums(val language: String, val category: String) :
+    Screen("language_category_albums?language=$language&category=$category") {
+    companion object {
+      const val ROUTE = "language_category_albums?language={language}&category={category}"
     }
   }
 }

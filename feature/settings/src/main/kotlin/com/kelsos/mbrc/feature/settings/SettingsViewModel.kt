@@ -2,6 +2,7 @@ package com.kelsos.mbrc.feature.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kelsos.mbrc.core.common.settings.LibraryView
 import com.kelsos.mbrc.core.common.settings.TrackAction
 import com.kelsos.mbrc.core.platform.service.ServiceRestarter
 import com.kelsos.mbrc.feature.settings.data.CallAction
@@ -21,6 +22,7 @@ sealed class SettingsDialogType {
   data object Theme : SettingsDialogType()
   data object IncomingCallAction : SettingsDialogType()
   data object TrackDefaultAction : SettingsDialogType()
+  data object LibraryViews : SettingsDialogType()
 }
 
 /**
@@ -55,6 +57,9 @@ class SettingsViewModel(
 
   val trackDefaultAction: StateFlow<TrackAction> = settingsManager.libraryTrackDefaultActionFlow
     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TrackAction.PlayNow)
+
+  val enabledLibraryViews: StateFlow<Set<LibraryView>> = settingsManager.enabledLibraryViewsFlow
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), LibraryView.DEFAULT)
 
   val indexedLibraryScrollbarEnabled: StateFlow<Boolean> =
     settingsManager.indexedLibraryScrollbarFlow
@@ -126,6 +131,12 @@ class SettingsViewModel(
   fun updateIndexedLibraryScrollbar(enabled: Boolean) {
     viewModelScope.launch {
       settingsManager.setIndexedLibraryScrollbar(enabled)
+    }
+  }
+
+  fun updateLibraryView(view: LibraryView, enabled: Boolean) {
+    viewModelScope.launch {
+      settingsManager.setLibraryViewEnabled(view, enabled)
     }
   }
 

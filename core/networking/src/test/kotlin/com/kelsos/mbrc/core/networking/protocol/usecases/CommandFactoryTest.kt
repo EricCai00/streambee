@@ -240,6 +240,13 @@ class CommandFactoryTest {
   }
 
   @Test
+  fun `create should return SimpleLogCommand for PlaylistAddTrack protocol`() {
+    val action = commandFactory.create(Protocol.PlaylistAddTrack)
+    assertThat(createdActions.keys).contains(SimpleLogCommand::class)
+    assertThat(action).isNotNull()
+  }
+
+  @Test
   fun `create should return SimpleLogCommand for LibraryPlayAll protocol`() {
     val action = commandFactory.create(Protocol.LibraryPlayAll)
     assertThat(createdActions.keys).contains(SimpleLogCommand::class)

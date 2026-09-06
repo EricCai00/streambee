@@ -34,11 +34,14 @@ android {
 
 dependencies {
   implementation(project(":core:common"))
+  implementation(project(":core:data"))
+  implementation(project(":core:networking"))
 
   implementation(platform(libs.androidx.compose.bom))
   implementation(libs.bundles.androidx.compose)
   implementation(libs.google.material)
   implementation(libs.androidx.paging.compose)
+  implementation(libs.koin.compose)
 
   testImplementation(libs.androidx.test.core)
   testImplementation(libs.androidx.test.runner)

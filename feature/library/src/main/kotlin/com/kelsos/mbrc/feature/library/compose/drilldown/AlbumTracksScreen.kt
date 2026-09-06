@@ -35,10 +35,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -107,6 +107,7 @@ fun AlbumTracksScreen(
     title = title,
     snackbarHostState = snackbarHostState,
     navigationIcon = NavigationIconType.Back(onNavigateBack),
+    titleFontWeight = FontWeight.Bold,
     modifier = modifier
   ) { paddingValues ->
     Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
@@ -169,7 +170,7 @@ fun AlbumTracksScreen(
                   onQueue = { queue -> viewModel.queue(queue, track) },
                   showCover = false,
                   showAlbum = false,
-                  showExtendedActions = false,
+                  showNavigationActions = false,
                   trackNumber = index + 1,
                   isPlaying = track.src == playingTrack.path
                 )
@@ -242,7 +243,7 @@ private fun AlbumHeaderHorizontal(
     modifier = modifier
       .fillMaxWidth()
       .height(180.dp)
-      .padding(16.dp),
+      .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp),
     verticalAlignment = Alignment.Top
   ) {
     Card(
@@ -263,66 +264,45 @@ private fun AlbumHeaderHorizontal(
         .height(148.dp),
       verticalArrangement = Arrangement.SpaceBetween
     ) {
-      Column {
-        Text(
-          text = albumInfo.album.ifEmpty { stringResource(R.string.non_album_tracks) },
-          style = MaterialTheme.typography.titleLarge,
-          fontWeight = FontWeight.Bold,
-          maxLines = 2,
-          overflow = TextOverflow.Ellipsis
-        )
+      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
           text = albumInfo.artist.ifEmpty { stringResource(R.string.unknown_artist) },
-          style = MaterialTheme.typography.bodyLarge,
-          color = if (albumInfo.artist.isNotBlank()) {
-            MaterialTheme.colorScheme.primary
-          } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
-          },
-          textDecoration = if (albumInfo.artist.isNotBlank()) {
-            TextDecoration.Underline
-          } else {
-            null
-          },
-          maxLines = 1,
+          style = MaterialTheme.typography.titleMedium,
+          fontWeight = FontWeight.SemiBold,
+          color = MaterialTheme.colorScheme.onSurface,
+          maxLines = 2,
           overflow = TextOverflow.Ellipsis,
-          modifier = Modifier.clickable(
-            enabled = albumInfo.artist.isNotBlank(),
-            role = Role.Button,
-            onClick = { onArtistClick(albumInfo.artist) }
-          )
+          modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(
+              enabled = albumInfo.artist.isNotBlank(),
+              role = Role.Button,
+              onClick = { onArtistClick(albumInfo.artist) }
+            )
+            .padding(vertical = 2.dp)
         )
         if (year.isNotBlank() || genre.isNotBlank()) {
-          Row(verticalAlignment = Alignment.CenterVertically) {
+          Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             if (year.isNotBlank()) {
               Text(
                 text = year,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1
-              )
-            }
-            if (year.isNotBlank() && genre.isNotBlank()) {
-              Text(
-                text = " • ",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
               )
             }
             if (genre.isNotBlank()) {
               Text(
                 text = genre,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
-                textDecoration = TextDecoration.Underline,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                  .weight(1f, fill = false)
-                  .clickable(
-                    role = Role.Button,
-                    onClick = { onGenreClick(genre) }
-                  )
+                modifier = Modifier.clickable(
+                  role = Role.Button,
+                  onClick = { onGenreClick(genre) }
+                )
               )
             }
           }
