@@ -66,6 +66,17 @@ class WhatsNewViewModel(
     }
   }
 
+  /** Opens the changelog on demand without changing the automatic-display marker. */
+  fun showChangelog() {
+    if (_showWhatsNew.value) return
+
+    _isLoading.value = true
+    _showWhatsNew.value = true
+    viewModelScope.launch {
+      loadChangelog()
+    }
+  }
+
   fun dismiss() {
     _showWhatsNew.value = false
   }

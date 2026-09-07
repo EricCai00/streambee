@@ -77,6 +77,8 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kelsos.mbrc.core.common.state.ConnectionStatus
 import com.kelsos.mbrc.core.data.nowplaying.NowPlaying
+import com.kelsos.mbrc.core.ui.R as CoreUiR
+import com.kelsos.mbrc.core.ui.compose.AddToPlaylistDialog
 import com.kelsos.mbrc.core.ui.compose.ActionItem
 import com.kelsos.mbrc.core.ui.compose.DragDropState
 import com.kelsos.mbrc.core.ui.compose.DynamicScreenScaffold
@@ -630,6 +632,7 @@ fun NowPlayingTrackItem(
   trackNumber: Int = track.position
 ) {
   var showMenu by remember { mutableStateOf(false) }
+  var showAddToPlaylist by remember { mutableStateOf(false) }
 
   val elevation by animateDpAsState(
     targetValue = if (isDragging) 8.dp else 0.dp,
@@ -710,6 +713,10 @@ fun NowPlayingTrackItem(
             expanded = showMenu,
             onDismissRequest = { showMenu = false }
           ) {
+            DropdownMenuItem(
+              text = { Text(stringResource(CoreUiR.string.add_to_playlist)) },
+              onClick = { showMenu = false; showAddToPlaylist = true }
+            )
             if (onGoToAlbum != null) {
               DropdownMenuItem(
                 text = { Text(stringResource(R.string.player_go_to_album)) },
@@ -774,6 +781,9 @@ fun NowPlayingTrackItem(
         }
       }
     }
+  }
+  if (showAddToPlaylist) {
+    AddToPlaylistDialog(trackPath = track.path, onDismiss = { showAddToPlaylist = false })
   }
 }
 

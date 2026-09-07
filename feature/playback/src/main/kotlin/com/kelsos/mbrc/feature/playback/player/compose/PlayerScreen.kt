@@ -95,6 +95,7 @@ import com.kelsos.mbrc.core.common.state.ShuffleMode
 import com.kelsos.mbrc.core.common.state.TrackInfo
 import com.kelsos.mbrc.core.common.state.TrackRating
 import com.kelsos.mbrc.core.ui.R as CoreUiR
+import com.kelsos.mbrc.core.ui.compose.AddToPlaylistDialog
 import com.kelsos.mbrc.core.ui.compose.DynamicScreenScaffold
 import com.kelsos.mbrc.core.ui.compose.ThinSlider
 import com.kelsos.mbrc.core.ui.compose.TopBarState
@@ -146,6 +147,7 @@ fun PlayerScreen(
   var showBottomSheet by remember { mutableStateOf(false) }
   var showOutputSelection by remember { mutableStateOf(false) }
   var showLyrics by remember { mutableStateOf(false) }
+  var showAddToPlaylist by remember { mutableStateOf(false) }
   var showTrackDetails by remember { mutableStateOf(false) }
   var showQueue by remember { mutableStateOf(false) }
 
@@ -182,6 +184,12 @@ fun PlayerScreen(
       onGoToGenre = trackDetails.genre.takeIf { it.isNotBlank() }?.let {
         { onNavigateToGenre(trackDetails.genre) }
       },
+      onAddToPlaylist = playingTrack.path.takeIf { it.isNotBlank() }?.let {
+        {
+          showBottomSheet = false
+          showAddToPlaylist = true
+        }
+      },
       onDismiss = { showBottomSheet = false }
     )
   }
@@ -207,6 +215,13 @@ fun PlayerScreen(
       trackDetails = trackDetails,
       trackRating = trackRating,
       onDismiss = { showTrackDetails = false }
+    )
+  }
+
+  if (showAddToPlaylist) {
+    AddToPlaylistDialog(
+      trackPath = playingTrack.path,
+      onDismiss = { showAddToPlaylist = false }
     )
   }
 
@@ -578,10 +593,9 @@ private fun PortraitPlayerLayout(
     TrackInfoWithFavorite(
       track = playingTrack,
       isFavorite = isFavorite,
-      isStream = playingPosition.isStream,
       hasLyrics = hasLyrics,
       onTrackClick = onTrackInfoClick,
-      onFavoriteClick = { actions.toggleFavorite(isFavorite, isBanned) },
+      onFavoriteClick = { actions.toggleFavorite(playingTrack.path, isFavorite, isBanned) },
       onLyricsClick = onLyricsClick,
       modifier = Modifier
         .fillMaxWidth()
@@ -685,10 +699,9 @@ private fun TabletPlayerLayout(
       TrackInfoWithFavorite(
         track = playingTrack,
         isFavorite = isFavorite,
-        isStream = playingPosition.isStream,
         hasLyrics = hasLyrics,
         onTrackClick = onTrackInfoClick,
-        onFavoriteClick = { actions.toggleFavorite(isFavorite, isBanned) },
+        onFavoriteClick = { actions.toggleFavorite(playingTrack.path, isFavorite, isBanned) },
         onLyricsClick = onLyricsClick,
         modifier = Modifier.fillMaxWidth()
       )
@@ -797,10 +810,9 @@ private fun LandscapePlayerLayout(
       TrackInfoWithFavorite(
         track = playingTrack,
         isFavorite = isFavorite,
-        isStream = playingPosition.isStream,
         hasLyrics = hasLyrics,
         onTrackClick = onTrackInfoClick,
-        onFavoriteClick = { actions.toggleFavorite(isFavorite, isBanned) },
+        onFavoriteClick = { actions.toggleFavorite(playingTrack.path, isFavorite, isBanned) },
         onLyricsClick = onLyricsClick,
         modifier = Modifier.fillMaxWidth()
       )
@@ -880,7 +892,6 @@ private fun AlbumCover(painter: AsyncImagePainter, modifier: Modifier = Modifier
 private fun TrackInfoWithFavorite(
   track: TrackInfo,
   isFavorite: Boolean,
-  isStream: Boolean,
   hasLyrics: Boolean,
   onTrackClick: () -> Unit,
   onFavoriteClick: () -> Unit,
@@ -960,11 +971,9 @@ private fun TrackInfoWithFavorite(
       )
     }
 
-    // Favorite button - disabled for streams (LFM rating not applicable)
-    IconButton(
-      onClick = onFavoriteClick,
-      enabled = !isStream
-    ) {
+    // Local playback uses the plugin's path-qualified favorite endpoint;
+    // remote playback uses the LFM rating command.
+    IconButton(onClick = onFavoriteClick) {
       Icon(
         imageVector = if (isFavorite) {
           Icons.Default.Favorite
@@ -972,10 +981,10 @@ private fun TrackInfoWithFavorite(
           Icons.Default.FavoriteBorder
         },
         contentDescription = stringResource(R.string.player_lfm_love),
-        tint = when {
-          isStream -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-          isFavorite -> MaterialTheme.colorScheme.primary
-          else -> MaterialTheme.colorScheme.onSurfaceVariant
+        tint = if (isFavorite) {
+          MaterialTheme.colorScheme.primary
+        } else {
+          MaterialTheme.colorScheme.onSurfaceVariant
         },
         modifier = Modifier.size(28.dp)
       )

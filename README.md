@@ -1,9 +1,9 @@
-[![CI](https://github.com/EricCai00/mbrc/actions/workflows/flow.yml/badge.svg)](https://github.com/EricCai00/mbrc/actions/workflows/flow.yml)
-[![License: GPL v3](https://img.shields.io/github/license/EricCai00/mbrc.svg)](LICENSE)
-[![GitHub release](https://img.shields.io/github/v/release/EricCai00/mbrc)](https://github.com/EricCai00/mbrc/releases)
+[![CI](https://github.com/EricCai00/streambee/actions/workflows/flow.yml/badge.svg)](https://github.com/EricCai00/streambee/actions/workflows/flow.yml)
+[![License: GPL v3](https://img.shields.io/github/license/EricCai00/streambee.svg)](LICENSE)
+[![GitHub release](https://img.shields.io/github/v/release/EricCai00/streambee)](https://github.com/EricCai00/streambee/releases)
 
 <p align="center">
-  <a href="https://github.com/EricCai00/mbrc">
+  <a href="https://github.com/EricCai00/streambee">
     <img src="logo.png" alt="StreamBee logo" width="88" height="88" />
   </a>
 </p>
@@ -13,18 +13,18 @@
 <p align="center">
   A modern Android companion for MusicBee: stream your MusicBee library directly to your phone.
   <br />
-  <a href="https://github.com/EricCai00/mbrc/releases"><strong>Download the Android app</strong></a>
+  <a href="https://github.com/EricCai00/streambee/releases"><strong>Download the Android app</strong></a>
   ·
-  <a href="https://github.com/EricCai00/mbrc-plugin"><strong>Get the MusicBee plugin</strong></a>
+  <a href="https://github.com/EricCai00/streambee-plugin"><strong>Get the MusicBee plugin</strong></a>
   ·
-  <a href="https://github.com/EricCai00/mbrc/issues">Report an issue</a>
+  <a href="https://github.com/EricCai00/streambee/issues">Report an issue</a>
 </p>
 
 StreamBee is a community fork of
 [MusicBee Remote](https://github.com/musicbeeremote/mbrc). It streams audio from your MusicBee
 library to your phone, with richer library navigation, detailed track information, on-device
 playback history and lyrics, and a paired
-[StreamBee plugin](https://github.com/EricCai00/mbrc-plugin) for MusicBee on Windows.
+[StreamBee plugin](https://github.com/EricCai00/streambee-plugin) for MusicBee on Windows.
 
 ## Features
 
@@ -43,24 +43,17 @@ playback history and lyrics, and a paired
 - Load artwork progressively for the library, player, media session, and Android notification.
 - Use a privacy-focused GitHub build without Firebase, Crashlytics, or analytics.
 
-## StreamBee 2.2.0 highlights
+## StreamBee 2.3.0 highlights
 
-- Adds a richer two-tab track-details view with MusicBee tags, ratings, playback statistics, and
-  file properties.
-- Adds album year and genre links, loved-track markers, local artist pictures, and multi-artist
-  navigation throughout the library.
-- Improves genre browsing with stacked album-art previews, and improves indexed scrolling,
-  track-number display, and the animated playing indicator.
-- Fixes phone-playback metadata requests so the details shown match the exact streamed file, and
-  migrates existing multi-artist libraries without duplicate entries.
-- Refreshes the StreamBee branding with the orange rounded icon and matching notification
-  silhouette.
+- Add a track to an existing MusicBee playlist from library, playlist, queue, or player menus.
+- Toggle the player heart to synchronize the exact track's loved state with MusicBee.
+- Read the bundled offline Help guide and reopen What's New from Help.
 
 ## Requirements
 
 - Android 6.0 (API 23) or newer.
 - MusicBee 3.1 or newer on Windows.
-- The [StreamBee MusicBee plugin](https://github.com/EricCai00/mbrc-plugin).
+- The [StreamBee MusicBee plugin](https://github.com/EricCai00/streambee-plugin).
 - The phone and computer must be on the same trusted local network without client/AP isolation.
 
 ## Installation
@@ -68,17 +61,17 @@ playback history and lyrics, and a paired
 ### Android app
 
 Download `StreamBee_X.Y.Z.apk` from
-[GitHub Releases](https://github.com/EricCai00/mbrc/releases) and open it on the Android device.
+[GitHub Releases](https://github.com/EricCai00/streambee/releases) and open it on the Android device.
 
 Official StreamBee APKs use the package name `com.ericcai.streambee` and a dedicated release signing key.
-Development builds use `com.ericcai.streambee.dev`, so a release and a development build can be installed
-side by side with separate data. Builds using the previous `com.kelsos.mbrc` package are treated as a
+Development builds can retain this package for in-place updates with a `-devN` version suffix.
+Use the `.dev` package only for an explicitly requested side-by-side installation. Builds using the previous `com.kelsos.mbrc` package are treated as a
 separate app and can be removed after any data or settings that are still needed have been migrated.
 
 ### MusicBee plugin
 
 Install the matching plugin from the
-[StreamBee plugin repository](https://github.com/EricCai00/mbrc-plugin), restart MusicBee, and verify
+[StreamBee plugin repository](https://github.com/EricCai00/streambee-plugin), restart MusicBee, and verify
 that it appears under **Edit > Preferences > Plugins**.
 
 Create or select a connection in StreamBee using the computer's LAN address and the command port
@@ -102,7 +95,7 @@ authenticated: **do not port-forward either StreamBee port to the internet**.
 Clone this fork and open it in Android Studio:
 
 ```bash
-git clone https://github.com/EricCai00/mbrc.git
+git clone https://github.com/EricCai00/streambee.git
 cd mbrc
 ```
 
@@ -113,12 +106,12 @@ DataStore, and Glance.
 
 | Variant | Package | Purpose |
 | --- | --- | --- |
-| `githubDebug` | `com.ericcai.streambee.dev` | Normal USB development without Firebase |
+| `githubDebug` | `com.ericcai.streambee.dev` | Explicit side-by-side debugging without Firebase |
 | `playDebug` | `com.ericcai.streambee.dev` | USB development with Google services |
 | `githubRelease` | `com.ericcai.streambee` | Signed GitHub APK |
 | `playRelease` | `com.ericcai.streambee` | Signed Play build |
 
-Use `githubDebug` for day-to-day USB debugging. Release builds must be signed with the same private
+Use signed `githubRelease` development builds for in-place USB updates. Release builds must be signed with the same private
 release key as earlier StreamBee releases; never commit signing credentials to Git.
 
 ### Common commands
@@ -133,7 +126,7 @@ release key as earlier StreamBee releases; never commit signing credentials to G
 ./gradlew verifyLocal
 
 # Build the privacy-focused APK
-./gradlew :app:assembleGithubRelease
+./gradlew :app:assembleGithubRelease -x :app:uploadCrashlyticsMappingFileGithubRelease
 
 # Formatting
 ./gradlew formatKotlin

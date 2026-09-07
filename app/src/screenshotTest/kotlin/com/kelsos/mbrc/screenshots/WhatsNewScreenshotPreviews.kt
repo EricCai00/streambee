@@ -1,10 +1,12 @@
 package com.kelsos.mbrc.screenshots
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import com.android.tools.screenshot.PreviewTest
 import com.kelsos.mbrc.core.ui.theme.RemoteTheme
 import com.kelsos.mbrc.feature.misc.whatsnew.ChangelogEntry
+import com.kelsos.mbrc.feature.misc.whatsnew.ChangelogParser
 import com.kelsos.mbrc.feature.misc.whatsnew.EntryType
 import com.kelsos.mbrc.feature.misc.whatsnew.WhatsNewScreen
 
@@ -31,7 +33,7 @@ private val sampleEntries = listOf(
 fun WhatsNewScreenLightPreview() {
   RemoteTheme(darkTheme = false) {
     WhatsNewScreen(
-      entries = sampleEntries,
+      entries = ChangelogParser(LocalContext.current).changelog(com.kelsos.mbrc.R.raw.changelog),
       onDismiss = {}
     )
   }
@@ -43,7 +45,7 @@ fun WhatsNewScreenLightPreview() {
 fun WhatsNewScreenDarkPreview() {
   RemoteTheme(darkTheme = true) {
     WhatsNewScreen(
-      entries = sampleEntries,
+      entries = ChangelogParser(LocalContext.current).changelog(com.kelsos.mbrc.R.raw.changelog),
       onDismiss = {}
     )
   }

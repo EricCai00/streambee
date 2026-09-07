@@ -3,6 +3,14 @@ Changelog
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-09-07
+### Added
+- Adds an Add to playlist action to track menus and playback controls, with the selected playlist synchronized back to MusicBee.
+- Updates the offline Help guide for 2.3.0 and adds a What's New button to revisit release notes.
+
+### Changed
+- Makes the player loved-track heart interactive and synchronizes changes with MusicBee.
+
 ## [2.2.0] - 2026-09-02
 ### Added
 - Adds a two-tab track-details view with richer MusicBee tags, ratings, playback statistics, and file properties for both remote and phone playback.

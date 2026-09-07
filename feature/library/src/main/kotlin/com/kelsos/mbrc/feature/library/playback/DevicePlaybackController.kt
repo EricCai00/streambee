@@ -74,6 +74,8 @@ class DevicePlaybackController(
   private var muted = false
   private var volumeBeforeMute = 1f
   private var publishedTrackPath: String? = null
+  @Volatile
+  private var currentLocalTrackPath: String? = null
   private var lyricsJob: Job? = null
   private var favoriteJob: Job? = null
   private var queueFillJob: Job? = null
@@ -85,9 +87,6 @@ class DevicePlaybackController(
   private var queueRevision = 0L
   private var restoring = true
   private var appScrobblingEnabled = false
-
-  @Volatile
-  private var localPlaybackActive = false
 
   override val queue = _queue.asStateFlow()
 
@@ -155,8 +154,11 @@ class DevicePlaybackController(
     .setId(SESSION_ID)
     .build()
 
+  override val currentTrackPath: String?
+    get() = currentLocalTrackPath
+
   override val hasLocalPlayback: Boolean
-    get() = localPlaybackActive
+    get() = currentLocalTrackPath != null
 
   init {
     scope.launch {
@@ -243,7 +245,6 @@ class DevicePlaybackController(
         Timber.e(it, "Failed to remove local queue item")
       }
       .onSuccess {
-        localPlaybackActive = updatedQueue.isNotEmpty()
         notifyQueueChanged(updatedQueue, persistQueue = true)
         publishState()
       }
@@ -274,7 +275,7 @@ class DevicePlaybackController(
     logicalQueue = emptyList()
     loadedStartIndex = 0
     loadedEndIndexExclusive = 0
-    localPlaybackActive = false
+    currentLocalTrackPath = null
     publishedTrackPath = null
     lyricsJob?.cancel()
     favoriteJob?.cancel()
@@ -335,12 +336,31 @@ class DevicePlaybackController(
     publishState()
   }
 
+  override fun toggleFavorite() {
+    onMain {
+      toggleFavoriteForPath(currentPlayerTrackPath() ?: return@onMain)
+    }
+  }
+
+  override fun toggleFavorite(trackPath: String) {
+    onMain {
+      toggleFavoriteForPath(trackPath.takeIf { it.isNotBlank() } ?: return@onMain)
+    }
+  }
+
   override fun setFavorite(loved: Boolean) {
     onMain {
-      val track = player.currentMediaItem?.localConfiguration?.tag as? Track ?: return@onMain
+      val path = currentPlayerTrackPath() ?: return@onMain
+      setFavorite(path, loved)
+    }
+  }
+
+  override fun setFavorite(trackPath: String, loved: Boolean) {
+    onMain {
+      if (trackPath.isBlank()) return@onMain
       favoriteJob?.cancel()
       favoriteJob = scope.launch {
-        if (setFavoriteForPath(track.src, loved) && publishedTrackPath == track.src) {
+        if (setFavoriteForPath(trackPath, loved) && appState.playingTrack.value.path == trackPath) {
           appState.updateTrackRating(
             com.kelsos.mbrc.core.common.state.TrackRating(
               lfmRating = if (loved) {
@@ -388,8 +408,8 @@ class DevicePlaybackController(
         loadedStartIndex = selected
         loadedEndIndexExclusive = selected + 1
         player.setMediaItems(listOf(selectedItem), 0, positionMs.coerceAtLeast(0L))
+        currentLocalTrackPath = queueSnapshot[selected].src
         player.playWhenReady = playWhenReady
-        localPlaybackActive = true
         notifyQueueChanged(queueSnapshot, persistQueue)
         player.prepare()
         publishState()
@@ -502,7 +522,6 @@ class DevicePlaybackController(
           loadedEndIndexExclusive = previousEnd
           throw error
         }
-        localPlaybackActive = player.mediaItemCount > 0
         notifyQueueChanged(updatedQueue, persistQueue = true)
         true
       }.onFailure { Timber.e(it, "Failed to enqueue local tracks") }.getOrDefault(false)
@@ -533,6 +552,30 @@ class DevicePlaybackController(
           .build()
       )
       .build()
+
+  private fun currentPlayerTrackPath(): String? =
+    (player.currentMediaItem?.localConfiguration?.tag as? Track)?.src
+      ?: player.currentMediaItem?.mediaId?.takeIf { it.isNotBlank() }
+      ?: currentLocalTrackPath
+
+  private fun toggleFavoriteForPath(path: String) {
+    favoriteJob?.cancel()
+    favoriteJob = scope.launch {
+      val currentLoved = fetchFavorite(path) ?: return@launch
+      val loved = !currentLoved
+      if (setFavoriteForPath(path, loved) && publishedTrackPath == path) {
+        appState.updateTrackRating(
+          com.kelsos.mbrc.core.common.state.TrackRating(
+            lfmRating = if (loved) {
+              com.kelsos.mbrc.core.common.state.LfmRating.Loved
+            } else {
+              com.kelsos.mbrc.core.common.state.LfmRating.Normal
+            }
+          )
+        )
+      }
+    }
+  }
 
   private fun playLogicalQueueItem(index: Int) {
     if (index !in logicalQueue.indices) return
@@ -643,8 +686,11 @@ class DevicePlaybackController(
       return
     }
     val item = player.currentMediaItem
-    val track = item?.localConfiguration?.tag as? Track
+    val itemPath = item?.mediaId?.takeIf { it.isNotBlank() }
+    val track = (item?.localConfiguration?.tag as? Track)
+      ?: itemPath?.let { path -> logicalQueue.firstOrNull { it.src == path } }
     if (track != null) {
+      currentLocalTrackPath = track.src
       val duration = player.duration.takeIf { it != C.TIME_UNSET && it > 0 } ?: 0L
       appState.updatePlayingTrack(
         BasicTrackInfo(
@@ -653,7 +699,7 @@ class DevicePlaybackController(
           album = track.album,
           year = track.year,
           path = track.src,
-          coverUrl = item.mediaMetadata.artworkUri?.toString().orEmpty(),
+          coverUrl = item?.mediaMetadata?.artworkUri?.toString().orEmpty(),
           duration = duration
         )
       )
@@ -663,9 +709,15 @@ class DevicePlaybackController(
         loadLyrics(track.src)
         loadFavorite(track.src)
       }
-    } else if (publishedTrackPath != null) {
-      publishedTrackPath = null
-      appState.updateTrackDetails(TrackDetails.EMPTY)
+    } else if (itemPath != null || currentLocalTrackPath == null) {
+      // Media3 can briefly expose the current item without its tag while a
+      // queue item is being prepared. Keep the path-qualified favorite
+      // target through that transition instead of marking playback remote.
+      currentLocalTrackPath = itemPath
+      if (publishedTrackPath != null) {
+        publishedTrackPath = null
+        appState.updateTrackDetails(TrackDetails.EMPTY)
+      }
     }
     val state = when {
       player.isPlaying -> PlayerState.Playing
@@ -975,7 +1027,15 @@ class DevicePlaybackController(
           connection.connectTimeout = STREAM_CHECK_TIMEOUT_MS
           connection.readTimeout = STREAM_CHECK_TIMEOUT_MS
           connection.useCaches = false
-          connection.responseCode in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX
+          val responseCode = connection.responseCode
+          if (responseCode !in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX) {
+            false
+          } else {
+            val expectedState = if (loved) "loved" else "normal"
+            connection.inputStream.bufferedReader(StandardCharsets.US_ASCII).use {
+              it.readText().trim() == expectedState
+            }
+          }
         } finally {
           connection.disconnect()
         }
@@ -1075,6 +1135,7 @@ class DevicePlaybackController(
     private const val FIELD_SEPARATOR = "\u001f"
     private const val TRACK_FIELD_COUNT = 10
   }
+
 }
 
 internal fun Track.toTrackDetails(): TrackDetails = TrackDetails(

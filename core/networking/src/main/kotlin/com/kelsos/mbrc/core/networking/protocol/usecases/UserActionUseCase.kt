@@ -5,6 +5,7 @@ import com.kelsos.mbrc.core.networking.client.MessageQueue
 import com.kelsos.mbrc.core.networking.client.SocketMessage
 import com.kelsos.mbrc.core.networking.protocol.actions.UserAction
 import com.kelsos.mbrc.core.networking.protocol.base.Protocol
+import com.kelsos.mbrc.core.networking.protocol.payloads.AddTrackToPlaylistRequest
 import com.kelsos.mbrc.core.networking.protocol.payloads.NowPlayingMoveRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -58,6 +59,15 @@ suspend fun UserActionUseCase.pause() {
 
 suspend fun UserActionUseCase.playAllLibrary(shuffle: Boolean) {
   perform(UserAction.create(Protocol.LibraryPlayAll, shuffle))
+}
+
+suspend fun UserActionUseCase.addTrackToPlaylist(playlistUrl: String, trackPath: String) {
+  perform(
+    UserAction.create(
+      Protocol.PlaylistAddTrack,
+      AddTrackToPlaylistRequest(playlistUrl = playlistUrl, trackPath = trackPath)
+    )
+  )
 }
 
 class UserActionUseCaseImpl(

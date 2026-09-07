@@ -12,6 +12,49 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class DatabaseMigrationTest {
 
+  @Test
+  fun migrate9To8PreservesDevelopmentInstallData() {
+    var db = helper.createDatabase(migrationTestDb, 9)
+    db.execSQL(
+      """
+      INSERT INTO track (
+        artist, title, src, trackno, disc, album_artist, album, genre,
+        year, sortable_year, loved, language, date_added, id
+      ) VALUES (
+        'Artist', 'Title', 'D:/Music/song.flac', 1, 1, 'Artist', 'Album', 'Rock',
+        '2026', '2026', 1, 'English', 123, 42
+      )
+      """.trimIndent()
+    )
+    db.execSQL("INSERT INTO settings (address, port, name, id) VALUES ('192.168.1.2', 3000, 'PC', 1)")
+    db.execSQL(
+      """
+      INSERT INTO playback_history (
+        title, artist, album, album_artist, path, duration_ms, listened_ms,
+        started_at, played_at, scrobble_requested, id
+      ) VALUES ('Title', 'Artist', 'Album', 'Artist', 'D:/Music/song.flac',
+        180000, 90000, 1000, 91000, 1, 1)
+      """.trimIndent()
+    )
+    db.close()
+
+    db = helper.runMigrationsAndValidate(migrationTestDb, 8, true, MIGRATION_9_8)
+    db.query("SELECT src, loved FROM track WHERE id = 42").use {
+      assertThat(it.moveToFirst()).isTrue()
+      assertThat(it.getString(0)).isEqualTo("D:/Music/song.flac")
+      assertThat(it.getInt(1)).isEqualTo(1)
+    }
+    db.query("SELECT name FROM settings WHERE id = 1").use {
+      assertThat(it.moveToFirst()).isTrue()
+      assertThat(it.getString(0)).isEqualTo("PC")
+    }
+    db.query("SELECT listened_ms FROM playback_history WHERE id = 1").use {
+      assertThat(it.moveToFirst()).isTrue()
+      assertThat(it.getLong(0)).isEqualTo(90000L)
+    }
+    db.close()
+  }
+
   private val migrationTestDb: String
     get() = InstrumentationRegistry.getInstrumentation().targetContext
       .getDatabasePath("migration-test")

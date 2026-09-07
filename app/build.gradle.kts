@@ -90,8 +90,8 @@ val buildTimeProvider = providers.provider {
   df.format(Date())
 }
 
-val appVersionName = "2.2.0"
-val appVersionCode = 220
+val appVersionName = "2.3.0"
+val appVersionCode = 241
 val minSDKVersion = 23
 val compileSDKVersion = 36
 

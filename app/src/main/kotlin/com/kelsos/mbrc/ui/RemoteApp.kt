@@ -127,6 +127,7 @@ fun RemoteApp() {
         ) {
           // Each screen handles its own Scaffold - no shared Scaffold here
           AppNavGraph(
+            onShowChangelog = whatsNewViewModel::showChangelog,
             navController = navController,
             snackbarHostState = snackbarHostState,
             startDestination = Screen.Home.route,

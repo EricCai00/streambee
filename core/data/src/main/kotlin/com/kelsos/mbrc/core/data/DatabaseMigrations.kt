@@ -346,3 +346,14 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
     db.execSQL("CREATE UNIQUE INDEX artist_artist_idx ON artist (artist)")
   }
 }
+
+// Preserve existing data when returning from the unreleased 2.4.0-dev1 schema.
+val MIGRATION_9_8 = object : Migration(9, 8) {
+  override fun migrate(db: SupportSQLiteDatabase) {
+    db.execSQL("""CREATE TABLE IF NOT EXISTS `track_230` (`artist` TEXT NOT NULL, `title` TEXT NOT NULL, `src` TEXT NOT NULL, `trackno` INTEGER NOT NULL, `disc` INTEGER NOT NULL, `album_artist` TEXT NOT NULL, `album` TEXT NOT NULL, `genre` TEXT NOT NULL, `year` TEXT NOT NULL, `sortable_year` TEXT NOT NULL, `date_added` INTEGER NOT NULL, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `loved` INTEGER NOT NULL)""")
+    db.execSQL("""INSERT INTO track_230 (`artist`, `title`, `src`, `trackno`, `disc`, `album_artist`, `album`, `genre`, `year`, `sortable_year`, `date_added`, `id`, `loved`) SELECT `artist`, `title`, `src`, `trackno`, `disc`, `album_artist`, `album`, `genre`, `year`, `sortable_year`, `date_added`, `id`, `loved` FROM track""")
+    db.execSQL("""DROP TABLE track""")
+    db.execSQL("""ALTER TABLE track_230 RENAME TO track""")
+    db.execSQL("""CREATE UNIQUE INDEX IF NOT EXISTS `track_src_index` ON `track` (`src`)""")
+  }
+}

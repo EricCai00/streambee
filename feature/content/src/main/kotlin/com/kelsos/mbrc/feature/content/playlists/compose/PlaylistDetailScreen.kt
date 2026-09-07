@@ -36,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kelsos.mbrc.core.common.state.AppStateFlow
 import com.kelsos.mbrc.core.data.library.track.Track
 import com.kelsos.mbrc.core.ui.R as CoreUiR
+import com.kelsos.mbrc.core.ui.compose.AddToPlaylistDialog
 import com.kelsos.mbrc.core.ui.compose.DoubleLineRow
 import com.kelsos.mbrc.core.ui.compose.EmptyScreen
 import com.kelsos.mbrc.core.ui.compose.LoadingScreen
@@ -135,6 +136,7 @@ private fun PlaylistTrackRow(
   onNavigateToArtist: (artist: String) -> Unit
 ) {
   var menuExpanded by remember { mutableStateOf(false) }
+  var showAddToPlaylist by remember { mutableStateOf(false) }
   val title = track.title.ifEmpty { stringResource(R.string.unknown_title) }
   val artist = track.artist.ifEmpty { stringResource(R.string.unknown_artist) }
   val album = track.album.ifEmpty { stringResource(R.string.unknown_album) }
@@ -183,6 +185,10 @@ private fun PlaylistTrackRow(
             onDismissRequest = { menuExpanded = false }
           ) {
             DropdownMenuItem(
+              text = { Text(stringResource(CoreUiR.string.add_to_playlist)) },
+              onClick = { menuExpanded = false; showAddToPlaylist = true }
+            )
+            DropdownMenuItem(
               text = { Text(stringResource(R.string.playlist_go_to_album)) },
               onClick = {
                 menuExpanded = false
@@ -203,4 +209,7 @@ private fun PlaylistTrackRow(
       }
     }
   )
+  if (showAddToPlaylist) {
+    AddToPlaylistDialog(trackPath = track.src, onDismiss = { showAddToPlaylist = false })
+  }
 }

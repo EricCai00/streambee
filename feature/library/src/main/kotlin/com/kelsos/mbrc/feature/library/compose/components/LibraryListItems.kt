@@ -40,6 +40,8 @@ import com.kelsos.mbrc.core.data.library.genre.Genre
 import com.kelsos.mbrc.core.data.library.genre.GenreCategory
 import com.kelsos.mbrc.core.data.library.track.Track
 import com.kelsos.mbrc.core.queue.Queue
+import com.kelsos.mbrc.core.ui.R as CoreUiR
+import com.kelsos.mbrc.core.ui.compose.AddToPlaylistDialog
 import com.kelsos.mbrc.core.ui.compose.DoubleLineRow
 import com.kelsos.mbrc.core.ui.compose.MoreOptionsButton
 import com.kelsos.mbrc.core.ui.compose.SingleLineRow
@@ -294,6 +296,7 @@ fun TrackListItem(
   isPlaying: Boolean = false
 ) {
   var menuExpanded by remember { mutableStateOf(false) }
+  var addToPlaylist by remember { mutableStateOf(false) }
   val title = track.title.ifEmpty { stringResource(R.string.unknown_title) }
   val artist = track.artist.ifEmpty { stringResource(R.string.unknown_artist) }
   val subtitle = if (showAlbum) {
@@ -346,12 +349,16 @@ fun TrackListItem(
             expanded = menuExpanded,
             onDismiss = { menuExpanded = false },
             onQueue = onQueue,
+            onAddToPlaylist = { addToPlaylist = true },
             showExtendedActions = showExtendedActions
           )
         }
       }
     }
   )
+  if (addToPlaylist) {
+    AddToPlaylistDialog(trackPath = track.src, onDismiss = { addToPlaylist = false })
+  }
 }
 
 @Composable
@@ -359,6 +366,7 @@ private fun TrackItemMenu(
   expanded: Boolean,
   onDismiss: () -> Unit,
   onQueue: (Queue) -> Unit,
+  onAddToPlaylist: () -> Unit,
   showExtendedActions: Boolean
 ) {
   DropdownMenu(
@@ -371,6 +379,10 @@ private fun TrackItemMenu(
         onDismiss()
         onQueue(Queue.Now)
       }
+    )
+    DropdownMenuItem(
+      text = { Text(stringResource(CoreUiR.string.add_to_playlist)) },
+      onClick = { onDismiss(); onAddToPlaylist() }
     )
     if (showExtendedActions) {
       DropdownMenuItem(

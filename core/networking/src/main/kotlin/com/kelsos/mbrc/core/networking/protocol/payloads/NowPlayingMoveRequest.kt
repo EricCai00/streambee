@@ -10,3 +10,11 @@ data class NowPlayingMoveRequest(
   @Json(name = "to")
   val to: Int
 )
+
+@JsonClass(generateAdapter = true)
+data class AddTrackToPlaylistRequest(
+  @Json(name = "playlist_url")
+  val playlistUrl: String,
+  @Json(name = "track_path")
+  val trackPath: String
+)

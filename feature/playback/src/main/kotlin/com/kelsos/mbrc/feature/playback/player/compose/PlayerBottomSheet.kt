@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Person
@@ -41,6 +42,7 @@ fun PlayerBottomSheet(
   onGoToAlbum: (() -> Unit)?,
   onGoToArtist: (() -> Unit)?,
   onGoToGenre: (() -> Unit)?,
+  onAddToPlaylist: (() -> Unit)?,
   onDismiss: () -> Unit,
   viewModel: RatingDialogViewModel = koinViewModel()
 ) {
@@ -155,6 +157,29 @@ fun PlayerBottomSheet(
           )
           Text(
             text = stringResource(R.string.player_go_to_genre),
+            style = MaterialTheme.typography.bodyLarge
+          )
+        }
+      }
+
+      // Add the current track to a MusicBee playlist.
+      if (onAddToPlaylist != null) {
+        Row(
+          modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onAddToPlaylist)
+            .padding(vertical = 12.dp),
+          horizontalArrangement = Arrangement.spacedBy(16.dp),
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          Icon(
+            imageVector = Icons.AutoMirrored.Filled.PlaylistAdd,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(24.dp)
+          )
+          Text(
+            text = stringResource(com.kelsos.mbrc.core.ui.R.string.add_to_playlist),
             style = MaterialTheme.typography.bodyLarge
           )
         }

@@ -29,6 +29,8 @@ fun HelpFeedbackHelpTabPreviewLight() {
   RemoteTheme(darkTheme = false) {
     HelpFeedbackScreenContent(
       selectedTabIndex = 0,
+      showWebView = true,
+      versionName = "2.3.0",
       feedbackState = emptyFeedbackState,
       actions = EmptyFeedbackActions
     )
@@ -42,6 +44,8 @@ fun HelpFeedbackHelpTabPreviewDark() {
   RemoteTheme(darkTheme = true) {
     HelpFeedbackScreenContent(
       selectedTabIndex = 0,
+      showWebView = true,
+      versionName = "2.3.0",
       feedbackState = emptyFeedbackState,
       actions = EmptyFeedbackActions
     )

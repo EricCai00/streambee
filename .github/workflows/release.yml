@@ -22,9 +22,7 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v*'
+  # Releases are built and uploaded locally; creating a tag must not rebuild binaries.
   workflow_dispatch:
     inputs:
       tag:

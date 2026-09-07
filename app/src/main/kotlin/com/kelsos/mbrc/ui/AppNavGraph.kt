@@ -42,7 +42,8 @@ fun AppNavGraph(
   navController: NavHostController,
   snackbarHostState: SnackbarHostState,
   startDestination: String = Screen.Home.route,
-  onOpenDrawer: () -> Unit = {}
+  onOpenDrawer: () -> Unit = {},
+  onShowChangelog: () -> Unit = {}
 ) {
   NavHost(
     navController = navController,
@@ -142,6 +143,7 @@ fun AppNavGraph(
 
     composable(Screen.Help.route) {
       HelpFeedbackScreen(
+        onShowChangelog = onShowChangelog,
         snackbarHostState = snackbarHostState,
         onOpenDrawer = onOpenDrawer
       )

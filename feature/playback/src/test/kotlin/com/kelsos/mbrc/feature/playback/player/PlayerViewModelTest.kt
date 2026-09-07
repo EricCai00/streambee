@@ -69,6 +69,7 @@ class PlayerViewModelTest : KoinTest {
     single<LocalPlaybackController> {
       mockk(relaxed = true) {
         every { queue } returns queueFlow
+        every { currentTrackPath } returns null
       }
     }
     single<ChangeLogChecker> { mockk(relaxed = true) }
@@ -392,7 +393,7 @@ class PlayerViewModelTest : KoinTest {
 
   @Test
   fun `toggleFavorite when normal should set to loved`() = runTest(testDispatcher) {
-    viewModel.actions.toggleFavorite(false, false)
+    viewModel.actions.toggleFavorite("", false, false)
     advanceUntilIdle()
 
     coVerify {
@@ -407,7 +408,7 @@ class PlayerViewModelTest : KoinTest {
 
   @Test
   fun `toggleFavorite when already loved should toggle to normal`() = runTest(testDispatcher) {
-    viewModel.actions.toggleFavorite(true, false)
+    viewModel.actions.toggleFavorite("", true, false)
     advanceUntilIdle()
 
     coVerify {
@@ -420,7 +421,7 @@ class PlayerViewModelTest : KoinTest {
   @Test
   fun `toggleFavorite when banned should first toggle then set to loved`() =
     runTest(testDispatcher) {
-      viewModel.actions.toggleFavorite(false, true)
+      viewModel.actions.toggleFavorite("", false, true)
       advanceUntilIdle()
 
       coVerify(ordering = io.mockk.Ordering.ORDERED) {
@@ -435,6 +436,46 @@ class PlayerViewModelTest : KoinTest {
         )
       }
     }
+
+  @Test
+  fun `toggleFavorite targets the visible library path even when local state lags`() {
+    val controller = mockk<LocalPlaybackController>(relaxed = true) {
+      every { currentTrackPath } returns null
+      every { hasLocalPlayback } returns false
+    }
+    val userActions = mockk<UserActionUseCase>(relaxed = true)
+    val settings = mockk<SettingsManager>(relaxed = true)
+
+    runTest(testDispatcher) {
+      PlayerActions(userActions, this, controller, settings)
+        .toggleFavorite("C:/Music/phone-track.flac", false, false)
+      advanceUntilIdle()
+    }
+
+    verify { controller.toggleFavorite("C:/Music/phone-track.flac") }
+    coVerify(exactly = 0) { userActions.perform(any()) }
+  }
+
+  @Test
+  fun `toggleFavorite uses the local player when the computer shows another track`() {
+    val controller = mockk<LocalPlaybackController>(relaxed = true) {
+      every { currentTrackPath } returns "C:/Music/phone-track.flac"
+      every { hasLocalPlayback } returns true
+    }
+    val userActions = mockk<UserActionUseCase>(relaxed = true)
+    val settings = mockk<SettingsManager>(relaxed = true)
+
+    runTest(testDispatcher) {
+      PlayerActions(userActions, this, controller, settings)
+        .toggleFavorite("C:/Music/computer-track.flac", false, false)
+      advanceUntilIdle()
+    }
+
+    verify { controller.toggleFavorite("C:/Music/phone-track.flac") }
+    verify(exactly = 0) { controller.toggleFavorite() }
+    verify(exactly = 0) { controller.setFavorite(match { true }, match { true }) }
+    coVerify(exactly = 0) { userActions.perform(any()) }
+  }
 
   @Test
   fun `toggleBan when normal should set to banned`() = runTest(testDispatcher) {

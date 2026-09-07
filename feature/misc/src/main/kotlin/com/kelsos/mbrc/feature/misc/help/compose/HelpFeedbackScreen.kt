@@ -92,6 +92,7 @@ fun HelpFeedbackScreen(
   snackbarHostState: SnackbarHostState,
   onOpenDrawer: () -> Unit,
   modifier: Modifier = Modifier,
+  onShowChangelog: () -> Unit = {},
   viewModel: FeedbackViewModel = koinViewModel()
 ) {
   val title = stringResource(R.string.nav_help)
@@ -104,13 +105,18 @@ fun HelpFeedbackScreen(
   ) { paddingValues ->
     HelpFeedbackContent(
       viewModel = viewModel,
+      onShowChangelog = onShowChangelog,
       modifier = Modifier.padding(paddingValues)
     )
   }
 }
 
 @Composable
-private fun HelpFeedbackContent(viewModel: FeedbackViewModel, modifier: Modifier = Modifier) {
+private fun HelpFeedbackContent(
+  viewModel: FeedbackViewModel,
+  onShowChangelog: () -> Unit,
+  modifier: Modifier = Modifier
+) {
   var selectedTab by remember { mutableStateOf<HelpFeedbackTab>(HelpFeedbackTab.Help) }
 
   Column(
@@ -134,6 +140,7 @@ private fun HelpFeedbackContent(viewModel: FeedbackViewModel, modifier: Modifier
     when (selectedTab) {
       is HelpFeedbackTab.Help -> HelpContent(
         modifier = Modifier.weight(1f),
+        onShowChangelog = onShowChangelog,
         versionName = viewModel.versionName
       )
 
@@ -147,16 +154,16 @@ private fun HelpFeedbackContent(viewModel: FeedbackViewModel, modifier: Modifier
 
 @Suppress("COMPOSE_UICOMPOSABLE_INVOCATION")
 @Composable
-private fun HelpContent(modifier: Modifier = Modifier, versionName: String) {
-  LocalGuideContent(modifier = modifier, versionName = versionName)
+private fun HelpContent(modifier: Modifier = Modifier, versionName: String, onShowChangelog: () -> Unit) {
+  LocalGuideContent(modifier = modifier, versionName = versionName, onShowChangelog = onShowChangelog)
 }
 
 /**
  * The user guide is deliberately rendered from app code so it remains available without a
- * connection to the documentation site. Keep this content aligned with the 2.2.0 feature set.
+ * connection to the documentation site. Keep this content aligned with the 2.3.0 feature set.
  */
 @Composable
-private fun LocalGuideContent(modifier: Modifier = Modifier, versionName: String) {
+private fun LocalGuideContent(modifier: Modifier = Modifier, versionName: String, onShowChangelog: () -> Unit) {
   LazyColumn(
     modifier = modifier.fillMaxSize(),
     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 20.dp),
@@ -174,7 +181,7 @@ private fun LocalGuideContent(modifier: Modifier = Modifier, versionName: String
             color = MaterialTheme.colorScheme.onSurface
           )
           Text(
-            text = "Offline guide for StreamBee 2.2.0",
+            text = "Offline guide for StreamBee 2.3.0",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary
           )
@@ -183,6 +190,9 @@ private fun LocalGuideContent(modifier: Modifier = Modifier, versionName: String
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
+          Button(onClick = onShowChangelog) {
+            Text(stringResource(R.string.help_whats_new))
+          }
           Text(
             text = "Stream your MusicBee library and playlists to your Android phone. MusicBee and the StreamBee Plugin provide the library and audio stream; playback, queue, lyrics, and history live on the phone.",
             style = MaterialTheme.typography.bodyMedium,
@@ -215,11 +225,11 @@ private fun LocalGuideContent(modifier: Modifier = Modifier, versionName: String
     item {
       GuideSection(title = "3. Browse the library") {
         GuideParagraph("Library contains Genres, Artists, Albums, and Tracks. The Genres tab starts with MusicBee Genre Categories; open a category to see its genres.")
-        GuideBullet("Drill down from genre to artist or album, artist to album, and album to tracks. Album year and genre are clickable links.")
+        GuideBullet("Drill down from genre to artist or album, artist to album, and album to tracks. Album details show the year and provide links to the album artist and genre.")
         GuideBullet("Multiple-artist tags can open each artist separately. Artist rows use MusicBee artist pictures when available and a standard icon otherwise.")
         GuideBullet("Genre and Genre Category rows can show stacked album-art previews. Albums support list and cover-grid views.")
         GuideBullet("Use search and sorting on each list. Enable Indexed library scrollbar in Settings to jump through large lists by first letter or year.")
-        GuideBullet("Track overflow actions include Play Now, Play on this device, Queue Next, Queue Last, and artist or collection playback.")
+        GuideBullet("Track overflow actions include Add to playlist, Play Now, Play on this device, Queue Next, Queue Last, and artist or collection playback.")
       }
     }
 
@@ -228,6 +238,8 @@ private fun LocalGuideContent(modifier: Modifier = Modifier, versionName: String
         GuideParagraph("Queue is an on-device queue, separate from whatever MusicBee is playing on the computer.")
         GuideBullet("Search the queue, tap a row to play it, swipe to remove it, or drag its handle to reorder it. The current track has an accent and playing indicator.")
         GuideBullet("Playlists preserve MusicBee folders. A playlist can include local files that are not in the main library; those files can still be streamed while authorized by the plugin.")
+        GuideBullet("To save a track to a MusicBee playlist, open its overflow menu or the player menu, choose Add to playlist, then select an existing playlist. Keep MusicBee connected with StreamBee Plugin 2.3.0 installed. This edits the MusicBee playlist, not the phone queue.")
+        GuideBullet("The playlist chooser uses your last synchronized playlist list. If a new playlist is missing, refresh Playlists first. Create playlists in MusicBee.")
         GuideBullet("History stores qualifying phone listens. A track counts after at least half its duration, up to four minutes, matching MusicBee's default play-count rule.")
         GuideBullet("Tap a history entry to play it again. Completed phone playback can update MusicBee Play Count and Last Played; optional Last.fm scrobbling is controlled from the player menu.")
       }
@@ -237,7 +249,7 @@ private fun LocalGuideContent(modifier: Modifier = Modifier, versionName: String
       GuideSection(title = "5. Details, ratings, and lyrics") {
         GuideParagraph("Open the player menu and choose Track Details. Tags shows MusicBee metadata; Properties shows the exact streamed file's format, size, duration, dates, play counts, and location.")
         GuideBullet("Rate tracks from zero to five stars, enable half-star ratings in Settings, use a bomb rating, or clear the rating. Show rating on player controls whether the rating appears below the track.")
-        GuideBullet("The player heart controls Last.fm Love/Ban. Hearts beside library and playlist rows are MusicBee loved markers and are read-only there.")
+        GuideBullet("Tap the player heart to love or unlove the displayed track in MusicBee. Phone playback targets that exact file, even if MusicBee is playing a different song. Hearts in library and playlist rows remain read-only; sync the library to refresh cached markers.")
         GuideBullet("Open lyrics from the player. Plain lyrics and synchronized LRC lines are supported; tapping a synchronized line seeks the phone player.")
       }
     }
@@ -472,7 +484,7 @@ fun HelpFeedbackScreenContent(
     when (selectedTabIndex) {
       0 -> {
         if (showWebView) {
-          HelpContent(modifier = Modifier.weight(1f), versionName = versionName)
+          HelpContent(modifier = Modifier.weight(1f), versionName = versionName, onShowChangelog = {})
         } else {
           HelpContentPlaceholder(modifier = Modifier.weight(1f))
         }
